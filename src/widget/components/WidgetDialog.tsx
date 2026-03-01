@@ -2,6 +2,7 @@ import { FunctionComponent } from 'preact';
 import { useState, useCallback } from 'preact/hooks';
 import { ScreenshotManager, CapturedMedia } from './ScreenshotManager.js';
 import { Button, Input, Textarea, Select, Label, Tabs } from './ui';
+import { ScreenCaptureConsentDialog } from './ScreenCaptureConsentDialog.js';
 
 export interface FormData {
   title: string;
@@ -27,6 +28,9 @@ interface WidgetDialogProps {
   onActiveTabChange: (tab: string) => void;
   formData: FormData;
   onFormDataChange: (data: FormData) => void;
+  showScreenCaptureConsent: boolean;
+  onConsentConfirm: () => void;
+  onConsentCancel: () => void;
 }
 
 const TABS = [
@@ -71,6 +75,9 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
   onActiveTabChange,
   formData,
   onFormDataChange,
+  showScreenCaptureConsent,
+  onConsentConfirm,
+  onConsentCancel,
 }) => {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
@@ -127,9 +134,9 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
       >
         {/* Header */}
         <div class="flex items-center justify-between p-6 border-b border-solid border-border">
-          <h2 id="bugpin-title" class="text-lg font-semibold text-foreground tracking-tight">
+          <h1 id="bugpin-title">
             Report a Bug
-          </h2>
+          </h1>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
             <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path
@@ -140,141 +147,151 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
           </Button>
         </div>
 
-        {/* Tabs */}
-        <div class="p-4 pb-0 bg-transparent">
-          <Tabs
-            tabs={TABS.map((tab) => ({
-              ...tab,
-              label:
-                tab.id === 'media' && mediaCount > 0 ? `${tab.label} (${mediaCount})` : tab.label,
-            }))}
-            activeTab={activeTab}
-            onTabChange={onActiveTabChange}
-          />
-        </div>
+        {showScreenCaptureConsent ? (
+          <ScreenCaptureConsentDialog onConfirm={onConsentConfirm} onCancel={onConsentCancel} />
+        ) : (
+          <>
+            {/* Tabs */}
+            <div class="p-4 pb-0 bg-transparent">
+              <Tabs
+                tabs={TABS.map((tab) => ({
+                  ...tab,
+                  label:
+                    tab.id === 'media' && mediaCount > 0
+                      ? `${tab.label} (${mediaCount})`
+                      : tab.label,
+                }))}
+                activeTab={activeTab}
+                onTabChange={onActiveTabChange}
+              />
+            </div>
 
-        {/* Body */}
-        <div class="flex-1 overflow-y-auto p-6">
-          {/* Details Tab */}
-          {activeTab === 'details' && (
-            <form class="flex flex-col gap-4" onSubmit={handleSubmit}>
-              {/* Title */}
-              <div class="flex flex-col gap-1.5">
-                <Label for="bugpin-title-input" required>
-                  Title
-                </Label>
-                <Input
-                  id="bugpin-title-input"
-                  type="text"
-                  placeholder="Brief description of the issue"
-                  value={formData.title}
-                  onInput={(e) => handleInputChange('title', (e.target as HTMLInputElement).value)}
-                  maxLength={200}
-                  error={!!errors.title}
-                  aria-describedby={errors.title ? 'bugpin-title-error' : undefined}
+            {/* Body */}
+            <div class="flex-1 overflow-y-auto p-6">
+              {/* Details Tab */}
+              {activeTab === 'details' && (
+                <form class="flex flex-col gap-4" onSubmit={handleSubmit}>
+                  {/* Title */}
+                  <div class="flex flex-col gap-1.5">
+                    <Label for="bugpin-title-input" required>
+                      Title
+                    </Label>
+                    <Input
+                      id="bugpin-title-input"
+                      type="text"
+                      placeholder="Brief description of the issue"
+                      value={formData.title}
+                      onInput={(e) =>
+                        handleInputChange('title', (e.target as HTMLInputElement).value)
+                      }
+                      maxLength={200}
+                      error={!!errors.title}
+                      aria-describedby={errors.title ? 'bugpin-title-error' : undefined}
+                    />
+                    {errors.title && (
+                      <span id="bugpin-title-error" class="text-destructive text-xs mt-0.5">
+                        {errors.title}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div class="flex flex-col gap-1.5">
+                    <Label for="bugpin-description">Description</Label>
+                    <Textarea
+                      id="bugpin-description"
+                      placeholder="Steps to reproduce, expected behavior, etc."
+                      value={formData.description}
+                      onInput={(e) =>
+                        handleInputChange('description', (e.target as HTMLTextAreaElement).value)
+                      }
+                    />
+                  </div>
+
+                  {/* Priority */}
+                  <div class="flex flex-col gap-1.5">
+                    <Label for="bugpin-priority">Priority</Label>
+                    <Select
+                      id="bugpin-priority"
+                      value={formData.priority}
+                      onChange={(e) =>
+                        handleInputChange('priority', (e.target as HTMLSelectElement).value)
+                      }
+                    >
+                      <option value="highest">Highest</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                      <option value="lowest">Lowest</option>
+                    </Select>
+                  </div>
+
+                  {/* Name */}
+                  <div class="flex flex-col gap-1.5">
+                    <Label for="bugpin-name">Name (optional)</Label>
+                    <Input
+                      id="bugpin-name"
+                      type="text"
+                      placeholder="Your name"
+                      value={formData.reporterName}
+                      onInput={(e) =>
+                        handleInputChange('reporterName', (e.target as HTMLInputElement).value)
+                      }
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div class="flex flex-col gap-1.5">
+                    <Label for="bugpin-email">Email (optional)</Label>
+                    <Input
+                      id="bugpin-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={formData.reporterEmail}
+                      onInput={(e) =>
+                        handleInputChange('reporterEmail', (e.target as HTMLInputElement).value)
+                      }
+                      error={!!errors.reporterEmail}
+                      aria-describedby={errors.reporterEmail ? 'bugpin-email-error' : undefined}
+                    />
+                    {errors.reporterEmail && (
+                      <span id="bugpin-email-error" class="text-destructive text-xs mt-0.5">
+                        {errors.reporterEmail}
+                      </span>
+                    )}
+                  </div>
+                </form>
+              )}
+
+              {/* Media Tab */}
+              {activeTab === 'media' && (
+                <ScreenshotManager
+                  media={media}
+                  onCapture={onCaptureScreenshot}
+                  onUpload={onAddMedia}
+                  onRemove={onRemoveMedia}
+                  onAnnotate={onAnnotateMedia}
+                  isCapturing={isCapturing}
+                  enableAnnotation={enableAnnotation}
                 />
-                {errors.title && (
-                  <span id="bugpin-title-error" class="text-destructive text-xs mt-0.5">
-                    {errors.title}
-                  </span>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div class="flex gap-3 p-6 border-t border-solid border-border bg-muted">
+              <Button variant="outline" class="flex-1" onClick={onClose} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button class="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <span class="w-4 h-4 border-2 border-solid border-white/30 border-t-white rounded-full animate-[spin_0.8s_linear_infinite]" />
+                ) : (
+                  'Submit Report'
                 )}
-              </div>
-
-              {/* Description */}
-              <div class="flex flex-col gap-1.5">
-                <Label for="bugpin-description">Description</Label>
-                <Textarea
-                  id="bugpin-description"
-                  placeholder="Steps to reproduce, expected behavior, etc."
-                  value={formData.description}
-                  onInput={(e) =>
-                    handleInputChange('description', (e.target as HTMLTextAreaElement).value)
-                  }
-                />
-              </div>
-
-              {/* Priority */}
-              <div class="flex flex-col gap-1.5">
-                <Label for="bugpin-priority">Priority</Label>
-                <Select
-                  id="bugpin-priority"
-                  value={formData.priority}
-                  onChange={(e) =>
-                    handleInputChange('priority', (e.target as HTMLSelectElement).value)
-                  }
-                >
-                  <option value="highest">Highest</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                  <option value="lowest">Lowest</option>
-                </Select>
-              </div>
-
-              {/* Name */}
-              <div class="flex flex-col gap-1.5">
-                <Label for="bugpin-name">Name (optional)</Label>
-                <Input
-                  id="bugpin-name"
-                  type="text"
-                  placeholder="Your name"
-                  value={formData.reporterName}
-                  onInput={(e) =>
-                    handleInputChange('reporterName', (e.target as HTMLInputElement).value)
-                  }
-                />
-              </div>
-
-              {/* Email */}
-              <div class="flex flex-col gap-1.5">
-                <Label for="bugpin-email">Email (optional)</Label>
-                <Input
-                  id="bugpin-email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={formData.reporterEmail}
-                  onInput={(e) =>
-                    handleInputChange('reporterEmail', (e.target as HTMLInputElement).value)
-                  }
-                  error={!!errors.reporterEmail}
-                  aria-describedby={errors.reporterEmail ? 'bugpin-email-error' : undefined}
-                />
-                {errors.reporterEmail && (
-                  <span id="bugpin-email-error" class="text-destructive text-xs mt-0.5">
-                    {errors.reporterEmail}
-                  </span>
-                )}
-              </div>
-            </form>
-          )}
-
-          {/* Media Tab */}
-          {activeTab === 'media' && (
-            <ScreenshotManager
-              media={media}
-              onCapture={onCaptureScreenshot}
-              onUpload={onAddMedia}
-              onRemove={onRemoveMedia}
-              onAnnotate={onAnnotateMedia}
-              isCapturing={isCapturing}
-              enableAnnotation={enableAnnotation}
-            />
-          )}
-        </div>
-
-        {/* Footer */}
-        <div class="flex gap-3 p-6 border-t border-solid border-border bg-muted">
-          <Button variant="outline" class="flex-1" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button class="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span class="w-4 h-4 border-2 border-solid border-white/30 border-t-white rounded-full animate-[spin_0.8s_linear_infinite]" />
-            ) : (
-              'Submit Report'
-            )}
-          </Button>
-        </div>
+              </Button>
+            </div>
+          </>
+        )}
 
         {/* Branding */}
         <div class="py-3 px-6 text-center text-xs text-muted-foreground border-t border-solid border-border bg-background">

@@ -108,19 +108,20 @@ export function ScreenshotSettingsForm({
                   capture videos, canvas, or WebGL content accurately.
                 </p>
                 <p>
-                  <strong>Screen Capture API:</strong> Requires user permission to select which
-                  tab/window to capture. Provides pixel-perfect screenshots including videos,
-                  canvas, WebGL, and exactly what the user sees. Higher friction but more accurate
-                  for complex visual bugs.
+                  <strong>Screen Capture API:</strong> Required for WordPress and other sites that
+                  load stylesheets or fonts from external domains (CDNs, Google Fonts, etc.). These
+                  cross-origin resources cannot be captured automatically, resulting in missing fonts
+                  and blank images. Also works for videos, canvas, and WebGL. The browser will ask
+                  the user to select a tab before each capture.
                 </p>
               </AlertDescription>
             </Alert>
             <Alert className="mt-3">
               <AlertDescription className="text-sm space-y-2">
                 <p>
-                  <strong>Recommended:</strong> Keep disabled for general use. Enable only if you
-                  need to capture video players, canvas graphics, or other dynamic content that
-                  doesn't render correctly with DOM capture.
+                  <strong>Recommended:</strong> Enable for WordPress sites or any site that uses
+                  external stylesheets and fonts. Keep disabled for same-origin apps where DOM
+                  capture works seamlessly.
                 </p>
               </AlertDescription>
             </Alert>

@@ -199,6 +199,9 @@ describe('widget components', () => {
           reporterName: '',
         }}
         onFormDataChange={() => undefined}
+        showScreenCaptureConsent={false}
+        onConsentConfirm={() => undefined}
+        onConsentCancel={() => undefined}
       />,
     );
     expect(html).toContain('Report a Bug');
@@ -228,6 +231,9 @@ describe('widget components', () => {
           reporterName: '',
         }}
         onFormDataChange={() => undefined}
+        showScreenCaptureConsent={false}
+        onConsentConfirm={() => undefined}
+        onConsentCancel={() => undefined}
       />,
     );
     expect(html).toContain('Screenshots (1)');
@@ -257,6 +263,9 @@ describe('widget components', () => {
           reporterName: '',
         }}
         onFormDataChange={() => undefined}
+        showScreenCaptureConsent={false}
+        onConsentConfirm={() => undefined}
+        onConsentCancel={() => undefined}
       />,
     );
     expect(html).toContain('animate-[spin_0.8s_linear_infinite]');

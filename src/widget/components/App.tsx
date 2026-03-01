@@ -62,6 +62,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showScreenCaptureConsent, setShowScreenCaptureConsent] = useState(false);
 
   // Load draft when widget opens
   useEffect(() => {
@@ -205,6 +206,16 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
   const handleCaptureScreenshot = useCallback(async () => {
     if (!config.enableScreenshot) return;
 
+    if (config.useScreenCaptureAPI && !showScreenCaptureConsent) {
+      const skipConsent = localStorage.getItem('bugpin-skip-screen-capture-consent') === 'true';
+      if (!skipConsent) {
+        setShowScreenCaptureConsent(true);
+        return;
+      }
+    }
+    // Reset consent flag before proceeding with actual capture
+    setShowScreenCaptureConsent(false);
+
     setIsCapturing(true);
     // Brief delay to ensure modal is hidden from capture
     setStep('closed');
@@ -265,7 +276,15 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
         type: 'error',
       });
     }
-  }, [config, captureScreenshotFn]);
+  }, [config, captureScreenshotFn, showScreenCaptureConsent]);
+
+  const handleConsentConfirm = useCallback(() => {
+    handleCaptureScreenshot();
+  }, [handleCaptureScreenshot]);
+
+  const handleConsentCancel = useCallback(() => {
+    setShowScreenCaptureConsent(false);
+  }, []);
 
   const handleAddMedia = useCallback((item: CapturedMedia) => {
     setMedia((prev) => [...prev, item]);
@@ -411,6 +430,9 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
           onActiveTabChange={setActiveTab}
           formData={formData}
           onFormDataChange={setFormData}
+          showScreenCaptureConsent={showScreenCaptureConsent}
+          onConsentConfirm={handleConsentConfirm}
+          onConsentCancel={handleConsentCancel}
         />
       )}
 
@@ -424,12 +446,9 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
             aria-labelledby="bugpin-confirm-title"
           >
             <div class="p-6">
-              <h3
-                id="bugpin-confirm-title"
-                class="text-lg font-semibold text-foreground tracking-tight mb-2"
-              >
+              <h1 id="bugpin-confirm-title" class="tracking-tight mb-2">
                 Save draft?
-              </h3>
+              </h1>
               <p class="text-sm text-muted-foreground mb-6">
                 You have unsaved changes. Would you like to save them as a draft for later?
               </p>
