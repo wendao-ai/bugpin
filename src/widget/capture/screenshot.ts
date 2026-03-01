@@ -286,7 +286,11 @@ async function captureWithScreenCaptureAPI(): Promise<string> {
       displaySurface: 'browser',
     } as MediaTrackConstraints,
     audio: false,
-  });
+    // Chrome/Edge 94+: pre-selects the current tab so the user only needs to
+    // click Share rather than hunt for their tab in the picker. Firefox and
+    // Safari ignore this option gracefully.
+    preferCurrentTab: true,
+  } as DisplayMediaStreamOptions & { preferCurrentTab?: boolean });
 
   try {
     const video = document.createElement('video');
