@@ -37,6 +37,7 @@ Thumbs.db
 *.code-workspace
 
 # AI agent files
+.claude/
 CLAUDE.md
 AGENT.md
 GEMINI.md
