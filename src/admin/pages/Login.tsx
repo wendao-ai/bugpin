@@ -7,10 +7,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Spinner } from '../components/ui/spinner';
-import { Bug } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
@@ -59,10 +58,18 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center bg-muted/40 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-bugpin-primary-100 text-bugpin-primary-700 dark:bg-bugpin-primary-900 dark:text-bugpin-primary-300">
-            <Bug className="w-7 h-7" />
+          <div className="mx-auto mb-2">
+            <img
+              src="/branding/light/logo-light.svg"
+              alt="BugPin"
+              className="h-10 dark:hidden"
+            />
+            <img
+              src="/branding/dark/logo-dark.svg"
+              alt="BugPin"
+              className="h-10 hidden dark:block"
+            />
           </div>
-          <CardTitle className="text-2xl mt-4">BugPin</CardTitle>
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
