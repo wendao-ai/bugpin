@@ -251,6 +251,11 @@ function getCaptureDefaults(): ToCanvasOptions {
   return {
     skipFonts: crossOrigin,
     imagePlaceholder: TRANSPARENT_PIXEL,
+    // Prevent html-to-image from rejecting when a cloned <img> fails to render.
+    // This handles the case where fetch() succeeds (200) but returns non-image
+    // content (e.g. HTML error page from a CORS redirect), producing an invalid
+    // data URL that triggers img.onerror.
+    onImageErrorHandler: () => {},
   };
 }
 
@@ -332,8 +337,9 @@ export async function captureScreenshot(options: CaptureOptions = {}): Promise<s
       return await captureWithScreenCaptureAPI();
     } catch (error) {
       console.warn(
-        '[BugPin] Screen Capture API unavailable, falling back to DOM capture:',
-        error instanceof Error ? error.message : error,
+        '[BugPin] Screen Capture API unavailable, falling back to DOM capture.',
+        'Ensure the page is served over HTTPS and the browser has screen recording permission.',
+        `(${error instanceof Error ? error.message : error})`,
       );
     }
   }

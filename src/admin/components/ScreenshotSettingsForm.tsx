@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Switch } from './ui/switch';
@@ -103,25 +104,27 @@ export function ScreenshotSettingsForm({
             <Alert className="mt-3">
               <AlertDescription className="text-sm space-y-2">
                 <p>
-                  <strong>Default (DOM Capture):</strong> Automatically captures your app UI without
-                  user permission. Fast, privacy-friendly, and works for most layout bugs. Does not
-                  capture videos, canvas, or WebGL content accurately.
+                  <strong>Default (DOM Capture):</strong> Captures the page without requiring user
+                  permission. Fast, seamless, and works for most layouts. Does not capture
+                  videos, canvas, or WebGL content accurately.
                 </p>
                 <p>
-                  <strong>Screen Capture API:</strong> Required for WordPress and other sites that
-                  load stylesheets or fonts from external domains (CDNs, Google Fonts, etc.). These
-                  cross-origin resources cannot be captured automatically, resulting in missing fonts
-                  and blank images. Also works for videos, canvas, and WebGL. The browser will ask
-                  the user to select a tab before each capture.
+                  <strong>Screen Capture API:</strong> Enable for websites (WordPress, Wix, etc.)
+                  that load stylesheets or fonts from external domains (CDNs, Google Fonts, etc.).
+                  These cross-origin resources cannot be captured automatically, resulting in
+                  missing fonts and blank images. Also captures videos, canvas, and WebGL. The
+                  browser will prompt the user for permission before each capture.
                 </p>
-              </AlertDescription>
-            </Alert>
-            <Alert className="mt-3">
-              <AlertDescription className="text-sm space-y-2">
                 <p>
-                  <strong>Recommended:</strong> Enable for WordPress sites or any site that uses
-                  external stylesheets and fonts. Keep disabled for same-origin apps where DOM
-                  capture works seamlessly.
+                  <a
+                    href="https://docs.bugpin.io/configuration/widget#screen-capture-api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    View documentation
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
                 </p>
               </AlertDescription>
             </Alert>
