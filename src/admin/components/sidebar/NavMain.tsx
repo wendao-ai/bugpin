@@ -19,6 +19,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from '../ui/sidebar';
 
 interface NavSubItem {
@@ -71,6 +72,11 @@ export function NavMain() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const closeSidebarOnMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   const filteredItems = navItems.filter((item) => {
     if (!item.roles) return true;
@@ -135,7 +141,7 @@ export function NavMain() {
                         return (
                           <SidebarMenuSubItem key={subItem.url}>
                             <SidebarMenuSubButton asChild isActive={subIsActive}>
-                              <a href={item.url + subItem.url} onClick={handleSubItemClick}>
+                              <a href={item.url + subItem.url} onClick={(e) => { handleSubItemClick(e); closeSidebarOnMobile(); }}>
                                 <span>{subItem.title}</span>
                               </a>
                             </SidebarMenuSubButton>
@@ -153,7 +159,7 @@ export function NavMain() {
           return (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                <Link to={item.url}>
+                <Link to={item.url} onClick={closeSidebarOnMobile}>
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>

@@ -54,7 +54,7 @@ export function Layout() {
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <SidebarInset className="flex flex-col h-screen">
+      <SidebarInset className="flex flex-col h-screen max-w-[100vw] min-w-0">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
@@ -78,7 +78,7 @@ export function Layout() {
           )}
         </header>
         <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="flex flex-col gap-4 p-6">
+          <div className="flex flex-col gap-4 p-4 md:p-6">
             <Outlet />
           </div>
         </div>

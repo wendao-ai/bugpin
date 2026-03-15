@@ -106,14 +106,14 @@ export function Dashboard() {
                   to={`/reports/${report.id}`}
                   className="block px-6 py-4 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{report.title}</p>
                       <p className="text-sm text-muted-foreground truncate">
                         {report.metadata?.url}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2 sm:ml-4 sm:shrink-0">
                       <StatusBadge status={report.status} />
                       <PriorityBadge priority={report.priority} />
                     </div>

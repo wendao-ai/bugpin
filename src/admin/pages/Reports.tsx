@@ -410,8 +410,74 @@ export function Reports() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Reports — mobile card list */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Spinner className="text-primary" />
+          </div>
+        ) : data?.data?.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center text-muted-foreground">No reports found</CardContent>
+          </Card>
+        ) : (
+          data?.data?.map((report: ReportItem) => (
+            <Card
+              key={report.id}
+              className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(report.id) ? 'bg-muted/30' : ''}`}
+              onClick={() => navigate(`/reports/${report.id}`)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div onClick={(e) => e.stopPropagation()} className="mt-0.5">
+                    <Checkbox
+                      checked={selectedIds.has(report.id)}
+                      onCheckedChange={(checked) => handleSelectOne(report.id, checked as boolean)}
+                      aria-label={`Select ${report.title}`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{report.title}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {report.metadata?.url || 'No URL'}
+                    </p>
+                    {report.reporterEmail && (
+                      <p className="text-xs text-muted-foreground">
+                        {report.reporterName || report.reporterEmail}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <StatusBadge status={report.status} />
+                      <PriorityBadge priority={report.priority} />
+                      <span className="text-xs text-muted-foreground">
+                        {report.projectName || 'Unknown'}
+                      </span>
+                      <GitHubSyncIcon report={report} />
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {formatDate(report.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+        {data && data.totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Page {data.page} of {data.totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleFilterChange('page', String(page - 1))} disabled={page <= 1}>Previous</Button>
+              <Button variant="outline" size="sm" onClick={() => handleFilterChange('page', String(page + 1))} disabled={page >= data.totalPages}>Next</Button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Reports table */}
-      <Card>
+      <Card className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>

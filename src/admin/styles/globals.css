@@ -144,6 +144,38 @@
   --radius: var(--radius);
 }
 
+
+/* Appearance dialog theme buttons — sm on desktop, larger on mobile */
+@layer utilities {
+  .appearance-theme-btn {
+    height: 2rem;
+    padding-inline: 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile touch targets — larger tap areas below md (768px) */
+@layer utilities {
+  @media (max-width: 767px) {
+    [data-sidebar='menu-button'][data-size='default'] {
+      @apply h-12 text-base;
+    }
+
+    [data-sidebar='menu-sub-button'] {
+      @apply h-10 text-base;
+    }
+
+    .dropdown-menu-item {
+      @apply py-3 text-base;
+    }
+
+    .appearance-theme-btn {
+      height: 3rem;
+      font-size: 0.875rem;
+    }
+  }
+}
+
 /* Base styles */
 @layer base {
   * {

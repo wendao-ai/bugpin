@@ -236,12 +236,12 @@ export function Projects() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Projects</h1>
           <p className="text-muted-foreground">Manage your projects and API keys</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>Create Project</Button>
+        <Button onClick={() => setShowCreateModal(true)} className="sm:shrink-0">Create Project</Button>
       </div>
 
       {/* Projects list */}
@@ -449,8 +449,8 @@ function SortableProjectCard({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={!project.isActive ? 'opacity-60' : undefined}>
-        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+      <Card className={`overflow-hidden${!project.isActive ? ' opacity-60' : ''}`}>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between space-y-0">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -506,12 +506,8 @@ function SortableProjectCard({
               disabled={isToggling}
               title={project.isActive ? 'Pause project' : 'Activate project'}
             >
-              {isToggling ? (
-                <Spinner size="sm" className="mr-1" />
-              ) : (
-                <Power className="h-4 w-4 mr-1" />
-              )}
-              {project.isActive ? 'Pause' : 'Activate'}
+              {isToggling ? <Spinner size="sm" /> : <Power className="h-4 w-4" />}
+              <span className="hidden sm:inline">{project.isActive ? 'Pause' : 'Activate'}</span>
             </Button>
             <Button
               variant="outline"
@@ -519,8 +515,8 @@ function SortableProjectCard({
               onClick={onConfigureSettings}
               title="Project Settings"
             >
-              <Settings className="h-4 w-4 mr-1" />
-              Settings
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
             </Button>
             <Button
               variant="outline"
@@ -528,16 +524,16 @@ function SortableProjectCard({
               onClick={onConfigureIntegrations}
               title="Integrations"
             >
-              <Plug className="h-4 w-4 mr-1" />
-              Integrations
+              <Plug className="h-4 w-4" />
+              <span className="hidden sm:inline">Integrations</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={onRegenerateKey}>
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Regenerate Key
+            <Button variant="outline" size="sm" onClick={onRegenerateKey} title="Regenerate Key">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Regenerate Key</span>
             </Button>
-            <Button variant="destructive" size="sm" onClick={onDelete}>
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
+            <Button variant="destructive" size="sm" onClick={onDelete} title="Delete">
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           </div>
         </CardHeader>
@@ -547,7 +543,7 @@ function SortableProjectCard({
             <div className="space-y-2">
               <Label>API Key</Label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-muted-foreground break-all">
+                <code className="flex-1 min-w-0 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-muted-foreground break-all">
                   {project.apiKey}
                 </code>
                 <Button variant="outline" size="sm" onClick={copyApiKey}>
@@ -560,7 +556,7 @@ function SortableProjectCard({
             <div className="space-y-2">
               <Label>Widget Snippet</Label>
               <div className="flex items-center gap-2">
-                <pre className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono overflow-x-auto">
+                <pre className="flex-1 min-w-0 px-3 py-2 bg-muted rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap break-all">
                   {widgetSnippet}
                 </pre>
                 <Button variant="outline" size="sm" onClick={copyWidgetSnippet}>
