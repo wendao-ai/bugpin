@@ -330,6 +330,8 @@ export interface NotificationDefaultSettings {
 
 // Reporter notification settings
 export interface ReporterNotificationSettings {
+  emailEnabled: boolean;
+  notifyOnNewReport: boolean;
   notifyOnStatusChange: boolean;
   notifyOnPriorityChange: boolean;
   messagingEnabled: boolean;

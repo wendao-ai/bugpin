@@ -47,6 +47,8 @@ function getEffectiveReporterSettings(
   projectSettings?: ProjectSettings,
 ): ReporterNotificationSettings {
   const globalReporter = globalSettings.reporterNotifications ?? {
+    emailEnabled: true,
+    notifyOnNewReport: true,
     notifyOnStatusChange: true,
     notifyOnPriorityChange: true,
     messagingEnabled: true,
@@ -55,6 +57,8 @@ function getEffectiveReporterSettings(
   // Legacy backward compat: if notifyReporter is explicitly false, disable all
   if (projectSettings?.notifyReporter === false) {
     return {
+      emailEnabled: false,
+      notifyOnNewReport: false,
       notifyOnStatusChange: false,
       notifyOnPriorityChange: false,
       messagingEnabled: false,
@@ -64,6 +68,8 @@ function getEffectiveReporterSettings(
   // Project overrides take precedence over global
   const projectReporter = projectSettings?.reporterNotifications;
   return {
+    emailEnabled: projectReporter?.emailEnabled ?? globalReporter.emailEnabled,
+    notifyOnNewReport: projectReporter?.notifyOnNewReport ?? globalReporter.notifyOnNewReport,
     notifyOnStatusChange: projectReporter?.notifyOnStatusChange ?? globalReporter.notifyOnStatusChange,
     notifyOnPriorityChange:
       projectReporter?.notifyOnPriorityChange ?? globalReporter.notifyOnPriorityChange,
@@ -525,7 +531,6 @@ export const notificationsService = {
         return;
       }
 
-      // Check project settings for notifyReporter (default true)
       const project = await projectsRepo.findById(report.projectId);
       if (!project) {
         logger.error('Project not found for reporter submission notification', {
@@ -534,14 +539,14 @@ export const notificationsService = {
         return;
       }
 
-      if (project.settings?.notifyReporter === false) {
-        logger.debug('Reporter notifications disabled for project', {
+      const settings = await settingsCacheService.getAll();
+      const effective = getEffectiveReporterSettings(settings, project.settings);
+      if (!effective.emailEnabled || !effective.notifyOnNewReport) {
+        logger.debug('Reporter submission notifications disabled', {
           projectId: report.projectId,
         });
         return;
       }
-
-      const settings = await settingsCacheService.getAll();
 
       const result = await emailService.sendReporterConfirmationEmail(report.reporterEmail, {
         report,
@@ -592,7 +597,7 @@ export const notificationsService = {
 
       const settings = await settingsCacheService.getAll();
       const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.notifyOnStatusChange) {
+      if (!effective.emailEnabled || !effective.notifyOnStatusChange) {
         logger.debug('Reporter status change notifications disabled', {
           projectId: report.projectId,
         });
@@ -654,7 +659,7 @@ export const notificationsService = {
 
       const settings = await settingsCacheService.getAll();
       const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.messagingEnabled) {
+      if (!effective.emailEnabled || !effective.messagingEnabled) {
         logger.debug('Reporter messaging disabled', { projectId: report.projectId });
         return;
       }
@@ -820,7 +825,7 @@ export const notificationsService = {
 
       const settings = await settingsCacheService.getAll();
       const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.notifyOnPriorityChange) {
+      if (!effective.emailEnabled || !effective.notifyOnPriorityChange) {
         logger.debug('Reporter priority change notifications disabled', {
           projectId: report.projectId,
         });

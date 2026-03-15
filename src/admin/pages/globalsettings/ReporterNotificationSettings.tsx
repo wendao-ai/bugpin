@@ -18,6 +18,8 @@ import type { AppSettings, ReporterNotificationSettings as ReporterSettings } fr
 export function ReporterNotificationSettings() {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<ReporterSettings>({
+    emailEnabled: true,
+    notifyOnNewReport: true,
     notifyOnStatusChange: true,
     notifyOnPriorityChange: true,
     messagingEnabled: true,
@@ -77,62 +79,104 @@ export function ReporterNotificationSettings() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          {/* Status Change Notifications */}
+          {/* Email Notifications */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="reporter-status-change" className="text-sm font-normal">
-                Status Change Notifications
+              <Label htmlFor="reporter-email-enabled" className="text-sm font-normal">
+                Email Notifications
               </Label>
               <p className="text-xs text-muted-foreground">
-                Notify reporters when their bug report status changes
+                Enable email notifications for reporters
               </p>
             </div>
             <Switch
-              id="reporter-status-change"
-              checked={formData.notifyOnStatusChange}
+              id="reporter-email-enabled"
+              checked={formData.emailEnabled}
               onCheckedChange={(checked) =>
-                setFormData({ ...formData, notifyOnStatusChange: checked })
+                setFormData({ ...formData, emailEnabled: checked })
               }
             />
           </div>
 
-          {/* Priority Change Notifications */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="reporter-priority-change" className="text-sm font-normal">
-                Priority Change Notifications
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Notify reporters when their bug report priority changes
-              </p>
-            </div>
-            <Switch
-              id="reporter-priority-change"
-              checked={formData.notifyOnPriorityChange}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, notifyOnPriorityChange: checked })
-              }
-            />
-          </div>
+          {formData.emailEnabled && (
+            <>
+              {/* New Reports */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="reporter-new-report" className="text-sm font-normal">
+                    New Reports
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Send confirmation email when a report is submitted
+                  </p>
+                </div>
+                <Switch
+                  id="reporter-new-report"
+                  checked={formData.notifyOnNewReport}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, notifyOnNewReport: checked })
+                  }
+                />
+              </div>
 
-          {/* Messaging System */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="reporter-messaging" className="text-sm font-normal">
-                Messaging System
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Allow sending messages to reporters
-              </p>
-            </div>
-            <Switch
-              id="reporter-messaging"
-              checked={formData.messagingEnabled}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, messagingEnabled: checked })
-              }
-            />
-          </div>
+              {/* Status Change Notifications */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="reporter-status-change" className="text-sm font-normal">
+                    Status Change Notifications
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Notify reporters when their bug report status changes
+                  </p>
+                </div>
+                <Switch
+                  id="reporter-status-change"
+                  checked={formData.notifyOnStatusChange}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, notifyOnStatusChange: checked })
+                  }
+                />
+              </div>
+
+              {/* Priority Change Notifications */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="reporter-priority-change" className="text-sm font-normal">
+                    Priority Change Notifications
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Notify reporters when their bug report priority changes
+                  </p>
+                </div>
+                <Switch
+                  id="reporter-priority-change"
+                  checked={formData.notifyOnPriorityChange}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, notifyOnPriorityChange: checked })
+                  }
+                />
+              </div>
+
+              {/* Messaging System */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="reporter-messaging" className="text-sm font-normal">
+                    Messaging System
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow sending messages to reporters
+                  </p>
+                </div>
+                <Switch
+                  id="reporter-messaging"
+                  checked={formData.messagingEnabled}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, messagingEnabled: checked })
+                  }
+                />
+              </div>
+            </>
+          )}
 
           <div className="pt-4">
             <Button type="submit" disabled={mutation.isPending}>

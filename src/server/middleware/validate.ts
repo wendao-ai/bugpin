@@ -247,6 +247,8 @@ export const schemas = {
       .optional(),
     reporterNotifications: z
       .object({
+        emailEnabled: z.boolean().optional(),
+        notifyOnNewReport: z.boolean().optional(),
         notifyOnStatusChange: z.boolean().optional(),
         notifyOnPriorityChange: z.boolean().optional(),
         messagingEnabled: z.boolean().optional(),

@@ -77,6 +77,8 @@ const DEFAULT_BRANDING: BrandingSettings = {
 };
 
 const DEFAULT_REPORTER_NOTIFICATIONS: ReporterNotificationSettings = {
+  emailEnabled: true,
+  notifyOnNewReport: true,
   notifyOnStatusChange: true,
   notifyOnPriorityChange: true,
   messagingEnabled: true,

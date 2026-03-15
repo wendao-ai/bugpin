@@ -1,21 +1,17 @@
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
-import { Separator } from './ui/separator';
-import type { NotificationDefaultSettings, ReporterNotificationSettings } from '@shared/types';
+import type { NotificationDefaultSettings } from '@shared/types';
 
 interface NotificationSettingsFormProps {
   value: Partial<NotificationDefaultSettings>;
   onChange: (value: Partial<NotificationDefaultSettings>) => void;
   globalSettings?: {
     notifications: NotificationDefaultSettings;
-    reporterNotifications?: ReporterNotificationSettings;
   };
   disabled?: boolean;
   showCustomToggle?: boolean;
   useCustomSettings?: boolean;
   onCustomToggle?: (enabled: boolean) => void;
-  reporterValue?: Partial<ReporterNotificationSettings>;
-  onReporterChange?: (value: Partial<ReporterNotificationSettings>) => void;
 }
 
 export function NotificationSettingsForm({
@@ -26,8 +22,6 @@ export function NotificationSettingsForm({
   showCustomToggle = false,
   useCustomSettings = true,
   onCustomToggle,
-  reporterValue,
-  onReporterChange,
 }: NotificationSettingsFormProps) {
   const effectiveEmailEnabled =
     value.emailEnabled ?? globalSettings?.notifications.emailEnabled ?? true;
@@ -70,7 +64,6 @@ export function NotificationSettingsForm({
                   notifyOnAssignment: undefined,
                   notifyOnDeletion: undefined,
                 });
-                onReporterChange?.({});
               }
             }}
           />
@@ -80,9 +73,6 @@ export function NotificationSettingsForm({
       {/* Notification Settings - collapsed when custom toggle is off */}
       {(!showCustomToggle || useCustomSettings) && (
         <>
-          {onReporterChange && (
-            <p className="text-sm font-medium text-muted-foreground">Team Notifications</p>
-          )}
           {/* Email Notifications */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -186,80 +176,6 @@ export function NotificationSettingsForm({
               </div>
             </>
           )}
-        </>
-      )}
-
-      {/* Reporter Notifications */}
-      {onReporterChange && (!showCustomToggle || useCustomSettings) && (
-        <>
-          <Separator className="my-4" />
-          <p className="text-sm font-medium text-muted-foreground">Reporter Notifications</p>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="reporter-status-change" className="text-sm font-normal">
-                Status Change Notifications
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Notify reporters on status changes
-              </p>
-            </div>
-            <Switch
-              id="reporter-status-change"
-              checked={
-                reporterValue?.notifyOnStatusChange ??
-                globalSettings?.reporterNotifications?.notifyOnStatusChange ??
-                true
-              }
-              onCheckedChange={(checked) =>
-                onReporterChange({ ...reporterValue, notifyOnStatusChange: checked })
-              }
-              disabled={disabled}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="reporter-priority-change" className="text-sm font-normal">
-                Priority Change Notifications
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Notify reporters on priority changes
-              </p>
-            </div>
-            <Switch
-              id="reporter-priority-change"
-              checked={
-                reporterValue?.notifyOnPriorityChange ??
-                globalSettings?.reporterNotifications?.notifyOnPriorityChange ??
-                true
-              }
-              onCheckedChange={(checked) =>
-                onReporterChange({ ...reporterValue, notifyOnPriorityChange: checked })
-              }
-              disabled={disabled}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="reporter-messaging" className="text-sm font-normal">
-                Messaging System
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Allow sending messages to reporters
-              </p>
-            </div>
-            <Switch
-              id="reporter-messaging"
-              checked={
-                reporterValue?.messagingEnabled ??
-                globalSettings?.reporterNotifications?.messagingEnabled ??
-                true
-              }
-              onCheckedChange={(checked) =>
-                onReporterChange({ ...reporterValue, messagingEnabled: checked })
-              }
-              disabled={disabled}
-            />
-          </div>
         </>
       )}
     </div>

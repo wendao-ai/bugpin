@@ -28,7 +28,10 @@ import { WidgetDialogSettingsForm } from '../WidgetDialogSettingsForm';
 import type { ThemeColors } from '@shared/types';
 import { WidgetLauncherButtonSettingsForm } from '../WidgetLauncherButtonSettingsForm';
 import { ScreenshotSettingsForm } from '../ScreenshotSettingsForm';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
 import { NotificationSettingsForm } from '../NotificationSettingsForm';
+import { ReporterNotificationSettingsForm } from '../ReporterNotificationSettingsForm';
 import { ProjectWhitelistForm } from './ProjectWhitelistForm';
 
 interface ProjectSettingsDialogProps {
@@ -358,16 +361,54 @@ export function ProjectSettingsDialog({
 
               {/* Notifications Tab */}
               <TabsContent value="notifications" className="mt-0">
-                <NotificationSettingsForm
-                  value={notificationSettings}
-                  onChange={setNotificationSettings}
-                  globalSettings={globalSettings}
-                  showCustomToggle
-                  useCustomSettings={useCustomNotifications}
-                  onCustomToggle={setUseCustomNotifications}
-                  reporterValue={reporterSettings}
-                  onReporterChange={setReporterSettings}
-                />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b">
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="use-custom-notifications"
+                        className="text-sm font-medium"
+                      >
+                        Use Custom Notifications
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Enable individual notification defaults for this project
+                      </p>
+                    </div>
+                    <Switch
+                      id="use-custom-notifications"
+                      checked={useCustomNotifications}
+                      onCheckedChange={(checked) => {
+                        setUseCustomNotifications(checked);
+                        if (!checked) {
+                          setNotificationSettings({});
+                          setReporterSettings({});
+                        }
+                      }}
+                    />
+                  </div>
+                  {useCustomNotifications && (
+                    <Tabs defaultValue="team">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="team">Team</TabsTrigger>
+                        <TabsTrigger value="reporter">Reporter</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="team" className="mt-4">
+                        <NotificationSettingsForm
+                          value={notificationSettings}
+                          onChange={setNotificationSettings}
+                          globalSettings={globalSettings}
+                        />
+                      </TabsContent>
+                      <TabsContent value="reporter" className="mt-4">
+                        <ReporterNotificationSettingsForm
+                          value={reporterSettings}
+                          onChange={setReporterSettings}
+                          globalSettings={globalSettings}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                  )}
+                </div>
               </TabsContent>
 
               {/* Domain Whitelists Tab */}
