@@ -26,10 +26,10 @@ jobs:
           submodules: true
           token: ${{ secrets.EE_ACCESS_TOKEN }}
 
-      - name: Check if dev tag
+      - name: Check if dev or beta tag
         id: check
         run: |
-          if [[ "${{ github.ref_name }}" == *-dev ]]; then
+          if [[ "${{ github.ref_name }}" == *-dev || "${{ github.ref_name }}" == *-beta* ]]; then
             echo "is_dev=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_dev=false" >> "$GITHUB_OUTPUT"
@@ -65,7 +65,7 @@ jobs:
             # For production tags (v1.0.0) -> 1.0.0, latest
             type=semver,pattern={{version}},enable=${{ steps.check.outputs.is_dev == 'false' }}
             type=raw,value=latest,enable=${{ steps.check.outputs.is_dev == 'false' }}
-            # For dev tags (v1.0.1-dev) -> 1.0.1-dev, dev
+            # For dev/beta tags (v1.0.1-dev, v1.0.1-beta.1) -> <version>, dev
             type=match,pattern=v(.*),group=1,enable=${{ steps.check.outputs.is_dev == 'true' }}
             type=raw,value=dev,enable=${{ steps.check.outputs.is_dev == 'true' }}
           labels: |
