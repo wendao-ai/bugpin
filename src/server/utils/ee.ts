@@ -192,7 +192,9 @@ export function getLicenseStatus() {
     licensed: true,
     plan: license.plan,
     customerName: license.customerName,
+    customerEmail: license.customerEmail,
     features: license.features,
+    issuedAt: license.issuedAt,
     expiresAt: license.expiresAt,
   };
 }

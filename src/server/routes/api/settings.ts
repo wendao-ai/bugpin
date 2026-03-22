@@ -16,8 +16,8 @@ import { validate, schemas } from '../../middleware/validate.js';
 import { requireEEFeature, hasEEFeature } from '../../utils/ee.js';
 import type { EmailTemplateType } from '@shared/types';
 
-// Email template routes require 'email-templates' EE feature
-const requireEmailTemplates = requireEEFeature('email-templates');
+// Email template routes require 'custom-templates' EE feature
+const requireEmailTemplates = requireEEFeature('custom-templates');
 
 const settings = new Hono();
 
@@ -45,12 +45,12 @@ settings.put('/', authorize(['admin']), validate({ body: schemas.updateSettings 
   const body = await c.req.json();
 
   // Check if emailTemplates is being updated without EE license
-  if (body.emailTemplates && !hasEEFeature('email-templates')) {
+  if (body.emailTemplates && !hasEEFeature('custom-templates')) {
     return c.json(
       {
         success: false,
         error: 'FEATURE_NOT_LICENSED',
-        message: "Feature 'email-templates' requires Enterprise license",
+        message: "Feature 'custom-templates' requires Enterprise license",
         upgradeUrl: 'https://bugpin.io/editions/',
       },
       402,

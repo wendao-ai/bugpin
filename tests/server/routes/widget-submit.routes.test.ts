@@ -373,6 +373,29 @@ describe('widget routes', () => {
       expect(body.config.buttonText).toBe('Custom Text');
     });
 
+    it('preserves explicit null for nullable fields in project settings', async () => {
+      projectResult = {
+        ...baseProject,
+        settings: {
+          ...baseProject.settings,
+          widgetLauncherButton: {
+            buttonIcon: null,
+            buttonText: null,
+            tooltipText: null,
+          },
+        },
+      };
+
+      const app = createApp();
+      const res = await app.request('http://localhost/widget/config/test_api_key_123');
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.config.buttonIcon).toBeNull();
+      expect(body.config.buttonText).toBeNull();
+      expect(body.config.tooltipText).toBeNull();
+    });
+
     it('falls back to global settings when project settings not set', async () => {
       projectResult = {
         ...baseProject,

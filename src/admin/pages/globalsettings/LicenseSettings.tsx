@@ -81,8 +81,10 @@ export function LicenseSettings() {
   }
 
   const isLicensed = status?.licensed ?? false;
-  const daysRemaining = status?.expiresAt
-    ? Math.ceil((new Date(status.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const expiresDate = status?.expiresAt ? new Date(status.expiresAt) : null;
+  const neverExpires = expiresDate ? expiresDate.getFullYear() >= 9999 : false;
+  const daysRemaining = expiresDate && !neverExpires
+    ? Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0;
 
   return (
@@ -117,9 +119,19 @@ export function LicenseSettings() {
                   <p className="font-medium">{status?.customerName || 'N/A'}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground">Email</p>
+                  <p className="font-medium">{status?.customerEmail || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Issued</p>
+                  <p className="font-medium">
+                    {status?.issuedAt ? new Date(status.issuedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                  </p>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Expires</p>
                   <p className="font-medium">
-                    {status?.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : 'Never'}
+                    {!expiresDate || neverExpires ? 'Never' : expiresDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     {daysRemaining > 0 && daysRemaining <= 30 && (
                       <span className="text-orange-500 ml-2">({daysRemaining} days left)</span>
                     )}

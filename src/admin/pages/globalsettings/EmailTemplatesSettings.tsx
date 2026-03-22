@@ -200,13 +200,13 @@ export function EmailTemplatesSettings() {
   const [previewData, setPreviewData] = useState<{ subject: string; html: string } | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Check if email-templates feature is licensed
+  // Check if custom-templates feature is licensed
   const { data: featureStatus, isLoading: isLoadingLicense } = useQuery({
     queryKey: ['license-features'],
     queryFn: licenseApi.getFeatures,
   });
 
-  const isLicensed = featureStatus?.features?.['email-templates'] ?? false;
+  const isLicensed = featureStatus?.features?.['custom-templates'] ?? false;
 
   // Fetch current settings
   const { data: settings, isLoading: isLoadingSettings } = useQuery({
@@ -347,7 +347,7 @@ export function EmailTemplatesSettings() {
   if (!isLicensed) {
     return (
       <UpgradePrompt
-        feature="email-templates"
+        feature="custom-templates"
         title="Email Templates"
         description="Customize the email notification templates sent to users. Personalize subject lines, content, and styling to match your brand."
       />

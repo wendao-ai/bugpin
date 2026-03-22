@@ -84,22 +84,23 @@ auth.post(
   validate({ body: schemas.changePassword }),
   async (c) => {
     const user = c.get('user');
+    const session = c.get('session');
     const { currentPassword, newPassword } = await c.req.json();
 
-    const result = await authService.changePassword(user.id, currentPassword, newPassword);
+    const result = await authService.changePassword(
+      user.id,
+      currentPassword,
+      newPassword,
+      session.id,
+    );
 
     if (!result.success) {
       return c.json({ success: false, error: result.code, message: result.error }, 400);
     }
 
-    // Clear session cookie (user needs to re-login)
-    deleteCookie(c, 'session', {
-      path: '/',
-    });
-
     return c.json({
       success: true,
-      message: 'Password changed successfully. Please log in again.',
+      message: 'Password changed successfully.',
     });
   },
 );

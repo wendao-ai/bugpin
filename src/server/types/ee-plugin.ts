@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import type { Report, WebhookEvent, EmailTemplateType, User } from '@shared/types';
+import type { Report, EmailTemplateType, User } from '@shared/types';
 import type { Result } from '../utils/result.js';
 
 /**
@@ -32,24 +32,6 @@ export interface StorageStatus {
   bucket?: string;
   region?: string;
   endpoint?: string;
-}
-
-/**
- * Webhook service interface
- */
-export interface WebhookService {
-  onReportCreated(report: Report): Promise<void>;
-  onReportUpdated(
-    report: Report,
-    changes: Record<string, { old: unknown; new: unknown }>,
-  ): Promise<void>;
-  onReportDeleted(report: Report): Promise<void>;
-  trigger(
-    projectId: string,
-    event: WebhookEvent,
-    report: Report,
-    changes?: Record<string, { old: unknown; new: unknown }>,
-  ): Promise<void>;
 }
 
 /**

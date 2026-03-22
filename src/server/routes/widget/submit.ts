@@ -276,7 +276,9 @@ widget.get('/config/:apiKey', async (c) => {
   const globalDialog = appSettings.widgetDialog;
   const globalScreenshot = appSettings.screenshot;
 
-  // Use project-level settings if defined, otherwise fall back to global settings
+  // Use project-level settings if defined, otherwise fall back to global settings.
+  // For nullable fields (buttonIcon, buttonText, tooltipText), check for undefined specifically
+  // because null is a valid explicit value (e.g., "No Icon") and ?? would treat it as unset.
   const useScreenCaptureAPI =
     projScreenshot?.useScreenCaptureAPI ?? globalScreenshot.useScreenCaptureAPI;
   const maxImageUploadSizeMb =
@@ -285,15 +287,18 @@ widget.get('/config/:apiKey', async (c) => {
     projScreenshot?.maxVideoUploadSizeMb ?? globalScreenshot.maxVideoUploadSizeMb;
   const theme = projButton?.theme ?? globalButton.theme;
   const position = projButton?.position ?? globalButton.position;
-  const buttonText = projButton?.buttonText ?? globalButton.buttonText;
+  const buttonText =
+    projButton?.buttonText !== undefined ? projButton.buttonText : globalButton.buttonText;
   const buttonShape = projButton?.buttonShape ?? globalButton.buttonShape;
-  const buttonIcon = projButton?.buttonIcon ?? globalButton.buttonIcon;
+  const buttonIcon =
+    projButton?.buttonIcon !== undefined ? projButton.buttonIcon : globalButton.buttonIcon;
   const buttonIconSize = projButton?.buttonIconSize ?? globalButton.buttonIconSize;
   const buttonIconStroke = projButton?.buttonIconStroke ?? globalButton.buttonIconStroke;
   const enableHoverScaleEffect =
     projButton?.enableHoverScaleEffect ?? globalButton.enableHoverScaleEffect;
   const tooltipEnabled = projButton?.tooltipEnabled ?? globalButton.tooltipEnabled;
-  const tooltipText = projButton?.tooltipText ?? globalButton.tooltipText;
+  const tooltipText =
+    projButton?.tooltipText !== undefined ? projButton.tooltipText : globalButton.tooltipText;
 
   // Widget Button light mode colors
   const lightButtonColor = projButton?.lightButtonColor ?? globalButton.lightButtonColor;

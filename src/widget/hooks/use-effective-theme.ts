@@ -164,7 +164,7 @@ function detectFromMediaQuery(): ResolvedTheme {
  * 3. Background color luminance of <body>
  * 4. OS prefers-color-scheme media query (fallback)
  */
-export function detectEffectiveTheme(): ResolvedTheme {
+function detectEffectiveTheme(): ResolvedTheme {
   return (
     detectFromExplicitOverride() ??
     detectFromDomSignals() ??

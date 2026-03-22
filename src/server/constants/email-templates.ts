@@ -29,7 +29,7 @@ export function applyBrandColor(html: string, primaryColor: string): string {
 }
 
 // Variable documentation for each template type
-export const templateVariables: Record<EmailTemplateType, string[]> = {
+const templateVariables: Record<EmailTemplateType, string[]> = {
   newReport: [
     'app.name',
     'app.url',
@@ -141,7 +141,7 @@ export const templateVariables: Record<EmailTemplateType, string[]> = {
 
 // Shared email styles (exported for use in appending footer)
 // Uses placeholders that are replaced at runtime with the actual brand color
-export const emailStyles = `
+const emailStyles = `
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: ${BRAND_COLOR_PLACEHOLDER}; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
@@ -163,14 +163,14 @@ export const emailStyles = `
 `;
 
 // Hardcoded footer HTML - appended automatically to all emails, NOT editable
-export const emailFooterHtml = `
+const emailFooterHtml = `
     <div class="footer">
       <p style="margin: 0;">&copy; ${CURRENT_YEAR} <a href="https://bugpin.io">BugPin</a> | <a href="https://github.com/aranticlabs/bugpin">GitHub</a></p>
     </div>
 `;
 
 // Invitation has a special footer with the URL fallback
-export const invitationFooterHtml = `
+const invitationFooterHtml = `
     <div class="footer">
       <p style="margin: 0;">If the button doesn't work, copy and paste this link into your browser:</p>
       <p style="margin: 5px 0 0 0; word-break: break-all;"><a href="{{invite.url}}" style="color: ${BRAND_COLOR_PLACEHOLDER};">{{invite.url}}</a></p>

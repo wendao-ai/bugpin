@@ -133,6 +133,7 @@ export const authService = {
     userId: string,
     currentPassword: string,
     newPassword: string,
+    currentSessionId?: string,
   ): Promise<Result<void>> {
     // Get user with password
     const user = await usersRepo.findById(userId);
@@ -160,8 +161,12 @@ export const authService = {
     const newHash = await hashPassword(newPassword);
     await usersRepo.updatePassword(userId, newHash);
 
-    // Invalidate all sessions for this user
-    await sessionsRepo.deleteByUserId(userId);
+    // Invalidate all other sessions, keep the current one active
+    if (currentSessionId) {
+      await sessionsRepo.deleteByUserIdExcept(userId, currentSessionId);
+    } else {
+      await sessionsRepo.deleteByUserId(userId);
+    }
 
     logger.info('Password changed', { userId });
     return Result.ok(undefined);

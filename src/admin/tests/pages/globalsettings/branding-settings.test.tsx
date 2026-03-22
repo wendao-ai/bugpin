@@ -95,7 +95,7 @@ describe('BrandingSettings', () => {
         's3-storage': true,
         webhooks: true,
         'api-access': true,
-        'custom-email-templates': true,
+        'custom-templates': true,
         'white-label': true,
       },
     });

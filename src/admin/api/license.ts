@@ -6,7 +6,9 @@ export interface LicenseStatus {
   message?: string;
   plan?: string;
   customerName?: string;
+  customerEmail?: string;
   features?: string[];
+  issuedAt?: string;
   expiresAt?: string;
 }
 

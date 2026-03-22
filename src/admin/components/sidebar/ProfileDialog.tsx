@@ -32,11 +32,7 @@ interface ProfileDialogProps {
 }
 
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
-  const { user, logout } = useAuth();
-
-  const handlePasswordChangeSuccess = async () => {
-    await logout();
-  };
+  const { user } = useAuth();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,7 +48,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         <div className="space-y-6 py-4">
           <ProfileSection user={user} />
           <UpdateProfileSection key={user?.id || 'no-user'} user={user} />
-          <ChangePasswordSection onSuccess={handlePasswordChangeSuccess} />
+          <ChangePasswordSection />
         </div>
       </DialogContent>
     </Dialog>
@@ -524,7 +520,7 @@ const changePasswordSchema = z
 
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
-function ChangePasswordSection({ onSuccess }: { onSuccess: () => void }) {
+function ChangePasswordSection() {
   const {
     register,
     handleSubmit,
@@ -547,7 +543,6 @@ function ChangePasswordSection({ onSuccess }: { onSuccess: () => void }) {
     onSuccess: () => {
       reset();
       toast.success('Password changed successfully');
-      setTimeout(onSuccess, 2000);
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
       const errorMessage = err.response?.data?.message || 'Failed to change password';

@@ -169,7 +169,7 @@ export const settingsUpdateSchema = z.object({
   adminButton: themeColorsSchema.optional(),
 });
 
-export type SettingsUpdateInput = z.infer<typeof settingsUpdateSchema>;
+
 
 // Validation Result Helpers
 
