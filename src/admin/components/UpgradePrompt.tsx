@@ -46,7 +46,7 @@ interface FeatureGateProps {
 /**
  * Wrapper component that shows upgrade prompt if feature is not licensed
  */
-export function FeatureGate({
+function FeatureGate({
   feature,
   isLicensed,
   title,

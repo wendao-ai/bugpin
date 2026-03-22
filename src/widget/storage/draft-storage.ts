@@ -140,7 +140,7 @@ async function clearMediaDraft(apiKey: string): Promise<void> {
 /**
  * Check if a draft exists
  */
-export async function hasDraft(apiKey: string): Promise<boolean> {
+async function hasDraft(apiKey: string): Promise<boolean> {
   const formDraft = loadFormDraft(apiKey);
   if (formDraft) return true;
 
@@ -156,7 +156,7 @@ export async function hasDraft(apiKey: string): Promise<boolean> {
 /**
  * Save complete draft (form data + media)
  */
-export async function saveDraft(
+async function saveDraft(
   apiKey: string,
   formData: FormData,
   activeTab: string,
@@ -177,7 +177,7 @@ export async function saveDraft(
 /**
  * Load complete draft (form data + media)
  */
-export async function loadDraft(
+async function loadDraft(
   apiKey: string,
 ): Promise<{ formData: FormData; activeTab: string; media: CapturedMedia[] } | null> {
   const formDraft = loadFormDraft(apiKey);
@@ -204,7 +204,7 @@ export async function loadDraft(
 /**
  * Clear complete draft (form data + media)
  */
-export async function clearDraft(apiKey: string): Promise<void> {
+async function clearDraft(apiKey: string): Promise<void> {
   clearFormDraft(apiKey);
   await clearMediaDraft(apiKey);
 }

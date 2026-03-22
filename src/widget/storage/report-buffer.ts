@@ -349,7 +349,7 @@ export async function clearBuffer(): Promise<void> {
   }
 }
 
-export const reportBuffer = {
+const reportBuffer = {
   buffer: bufferReport,
   getPending: getPendingReports,
   getCount: getPendingCount,

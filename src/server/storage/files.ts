@@ -606,7 +606,7 @@ export async function saveBrandingFavicon(
 /**
  * Generate all favicon sizes from source image
  */
-export async function generateFaviconSizes(
+async function generateFaviconSizes(
   sourceBuffer: Buffer,
   mode: 'light' | 'dark',
 ): Promise<FaviconSet> {
