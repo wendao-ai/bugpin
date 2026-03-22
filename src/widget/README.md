@@ -8,7 +8,7 @@ Embeddable visual bug reporting widget for web applications. Capture screenshots
 - **Annotation Tools** - Draw, highlight, blur, and add text
 - **Privacy First** - Self-hosted, your data stays on your servers
 - **Customizable** - Match your brand colors and style
-- **Lightweight** - Under 130KB gzipped
+- **Lightweight** - Less than 150KB gzipped
 - **Dark Mode** - Automatic theme detection
 - **Responsive** - Works on all devices
 - **Framework Agnostic** - Works with React, Vue, Angular, Svelte, .NET, and more
