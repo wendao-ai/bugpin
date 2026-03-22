@@ -28,7 +28,7 @@ app.get('/features', authMiddleware, async (c) => {
     'api-access',
     'webhooks',
     'white-label',
-    'email-templates',
+    'custom-templates',
     's3-storage',
   ];
 
