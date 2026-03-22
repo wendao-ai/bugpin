@@ -1,25 +1,56 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, type ComponentType } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Spinner } from './components/ui/spinner';
 
+// Wrapper around React.lazy that reloads the page once when a chunk fails to load.
+// This handles stale tabs after deployments where old chunk filenames no longer exist.
+function lazyWithRetry(
+  factory: () => Promise<{ default: ComponentType }>,
+): React.LazyExoticComponent<ComponentType> {
+  return lazy(() =>
+    factory().catch((error: unknown) => {
+      const isChunkError =
+        error instanceof Error &&
+        (error.message.includes('dynamically imported module') ||
+          error.message.includes('Failed to fetch') ||
+          error.message.includes('Loading chunk'));
+
+      if (isChunkError && !sessionStorage.getItem('chunk_reload')) {
+        sessionStorage.setItem('chunk_reload', '1');
+        window.location.reload();
+        return new Promise(() => {}); // Never resolves — page is reloading
+      }
+
+      sessionStorage.removeItem('chunk_reload');
+      throw error;
+    }),
+  );
+}
+
 // Lazy load pages for code splitting
-const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
-const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
-const Reports = lazy(() => import('./pages/Reports').then((m) => ({ default: m.Reports })));
-const ReportDetail = lazy(() =>
+const Login = lazyWithRetry(() => import('./pages/Login').then((m) => ({ default: m.Login })));
+const Dashboard = lazyWithRetry(() =>
+  import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })),
+);
+const Reports = lazyWithRetry(() =>
+  import('./pages/Reports').then((m) => ({ default: m.Reports })),
+);
+const ReportDetail = lazyWithRetry(() =>
   import('./pages/ReportDetail').then((m) => ({ default: m.ReportDetail })),
 );
-const Projects = lazy(() => import('./pages/Projects').then((m) => ({ default: m.Projects })));
-const Settings = lazy(() =>
+const Projects = lazyWithRetry(() =>
+  import('./pages/Projects').then((m) => ({ default: m.Projects })),
+);
+const Settings = lazyWithRetry(() =>
   import('./pages/globalsettings').then((m) => ({ default: m.Settings })),
 );
-const TestWidgetPage = lazy(() =>
+const TestWidgetPage = lazyWithRetry(() =>
   import('./pages/TestWidgetPage').then((m) => ({ default: m.TestWidgetPage })),
 );
-const AcceptInvitation = lazy(() =>
+const AcceptInvitation = lazyWithRetry(() =>
   import('./pages/AcceptInvitation').then((m) => ({ default: m.AcceptInvitation })),
 );
 
