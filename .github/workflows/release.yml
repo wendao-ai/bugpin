@@ -19,33 +19,35 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for changelog generation
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Get the previous tag
-          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
-
-          # Generate changelog (include all commits from merged branches)
-          if [ -n "$PREVIOUS_TAG" ]; then
-            echo "Commits since $PREVIOUS_TAG:"
-            git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" > changelog.txt
-          else
-            echo "Initial release"
-            git log --pretty=format:"- %s (%h)" > changelog.txt
-          fi
-
-          # Set outputs
-          echo "changelog<<CHANGELOG_EOF" >> $GITHUB_OUTPUT
-          cat changelog.txt >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "CHANGELOG_EOF" >> $GITHUB_OUTPUT
-          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
-
       - name: Extract version
         id: version
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Load changelog
+        id: changelog
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          CHANGELOG_FILE="Changelog/v${VERSION}.md"
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+
+          if [ -f "$CHANGELOG_FILE" ]; then
+            # Read the changelog file, skip the first line (# Changelog X.Y.Z header)
+            BODY=$(tail -n +2 "$CHANGELOG_FILE")
+          else
+            echo "Warning: No changelog file found at $CHANGELOG_FILE, falling back to git log"
+            if [ -n "$PREVIOUS_TAG" ]; then
+              BODY=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s")
+            else
+              BODY=$(git log --pretty=format:"- %s")
+            fi
+          fi
+
+          echo "body<<CHANGELOG_EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "CHANGELOG_EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -55,11 +57,9 @@ jobs:
           tag_name: ${{ github.ref_name }}
           release_name: BugPin ${{ steps.version.outputs.version }}
           body: |
-            ## Changelog
+            ${{ steps.changelog.outputs.body }}
 
-            ${{ steps.changelog.outputs.changelog }}
-
-
+            ---
             **Compare**: https://github.com/${{ github.repository }}/compare/${{ steps.changelog.outputs.previous_tag }}...${{ github.ref_name }}
           draft: false
           prerelease: false
