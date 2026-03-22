@@ -6,6 +6,7 @@ import {
   hasEEFeature,
   getEELicenseService,
 } from '../../utils/ee.js';
+import { settingsRepo } from '../../database/repositories/settings.repo.js';
 
 const app = new Hono();
 
@@ -105,6 +106,9 @@ app.post('/activate', authMiddleware, authorize(['admin']), async (c) => {
       );
     }
 
+    // Persist the license key to the database so it survives container restarts
+    await settingsRepo.set('license_key', licenseKey);
+
     return c.json({ success: true, license: result.license });
   } catch (error) {
     return c.json(
@@ -137,6 +141,7 @@ app.delete('/', authMiddleware, authorize(['admin']), async (c) => {
 
   try {
     await licenseService.removeLicense();
+    await settingsRepo.delete('license_key');
     return c.json({ success: true });
   } catch (error) {
     return c.json(

@@ -2,6 +2,7 @@ import type { Context, Next } from 'hono';
 import type { EEPlugin } from '../types/ee-plugin.js';
 import { registerEEHooks, resetEEHooks } from './ee-hooks.js';
 import { logger } from './logger.js';
+import { settingsRepo } from '../database/repositories/settings.repo.js';
 
 /**
  * Enterprise Edition utilities
@@ -103,6 +104,24 @@ export async function initializeEE(): Promise<void> {
 
   try {
     await plugin.initialize();
+
+    // Restore license from database if one was previously activated
+    if (!plugin.isLicensed()) {
+      const storedKey = await settingsRepo.get<string>('license_key');
+      if (storedKey) {
+        const licenseService = getEELicenseService();
+        if (licenseService) {
+          const result = await licenseService.validateAndStore(storedKey);
+          if (result.valid) {
+            logger.info('License restored from database');
+          } else {
+            logger.warn('Stored license key is no longer valid', { error: result.error });
+            await settingsRepo.delete('license_key');
+          }
+        }
+      }
+    }
+
     registerEEHooks(plugin.getHooks());
     logger.info('Enterprise Edition initialized', {
       name: plugin.name,
