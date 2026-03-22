@@ -115,6 +115,18 @@ export const sessionsRepo = {
   },
 
   /**
+   * Delete all sessions for a user except the specified one
+   */
+  async deleteByUserIdExcept(userId: string, exceptSessionId: string): Promise<number> {
+    const db = getDb();
+    const result = db.run('DELETE FROM sessions WHERE user_id = ? AND id != ?', [
+      userId,
+      exceptSessionId,
+    ]);
+    return result.changes;
+  },
+
+  /**
    * Delete expired sessions
    */
   async deleteExpired(): Promise<number> {

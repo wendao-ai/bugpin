@@ -41,6 +41,7 @@ let deleteSessionResult = true;
 let updatedLastLoginId: string | null = null;
 let updatedPasswordId: string | null = null;
 let deletedUserSessionsId: string | null = null;
+let deletedUserSessionsExceptId: { userId: string; exceptSessionId: string } | null = null;
 let updatedActivitySessionId: string | null = null;
 let createdSessionPayload: { userId: string; expiresAt: string } | null = null;
 let deletedExpiredCount = 0;
@@ -58,6 +59,7 @@ beforeEach(() => {
   updatedLastLoginId = null;
   updatedPasswordId = null;
   deletedUserSessionsId = null;
+  deletedUserSessionsExceptId = null;
   updatedActivitySessionId = null;
   createdSessionPayload = null;
   deletedExpiredCount = 0;
@@ -91,6 +93,10 @@ beforeEach(() => {
   };
   sessionsRepo.deleteByUserId = async (id) => {
     deletedUserSessionsId = id;
+  };
+  sessionsRepo.deleteByUserIdExcept = async (userId, exceptSessionId) => {
+    deletedUserSessionsExceptId = { userId, exceptSessionId };
+    return 0;
   };
   sessionsRepo.deleteExpired = async () => deletedExpiredCount;
 
@@ -214,6 +220,22 @@ describe('authService.changePassword', () => {
     expect(result.success).toBe(true);
     expect(updatedPasswordId).toBe(baseUser.id);
     expect(deletedUserSessionsId).toBe(baseUser.id);
+  });
+
+  it('keeps current session when currentSessionId is provided', async () => {
+    const result = await authService.changePassword(
+      baseUser.id,
+      validPassword,
+      'newpass123',
+      'sess_current',
+    );
+    expect(result.success).toBe(true);
+    expect(updatedPasswordId).toBe(baseUser.id);
+    expect(deletedUserSessionsId).toBeNull();
+    expect(deletedUserSessionsExceptId).toEqual({
+      userId: baseUser.id,
+      exceptSessionId: 'sess_current',
+    });
   });
 });
 
