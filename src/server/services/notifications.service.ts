@@ -2,16 +2,17 @@ import {
   notificationPreferencesRepo,
   projectNotificationDefaultsRepo,
 } from '../database/repositories/notification-preferences.repo.js';
-import { reporterMessagesRepo } from '../database/repositories/reporter-messages.repo.js';
 import { usersRepo } from '../database/repositories/users.repo.js';
 import { projectsRepo } from '../database/repositories/projects.repo.js';
 import { settingsCacheService } from './settings-cache.service.js';
 import { emailService } from './email.service.js';
 import { Result } from '../utils/result.js';
 import { logger } from '../utils/logger.js';
+import { isValidEmail } from '../utils/validators.js';
 import type {
   NotificationPreferences,
   ProjectNotificationDefaults,
+  Project,
   Report,
   ReportStatus,
   ReportPriority,
@@ -75,6 +76,35 @@ function getEffectiveReporterSettings(
       projectReporter?.notifyOnPriorityChange ?? globalReporter.notifyOnPriorityChange,
     messagingEnabled: projectReporter?.messagingEnabled ?? globalReporter.messagingEnabled,
   };
+}
+
+interface ReporterContext {
+  project: Project;
+  settings: AppSettings;
+  effective: ReporterNotificationSettings;
+}
+
+async function getReporterContext(
+  report: Report,
+  flag: keyof ReporterNotificationSettings,
+): Promise<ReporterContext | null> {
+  if (!report.reporterEmail || !isValidEmail(report.reporterEmail)) {
+    return null;
+  }
+
+  const project = await projectsRepo.findById(report.projectId);
+  if (!project) {
+    logger.error('Project not found for reporter notification', { projectId: report.projectId });
+    return null;
+  }
+
+  const settings = await settingsCacheService.getAll();
+  const effective = getEffectiveReporterSettings(settings, project.settings);
+  if (!effective.emailEnabled || !effective[flag]) {
+    return null;
+  }
+
+  return { project, settings, effective };
 }
 
 // Service
@@ -527,32 +557,14 @@ export const notificationsService = {
    */
   async notifyReporterSubmission(report: Report): Promise<void> {
     try {
-      if (!report.reporterEmail) {
-        return;
-      }
+      const ctx = await getReporterContext(report, 'notifyOnNewReport');
+      if (!ctx) return;
 
-      const project = await projectsRepo.findById(report.projectId);
-      if (!project) {
-        logger.error('Project not found for reporter submission notification', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const settings = await settingsCacheService.getAll();
-      const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.emailEnabled || !effective.notifyOnNewReport) {
-        logger.debug('Reporter submission notifications disabled', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const result = await emailService.sendReporterConfirmationEmail(report.reporterEmail, {
+      const result = await emailService.sendReporterConfirmationEmail(report.reporterEmail!, {
         report,
-        projectName: project.name,
-        appName: settings.appName || 'BugPin',
-        appUrl: settings.appUrl || '',
+        projectName: ctx.project.name,
+        appName: ctx.settings.appName || 'BugPin',
+        appUrl: ctx.settings.appUrl || '',
       });
 
       if (result.success) {
@@ -583,37 +595,16 @@ export const notificationsService = {
     newStatus: ReportStatus,
   ): Promise<void> {
     try {
-      if (!report.reporterEmail) {
-        return;
-      }
+      const ctx = await getReporterContext(report, 'notifyOnStatusChange');
+      if (!ctx) return;
 
-      const project = await projectsRepo.findById(report.projectId);
-      if (!project) {
-        logger.error('Project not found for reporter status change notification', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const settings = await settingsCacheService.getAll();
-      const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.emailEnabled || !effective.notifyOnStatusChange) {
-        logger.debug('Reporter status change notifications disabled', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const latestMessage = await reporterMessagesRepo.findLatestByReportId(report.id);
-
-      const result = await emailService.sendReporterStatusChangeEmail(report.reporterEmail, {
+      const result = await emailService.sendReporterStatusChangeEmail(report.reporterEmail!, {
         report,
-        projectName: project.name,
-        appName: settings.appName || 'BugPin',
-        appUrl: settings.appUrl || '',
+        projectName: ctx.project.name,
+        appName: ctx.settings.appName || 'BugPin',
+        appUrl: ctx.settings.appUrl || '',
         oldStatus,
         newStatus,
-        reporterMessage: latestMessage?.message,
       });
 
       if (result.success) {
@@ -645,24 +636,8 @@ export const notificationsService = {
     ccSender?: boolean,
   ): Promise<void> {
     try {
-      if (!report.reporterEmail) {
-        return;
-      }
-
-      const project = await projectsRepo.findById(report.projectId);
-      if (!project) {
-        logger.error('Project not found for reporter message notification', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const settings = await settingsCacheService.getAll();
-      const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.emailEnabled || !effective.messagingEnabled) {
-        logger.debug('Reporter messaging disabled', { projectId: report.projectId });
-        return;
-      }
+      const ctx = await getReporterContext(report, 'messagingEnabled');
+      if (!ctx) return;
 
       const sender = await usersRepo.findById(senderUserId);
       if (!sender) {
@@ -674,15 +649,15 @@ export const notificationsService = {
 
       const emailData = {
         report,
-        projectName: project.name,
-        appName: settings.appName || 'BugPin',
-        appUrl: settings.appUrl || '',
+        projectName: ctx.project.name,
+        appName: ctx.settings.appName || 'BugPin',
+        appUrl: ctx.settings.appUrl || '',
         senderName: sender.name,
         message,
       };
 
       const result = await emailService.sendReporterMessageEmail(
-        report.reporterEmail,
+        report.reporterEmail!,
         emailData,
       );
 
@@ -698,9 +673,9 @@ export const notificationsService = {
         });
       }
 
-      // Send CC to sender if requested
+      // Send CC copy to sender with distinct framing
       if (ccSender && sender.email) {
-        const ccResult = await emailService.sendReporterMessageEmail(
+        const ccResult = await emailService.sendReporterMessageCcEmail(
           sender.email,
           emailData,
         );
@@ -811,32 +786,14 @@ export const notificationsService = {
     newPriority: ReportPriority,
   ): Promise<void> {
     try {
-      if (!report.reporterEmail) {
-        return;
-      }
+      const ctx = await getReporterContext(report, 'notifyOnPriorityChange');
+      if (!ctx) return;
 
-      const project = await projectsRepo.findById(report.projectId);
-      if (!project) {
-        logger.error('Project not found for reporter priority change notification', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const settings = await settingsCacheService.getAll();
-      const effective = getEffectiveReporterSettings(settings, project.settings);
-      if (!effective.emailEnabled || !effective.notifyOnPriorityChange) {
-        logger.debug('Reporter priority change notifications disabled', {
-          projectId: report.projectId,
-        });
-        return;
-      }
-
-      const result = await emailService.sendReporterPriorityChangeEmail(report.reporterEmail, {
+      const result = await emailService.sendReporterPriorityChangeEmail(report.reporterEmail!, {
         report,
-        projectName: project.name,
-        appName: settings.appName || 'BugPin',
-        appUrl: settings.appUrl || '',
+        projectName: ctx.project.name,
+        appName: ctx.settings.appName || 'BugPin',
+        appUrl: ctx.settings.appUrl || '',
         oldPriority,
         newPriority,
       });

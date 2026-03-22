@@ -42,7 +42,8 @@ reporterMessages.get('/:id/reporter-messages', validate({ params: schemas.id }),
   const result = await reporterMessagesService.listByReport(reportId);
 
   if (!result.success) {
-    return c.json({ success: false, error: result.code, message: result.error }, 400);
+    const status = result.code === 'NOT_FOUND' ? 404 : 400;
+    return c.json({ success: false, error: result.code, message: result.error }, status);
   }
 
   return c.json({

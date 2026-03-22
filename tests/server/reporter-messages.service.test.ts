@@ -131,4 +131,13 @@ describe('reporterMessagesService.listByReport', () => {
       expect(result.value).toHaveLength(0);
     }
   });
+
+  it('returns NOT_FOUND for non-existent report', async () => {
+    reportById = null;
+    const result = await reporterMessagesService.listByReport('rpt_missing');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.code).toBe('NOT_FOUND');
+    }
+  });
 });

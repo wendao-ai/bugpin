@@ -71,6 +71,8 @@ let projectById: Project | null = baseProject;
 const sendReporterConfirmationEmail = mock(async () => ({ success: true }));
 const sendReporterStatusChangeEmail = mock(async () => ({ success: true }));
 const sendReporterMessageEmail = mock(async () => ({ success: true }));
+const sendReporterMessageCcEmail = mock(async () => ({ success: true }));
+const sendReporterPriorityChangeEmail = mock(async () => ({ success: true }));
 
 beforeEach(() => {
   projectById = baseProject;
@@ -89,10 +91,14 @@ beforeEach(() => {
   emailService.sendReporterConfirmationEmail = sendReporterConfirmationEmail;
   emailService.sendReporterStatusChangeEmail = sendReporterStatusChangeEmail;
   emailService.sendReporterMessageEmail = sendReporterMessageEmail;
+  emailService.sendReporterMessageCcEmail = sendReporterMessageCcEmail;
+  emailService.sendReporterPriorityChangeEmail = sendReporterPriorityChangeEmail;
 
   sendReporterConfirmationEmail.mockClear();
   sendReporterStatusChangeEmail.mockClear();
   sendReporterMessageEmail.mockClear();
+  sendReporterMessageCcEmail.mockClear();
+  sendReporterPriorityChangeEmail.mockClear();
 
   logger.info = () => undefined;
   logger.error = () => undefined;
@@ -124,6 +130,12 @@ describe('notificationsService.notifyReporterSubmission', () => {
   it('skips when report has no reporterEmail', async () => {
     const reportWithoutEmail = { ...baseReport, reporterEmail: undefined };
     await notificationsService.notifyReporterSubmission(reportWithoutEmail);
+    expect(sendReporterConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it('skips when reporterEmail is malformed', async () => {
+    const badReport = { ...baseReport, reporterEmail: 'not-an-email' };
+    await notificationsService.notifyReporterSubmission(badReport);
     expect(sendReporterConfirmationEmail).not.toHaveBeenCalled();
   });
 
@@ -160,31 +172,22 @@ describe('notificationsService.notifyReporterStatusChange', () => {
     );
   });
 
-  it('includes latest reporter message when present', async () => {
+  it('does not include stale reporter messages', async () => {
     reporterMessagesRepo.findLatestByReportId = async () => baseMessage;
     await notificationsService.notifyReporterStatusChange(baseReport, 'open', 'resolved');
-    expect(sendReporterStatusChangeEmail).toHaveBeenCalledWith(
-      'reporter@example.com',
-      expect.objectContaining({
-        reporterMessage: 'We are looking into this.',
-      }),
-    );
-  });
-
-  it('sends without reporter message when none exist', async () => {
-    reporterMessagesRepo.findLatestByReportId = async () => null;
-    await notificationsService.notifyReporterStatusChange(baseReport, 'open', 'resolved');
-    expect(sendReporterStatusChangeEmail).toHaveBeenCalledWith(
-      'reporter@example.com',
-      expect.objectContaining({
-        reporterMessage: undefined,
-      }),
-    );
+    const callArgs = sendReporterStatusChangeEmail.mock.calls[0][1];
+    expect(callArgs.reporterMessage).toBeUndefined();
   });
 
   it('skips when report has no reporterEmail', async () => {
     const reportWithoutEmail = { ...baseReport, reporterEmail: undefined };
     await notificationsService.notifyReporterStatusChange(reportWithoutEmail, 'open', 'resolved');
+    expect(sendReporterStatusChangeEmail).not.toHaveBeenCalled();
+  });
+
+  it('skips when reporterEmail is malformed', async () => {
+    const badReport = { ...baseReport, reporterEmail: 'invalid' };
+    await notificationsService.notifyReporterStatusChange(badReport, 'open', 'resolved');
     expect(sendReporterStatusChangeEmail).not.toHaveBeenCalled();
   });
 
@@ -232,5 +235,74 @@ describe('notificationsService.notifyReporterMessage', () => {
     usersRepo.findById = async () => null;
     await notificationsService.notifyReporterMessage(baseReport, 'Hello', 'usr_missing');
     expect(sendReporterMessageEmail).not.toHaveBeenCalled();
+  });
+
+  it('skips when reporterEmail is malformed', async () => {
+    const badReport = { ...baseReport, reporterEmail: 'not-an-email' };
+    await notificationsService.notifyReporterMessage(badReport, 'Hello', 'usr_1');
+    expect(sendReporterMessageEmail).not.toHaveBeenCalled();
+  });
+
+  it('sends CC email using CC method when ccSender is true', async () => {
+    await notificationsService.notifyReporterMessage(baseReport, 'Hello', 'usr_1', true);
+    expect(sendReporterMessageEmail).toHaveBeenCalledWith(
+      'reporter@example.com',
+      expect.objectContaining({ message: 'Hello' }),
+    );
+    expect(sendReporterMessageCcEmail).toHaveBeenCalledWith(
+      'admin@example.com',
+      expect.objectContaining({ message: 'Hello' }),
+    );
+  });
+
+  it('does not send CC email when ccSender is false', async () => {
+    await notificationsService.notifyReporterMessage(baseReport, 'Hello', 'usr_1', false);
+    expect(sendReporterMessageEmail).toHaveBeenCalled();
+    expect(sendReporterMessageCcEmail).not.toHaveBeenCalled();
+  });
+
+  it('skips when project messagingEnabled is false', async () => {
+    projectById = {
+      ...baseProject,
+      settings: { reporterNotifications: { messagingEnabled: false } },
+    };
+    await notificationsService.notifyReporterMessage(baseReport, 'Hello', 'usr_1');
+    expect(sendReporterMessageEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe('notificationsService.notifyReporterPriorityChange', () => {
+  it('sends priority change email to reporter', async () => {
+    await notificationsService.notifyReporterPriorityChange(baseReport, 'low', 'critical');
+    expect(sendReporterPriorityChangeEmail).toHaveBeenCalledWith(
+      'reporter@example.com',
+      expect.objectContaining({
+        report: baseReport,
+        projectName: 'Project',
+        oldPriority: 'low',
+        newPriority: 'critical',
+      }),
+    );
+  });
+
+  it('skips when report has no reporterEmail', async () => {
+    const reportWithoutEmail = { ...baseReport, reporterEmail: undefined };
+    await notificationsService.notifyReporterPriorityChange(reportWithoutEmail, 'low', 'high');
+    expect(sendReporterPriorityChangeEmail).not.toHaveBeenCalled();
+  });
+
+  it('skips when reporterEmail is malformed', async () => {
+    const badReport = { ...baseReport, reporterEmail: 'bad-email' };
+    await notificationsService.notifyReporterPriorityChange(badReport, 'low', 'high');
+    expect(sendReporterPriorityChangeEmail).not.toHaveBeenCalled();
+  });
+
+  it('skips when project setting notifyReporter is false', async () => {
+    projectById = {
+      ...baseProject,
+      settings: { notifyReporter: false },
+    };
+    await notificationsService.notifyReporterPriorityChange(baseReport, 'low', 'high');
+    expect(sendReporterPriorityChangeEmail).not.toHaveBeenCalled();
   });
 });

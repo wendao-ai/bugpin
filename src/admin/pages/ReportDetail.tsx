@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../components/ui/collapsible';
 import { Spinner } from '../components/ui/spinner';
+import { formatDate, formatDateTime } from '../lib/utils';
 import type { AppSettings, Project } from '@shared/types';
 
 export function ReportDetail() {
@@ -183,10 +184,19 @@ export function ReportDetail() {
 
   const { report, files } = data;
 
-  const messagingEnabled =
-    projectData?.settings?.reporterNotifications?.messagingEnabled ??
-    settingsData?.reporterNotifications?.messagingEnabled ??
-    true;
+  const messagingEnabled = (() => {
+    if (projectData?.settings?.notifyReporter === false) return false;
+    const effectiveEmailEnabled =
+      projectData?.settings?.reporterNotifications?.emailEnabled ??
+      settingsData?.reporterNotifications?.emailEnabled ??
+      true;
+    if (!effectiveEmailEnabled) return false;
+    return (
+      projectData?.settings?.reporterNotifications?.messagingEnabled ??
+      settingsData?.reporterNotifications?.messagingEnabled ??
+      true
+    );
+  })();
 
   const handleSave = async () => {
     const updates: Record<string, string> = {};
@@ -614,7 +624,7 @@ export function ReportDetail() {
                               )}
                             </div>
                             <span className="shrink-0 text-xs text-muted-foreground">
-                              {new Date(activity.timestamp).toLocaleString()}
+                              {formatDateTime(activity.timestamp)}
                             </span>
                           </div>
                         ),
@@ -805,7 +815,7 @@ export function ReportDetail() {
               <Separator />
               <div className="space-y-1">
                 <Label className="text-muted-foreground">Created</Label>
-                <p className="text-sm">{new Date(report.createdAt).toLocaleString()}</p>
+                <p className="text-sm">{formatDateTime(report.createdAt)}</p>
               </div>
               {(report.reporterEmail || report.reporterName) && (
                 <div className="space-y-1">
@@ -946,7 +956,7 @@ export function ReportDetail() {
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {[...reporterMessages].reverse().map((msg) => (
+                    {reporterMessages.map((msg) => (
                       <div
                         key={msg.id}
                         className="rounded-lg border bg-muted/30 p-3 space-y-1"
@@ -955,7 +965,7 @@ export function ReportDetail() {
                           <span className="font-medium">
                             {msg.userName ?? 'System'}
                           </span>
-                          <span title={new Date(msg.sentAt).toLocaleString()}>
+                          <span title={formatDateTime(msg.sentAt)}>
                             {formatRelativeTime(new Date(msg.sentAt))}
                           </span>
                         </div>
@@ -1072,7 +1082,7 @@ export function ReportDetail() {
                 )}
                 {report.githubSyncedAt && report.githubSyncStatus === 'synced' && (
                   <p className="text-xs text-muted-foreground">
-                    Last synced: {new Date(report.githubSyncedAt).toLocaleString()}
+                    Last synced: {formatDateTime(report.githubSyncedAt)}
                   </p>
                 )}
               </CardContent>
@@ -1160,5 +1170,5 @@ function formatRelativeTime(date: Date): string {
   if (diffMinutes < 60) return `${diffMinutes}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  return formatDate(date);
 }

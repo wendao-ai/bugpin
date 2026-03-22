@@ -40,6 +40,11 @@ export const reporterMessagesService = {
   },
 
   async listByReport(reportId: string): Promise<Result<ReporterMessage[]>> {
+    const report = await reportsRepo.findById(reportId);
+    if (!report) {
+      return Result.fail('Report not found', 'NOT_FOUND');
+    }
+
     const messages = await reporterMessagesRepo.findByReportId(reportId);
     return Result.ok(messages);
   },

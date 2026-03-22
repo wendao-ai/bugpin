@@ -63,7 +63,7 @@ export const reporterMessagesRepo: IReporterMessagesRepository = {
          FROM reporter_messages rm
          JOIN users u ON u.id = rm.user_id
          WHERE rm.report_id = ?
-         ORDER BY rm.created_at DESC`,
+         ORDER BY rm.created_at ASC`,
       )
       .all(reportId) as ReporterMessageRow[];
 

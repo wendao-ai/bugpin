@@ -99,7 +99,7 @@ export const emailService = {
 
       for (let i = 0; i < options.to.length; i += batchSize) {
         const batch = options.to.slice(i, i + batchSize);
-        await Promise.all(
+        const results = await Promise.allSettled(
           batch.map((recipient) =>
             transporter.sendMail({
               from: fromAddress,
@@ -110,6 +110,15 @@ export const emailService = {
             }),
           ),
         );
+
+        for (let j = 0; j < results.length; j++) {
+          if (results[j].status === 'rejected') {
+            logger.warn('Failed to send email to recipient', {
+              email: batch[j].email,
+              error: (results[j] as PromiseRejectedResult).reason,
+            });
+          }
+        }
       }
 
       logger.info('Email sent successfully', {
@@ -574,6 +583,60 @@ export const emailService = {
       withFooter,
       settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
     );
+
+    return this.sendEmail({
+      to: [{ email: recipient }],
+      subject,
+      html,
+    });
+  },
+
+  /**
+   * Send a CC copy of a reporter message to the sender
+   */
+  async sendReporterMessageCcEmail(
+    recipient: string,
+    data: {
+      report: Report;
+      projectName: string;
+      appName: string;
+      appUrl: string;
+      senderName: string;
+      message: string;
+    },
+  ): Promise<{ success: boolean; error?: string }> {
+    const settings = await settingsCacheService.getAll();
+    const { report, projectName, appName, appUrl, senderName, message } = data;
+
+    const template = await this.getTemplate('reporterMessage');
+    const templateData = {
+      app: {
+        name: appName,
+        url: appUrl,
+      },
+      project: {
+        name: projectName,
+      },
+      report: {
+        title: report.title,
+        description: report.description || '',
+        status: report.status,
+        statusFormatted: formatStatus(report.status),
+      },
+      sender: {
+        name: senderName,
+      },
+      message,
+    };
+
+    const compiledHtml = templateService.compileTemplate(template.html, templateData);
+    const withFooter = appendFooterToHtml(compiledHtml, 'reporterMessage');
+    const html = applyBrandColor(
+      withFooter,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+    );
+
+    const subject = `[CC] Message sent to reporter — ${report.title}`;
 
     return this.sendEmail({
       to: [{ email: recipient }],

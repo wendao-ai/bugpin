@@ -7,7 +7,9 @@ export const templateService = {
   compileTemplate(template: string, data: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path: string) => {
       const value = getNestedValue(data, path);
-      return value !== undefined ? escapeHtml(String(value)) : match;
+      if (value === undefined) return match;
+      const escaped = escapeHtml(String(value));
+      return escaped.replace(/\n/g, '<br>');
     });
   },
 

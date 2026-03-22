@@ -42,6 +42,7 @@ import {
 import { Search, RefreshCw, CheckCircle, AlertCircle, Trash2, X } from 'lucide-react';
 import { Spinner } from '../components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { formatDate as formatAbsoluteDate } from '../lib/utils';
 
 interface ReportItem {
   id: string;
@@ -629,7 +630,7 @@ function formatDate(dateString: string): string {
   } else if (diffDays < 7) {
     return `${diffDays} days ago`;
   } else {
-    return date.toLocaleDateString();
+    return formatAbsoluteDate(date);
   }
 }
 

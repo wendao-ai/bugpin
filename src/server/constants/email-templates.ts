@@ -7,8 +7,6 @@ const BRAND_COLOR_HOVER_PLACEHOLDER = '__BRAND_COLOR_HOVER__';
 // Default brand color (BugPin CI) - used as fallback
 export const DEFAULT_BRAND_COLOR = '#02658D';
 
-const CURRENT_YEAR = new Date().getFullYear();
-
 // Helper to darken a hex color for hover state
 function darkenColor(hex: string, percent: number = 15): string {
   // Remove # if present
@@ -163,20 +161,24 @@ const emailStyles = `
 `;
 
 // Hardcoded footer HTML - appended automatically to all emails, NOT editable
-const emailFooterHtml = `
+function getEmailFooterHtml(): string {
+  return `
     <div class="footer">
-      <p style="margin: 0;">&copy; ${CURRENT_YEAR} <a href="https://bugpin.io">BugPin</a> | <a href="https://github.com/aranticlabs/bugpin">GitHub</a></p>
+      <p style="margin: 0;">&copy; ${new Date().getFullYear()} <a href="https://bugpin.io">BugPin</a> | <a href="https://github.com/aranticlabs/bugpin">GitHub</a></p>
     </div>
 `;
+}
 
 // Invitation has a special footer with the URL fallback
-const invitationFooterHtml = `
+function getInvitationFooterHtml(): string {
+  return `
     <div class="footer">
       <p style="margin: 0;">If the button doesn't work, copy and paste this link into your browser:</p>
       <p style="margin: 5px 0 0 0; word-break: break-all;"><a href="{{invite.url}}" style="color: ${BRAND_COLOR_PLACEHOLDER};">{{invite.url}}</a></p>
-      <p style="margin: 15px 0 0 0;">&copy; ${CURRENT_YEAR} <a href="https://bugpin.io">BugPin</a> | <a href="https://github.com/aranticlabs/bugpin">GitHub</a></p>
+      <p style="margin: 15px 0 0 0;">&copy; ${new Date().getFullYear()} <a href="https://bugpin.io">BugPin</a> | <a href="https://github.com/aranticlabs/bugpin">GitHub</a></p>
     </div>
 `;
+}
 
 export const defaultEmailTemplates: EmailTemplates = {
   newReport: {
@@ -454,7 +456,7 @@ export const defaultEmailTemplates: EmailTemplates = {
 
       <div class="team-message" style="display: {{reporterMessageDisplay}};">
         <p style="margin: 0 0 5px 0; font-weight: 600; color: #374151;">Message from the team:</p>
-        <p style="margin: 0; color: #4b5563;">{{reporterMessage}}</p>
+        <p style="margin: 0; color: #4b5563; ">{{reporterMessage}}</p>
       </div>
 
       <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">Thank you for your report. We will continue to keep you updated on any changes.</p>
@@ -505,7 +507,7 @@ export const defaultEmailTemplates: EmailTemplates = {
   <meta charset="utf-8">
   <style>
     ${emailStyles}
-    .team-message { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid ${BRAND_COLOR_PLACEHOLDER}; }
+    .team-message { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
   </style>
 </head>
 <body>
@@ -519,17 +521,9 @@ export const defaultEmailTemplates: EmailTemplates = {
       <p style="color: #4b5563;"><strong>{{sender.name}}</strong> has sent you a message regarding your bug report.</p>
 
       <div class="team-message">
-        <p style="margin: 0; color: #4b5563;">{{message}}</p>
+        <p style="margin: 0; color: #4b5563; ">{{message}}</p>
       </div>
 
-      <div class="meta">
-        <div class="meta-row">
-          <span class="label">Current Status:</span>
-          <span class="badge badge-status">{{report.statusFormatted}}</span>
-        </div>
-      </div>
-
-      <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">Thank you for your report. We will continue to keep you updated on any changes.</p>
     </div>
   </div>
 </body>
@@ -571,7 +565,7 @@ export const defaultEmailTemplates: EmailTemplates = {
 
 // Helper to append footer to email HTML
 export function appendFooterToHtml(html: string, templateType: EmailTemplateType): string {
-  const footer = templateType === 'invitation' ? invitationFooterHtml : emailFooterHtml;
+  const footer = templateType === 'invitation' ? getInvitationFooterHtml() : getEmailFooterHtml();
   // Insert footer before closing </div></body></html>
   return html.replace(/(\s*<\/div>\s*<\/body>\s*<\/html>\s*)$/i, `${footer}$1`);
 }
