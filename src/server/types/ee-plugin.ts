@@ -143,6 +143,18 @@ export interface EEHooks {
   getWhiteLabelService(): WhiteLabelService | null;
 }
 
+export type EEFeature =
+  | 'custom-branding'
+  | 'sso'
+  | 'audit-log'
+  | 'api-access'
+  | 'webhooks'
+  | 'white-label'
+  | 'custom-templates'
+  | 's3-storage'
+  | 'advanced-roles'
+  | 'priority-support';
+
 /**
  * EE Plugin interface
  *
@@ -180,7 +192,7 @@ export interface EEPlugin {
   /**
    * Check if a specific feature is available and licensed
    */
-  hasFeature(feature: string): boolean;
+  hasFeature(feature: EEFeature): boolean;
 
   /**
    * Check if any EE license is active

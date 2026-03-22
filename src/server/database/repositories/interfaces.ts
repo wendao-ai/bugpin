@@ -137,10 +137,12 @@ export interface ISessionsRepository {
   findById(id: string): Promise<Session | null>;
   findValidById(id: string): Promise<Session | null>;
   findByUserId(userId: string): Promise<Session[]>;
-  updateActivity(id: string): Promise<boolean>;
+  updateActivity(id: string): Promise<void>;
   delete(id: string): Promise<boolean>;
   deleteByUserId(userId: string): Promise<number>;
+  deleteByUserIdExcept(userId: string, exceptSessionId: string): Promise<number>;
   deleteExpired(): Promise<number>;
+  extend(id: string, newExpiresAt: string): Promise<boolean>;
 }
 
 // File Repository Interface
