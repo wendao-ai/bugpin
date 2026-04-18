@@ -348,14 +348,3 @@ export async function clearBuffer(): Promise<void> {
     console.error('[BugPin] Failed to clear buffer:', error);
   }
 }
-
-const reportBuffer = {
-  buffer: bufferReport,
-  getPending: getPendingReports,
-  getCount: getPendingCount,
-  remove: removeBufferedReport,
-  sync: syncPendingReports,
-  startAutoSync,
-  stopAutoSync,
-  clear: clearBuffer,
-};
