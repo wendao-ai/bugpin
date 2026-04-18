@@ -1,6 +1,7 @@
 import { projectsRepo, type CreateProjectData } from '../database/repositories/projects.repo.js';
 import { reportsRepo } from '../database/repositories/reports.repo.js';
 import { webhooksRepo } from '../database/repositories/webhooks.repo.js';
+import { usersService } from './users.service.js';
 import { Result } from '../utils/result.js';
 import { logger } from '../utils/logger.js';
 import type { Project, ProjectSettings } from '@shared/types';
@@ -106,8 +107,22 @@ export const projectsService = {
     }
 
     if (input.settings !== undefined) {
+      const nextSettings = { ...existing.settings, ...input.settings };
+      const defaultAssigneeUserId = nextSettings.defaultAssigneeUserId;
+
+      if (defaultAssigneeUserId) {
+        const assigneeResult = await usersService.getAssignableById(defaultAssigneeUserId);
+        if (!assigneeResult.success) {
+          return Result.fail(assigneeResult.error, 'INVALID_DEFAULT_ASSIGNEE');
+        }
+      }
+
+      if (defaultAssigneeUserId === null) {
+        delete nextSettings.defaultAssigneeUserId;
+      }
+
       // Merge settings instead of replacing
-      updates.settings = { ...existing.settings, ...input.settings };
+      updates.settings = nextSettings;
     }
 
     if (input.isActive !== undefined) {

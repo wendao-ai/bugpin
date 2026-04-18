@@ -91,6 +91,7 @@ const DEFAULT_REPORTER_NOTIFICATIONS: ReporterNotificationSettings = {
   notifyOnNewReport: true,
   notifyOnStatusChange: true,
   notifyOnPriorityChange: true,
+  notifyOnAssignment: true,
   messagingEnabled: true,
 };
 

@@ -137,6 +137,22 @@ export const usersRepo = {
   },
 
   /**
+   * Find users that can be assigned to reports
+   */
+  async findAssignable(): Promise<User[]> {
+    const db = getDb();
+    const rows = db
+      .query(
+        `SELECT * FROM users
+         WHERE is_active = 1
+           AND (invitation_sent_at IS NULL OR invitation_accepted_at IS NOT NULL)
+         ORDER BY name ASC`,
+      )
+      .all() as UserRow[];
+    return rows.map(mapRowToUser);
+  },
+
+  /**
    * Find users by role
    */
   async findByRole(role: UserRole): Promise<User[]> {

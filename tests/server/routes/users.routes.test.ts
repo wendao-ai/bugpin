@@ -36,19 +36,23 @@ let tempDir = '';
 let userRole: User['role'] = 'admin';
 let userResult: User | null = baseUser;
 let listResult: User[] = [baseUser];
+let assignableResult: User[] = [baseUser];
 let createResult: Result<User> = Result.ok(baseUser);
 let updateResult: Result<User> = Result.ok(baseUser);
 let deleteResult: Result<void> = Result.ok(undefined);
 let updateProfileResult: Result<User> = Result.ok(baseUser);
+let lastUpdateBody: unknown;
 
 beforeEach(() => {
   userRole = 'admin';
   userResult = baseUser;
   listResult = [baseUser];
+  assignableResult = [baseUser];
   createResult = Result.ok(baseUser);
   updateResult = Result.ok(baseUser);
   deleteResult = Result.ok(undefined);
   updateProfileResult = Result.ok(baseUser);
+  lastUpdateBody = undefined;
 
   authService.validateSession = async () =>
     Result.ok({
@@ -57,6 +61,7 @@ beforeEach(() => {
     });
 
   usersService.list = async () => Result.ok(listResult);
+  usersService.listAssignable = async () => Result.ok(assignableResult);
   usersService.getById = async () => {
     if (!userResult) {
       return Result.fail('Not found', 'NOT_FOUND');
@@ -64,7 +69,10 @@ beforeEach(() => {
     return Result.ok(userResult);
   };
   usersService.create = async () => createResult;
-  usersService.update = async () => updateResult;
+  usersService.update = async (_id, input) => {
+    lastUpdateBody = input;
+    return updateResult;
+  };
   usersService.delete = async () => deleteResult;
   usersService.updateProfile = async () => updateProfileResult;
   usersService.updateAvatar = async () => Result.ok(baseUser);
@@ -123,6 +131,15 @@ describe('users routes', () => {
       headers: { cookie: 'session=sess_1' },
     });
     expect(res.status).toBe(400);
+  });
+
+  it('lists assignable users for editor', async () => {
+    userRole = 'editor';
+    const app = createApp();
+    const res = await app.request('http://localhost/users/assignable', {
+      headers: { cookie: 'session=sess_1' },
+    });
+    expect(res.status).toBe(200);
   });
 
   it('returns user by id for admin', async () => {
@@ -189,6 +206,21 @@ describe('users routes', () => {
       body: JSON.stringify({ name: 'New' }),
     });
     expect(res.status).toBe(200);
+  });
+
+  it('passes default project assignments through update requests', async () => {
+    const app = createApp();
+    const res = await app.request('http://localhost/users/usr_1', {
+      method: 'PATCH',
+      headers: {
+        cookie: 'session=sess_1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ defaultProjectIds: ['prj_1', 'prj_2'] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(lastUpdateBody).toEqual({ defaultProjectIds: ['prj_1', 'prj_2'] });
   });
 
   it('returns 404 when update fails', async () => {

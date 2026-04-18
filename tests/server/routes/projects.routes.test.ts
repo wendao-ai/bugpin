@@ -43,6 +43,7 @@ let createResult: Result<Project> = Result.ok(baseProject);
 let updateResult: Result<Project> = Result.ok(baseProject);
 let deleteResult: Result<void> = Result.ok(undefined);
 let regenerateResult: Result<string> = Result.ok('proj_new');
+let lastUpdateBody: unknown;
 
 beforeEach(() => {
   listResult = [baseProject];
@@ -51,6 +52,7 @@ beforeEach(() => {
   updateResult = Result.ok(baseProject);
   deleteResult = Result.ok(undefined);
   regenerateResult = Result.ok('proj_new');
+  lastUpdateBody = undefined;
 
   authService.validateSession = async () =>
     Result.ok({
@@ -66,7 +68,10 @@ beforeEach(() => {
     return Result.ok(projectResult);
   };
   projectsService.create = async () => createResult;
-  projectsService.update = async () => updateResult;
+  projectsService.update = async (_id, input) => {
+    lastUpdateBody = input;
+    return updateResult;
+  };
   projectsService.delete = async () => deleteResult;
   projectsService.regenerateApiKey = async () => regenerateResult;
 });
@@ -124,6 +129,21 @@ describe('projects routes', () => {
       body: JSON.stringify({ name: 'New' }),
     });
     expect(res.status).toBe(200);
+  });
+
+  it('passes project default assignee settings through update requests', async () => {
+    const app = createApp();
+    const res = await app.request('http://localhost/projects/prj_1', {
+      method: 'PATCH',
+      headers: {
+        cookie: 'session=sess_1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ settings: { defaultAssigneeUserId: 'usr_2' } }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(lastUpdateBody).toEqual({ settings: { defaultAssigneeUserId: 'usr_2' } });
   });
 
   it('deletes project', async () => {

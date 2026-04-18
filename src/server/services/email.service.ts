@@ -539,6 +539,52 @@ export const emailService = {
   },
 
   /**
+   * Send assignment change email to reporter
+   */
+  async sendReporterAssignmentEmail(
+    recipient: string,
+    data: {
+      report: Report;
+      projectName: string;
+      appName: string;
+      appUrl: string;
+      assigneeName: string;
+      previousAssigneeName?: string;
+    },
+  ): Promise<{ success: boolean; error?: string }> {
+    const settings = await settingsCacheService.getAll();
+    const { report, projectName, appName, appUrl, assigneeName, previousAssigneeName } = data;
+
+    const subject = `[${projectName}] Report Assignment Updated: ${report.title}`;
+    const intro = previousAssigneeName
+      ? `Your report has been reassigned from <strong>${previousAssigneeName}</strong> to <strong>${assigneeName}</strong>.`
+      : `Your report has been assigned to <strong>${assigneeName}</strong>.`;
+    const reportLink = appUrl ? `<p><a href="${appUrl}/admin/reports/${report.id}">View report</a></p>` : '';
+    const html = applyBrandColor(
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #111827;">
+          <h1 style="font-size: 24px; margin-bottom: 16px;">Assignment Updated</h1>
+          <p>${intro}</p>
+          <div style="margin: 24px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px;">
+            <p style="margin: 0 0 8px;"><strong>Project:</strong> ${projectName}</p>
+            <p style="margin: 0 0 8px;"><strong>Report:</strong> ${report.title}</p>
+            <p style="margin: 0;"><strong>Status:</strong> ${formatStatus(report.status)}</p>
+          </div>
+          ${reportLink}
+          <p style="color: #6b7280;">Sent by ${appName}.</p>
+        </div>
+      `,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+    );
+
+    return this.sendEmail({
+      to: [{ email: recipient }],
+      subject,
+      html,
+    });
+  },
+
+  /**
    * Send a direct message email to the reporter
    */
   async sendReporterMessageEmail(

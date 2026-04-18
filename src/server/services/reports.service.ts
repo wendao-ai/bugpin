@@ -9,6 +9,7 @@ import { getEEHooks } from '../utils/ee-hooks.js';
 import { notificationsService } from './notifications.service.js';
 import { githubSyncService } from './integrations/github-sync.service.js';
 import { syncQueueService } from './integrations/sync-queue.service.js';
+import { usersService } from './users.service.js';
 import type {
   Report,
   ReportFilter,
@@ -51,6 +52,37 @@ export interface UpdateReportInput {
   forwardedTo?: ForwardedReference[];
 }
 
+async function validateAssignee(assignedTo: string | null | undefined): Promise<Result<void>> {
+  if (assignedTo === undefined || assignedTo === null) {
+    return Result.ok(undefined);
+  }
+
+  const assigneeResult = await usersService.getAssignableById(assignedTo);
+  if (!assigneeResult.success) {
+    return Result.fail(assigneeResult.error, 'INVALID_ASSIGNEE');
+  }
+
+  return Result.ok(undefined);
+}
+
+async function resolveDefaultAssignee(projectId: string, userId: string | null | undefined) {
+  if (!userId) {
+    return undefined;
+  }
+
+  const assigneeResult = await usersService.getAssignableById(userId);
+  if (!assigneeResult.success) {
+    logger.warn('Skipping invalid project default assignee during report creation', {
+      projectId,
+      userId,
+      code: assigneeResult.code,
+    });
+    return undefined;
+  }
+
+  return userId;
+}
+
 // Service
 
 export const reportsService = {
@@ -75,12 +107,18 @@ export const reportsService = {
       return Result.fail('Title must be at most 200 characters', 'INVALID_TITLE');
     }
 
+    const assignedTo = await resolveDefaultAssignee(
+      project.id,
+      project.settings?.defaultAssigneeUserId,
+    );
+
     // Create report
     const reportData: CreateReportData = {
       projectId: project.id,
       title: input.title.trim(),
       description: input.description?.trim(),
       priority: input.priority ?? 'medium',
+      assignedTo,
       annotations: input.annotations,
       metadata: input.metadata,
       reporterEmail: input.reporterEmail?.trim(),
@@ -182,6 +220,20 @@ export const reportsService = {
         reportId: report.id,
       });
     });
+
+    if (assignedTo) {
+      notificationsService.notifyAssignment(report, assignedTo).catch((error) => {
+        logger.error('Failed to send assignment notification', error, { reportId: report.id });
+      });
+
+      notificationsService
+        .notifyReporterAssignment(report, undefined, assignedTo)
+        .catch((error) => {
+          logger.error('Failed to send reporter assignment notification', error, {
+            reportId: report.id,
+          });
+        });
+    }
 
     // Check for auto-sync integration and queue sync (async, don't block)
     githubSyncService
@@ -293,6 +345,11 @@ export const reportsService = {
     }
 
     if (input.assignedTo !== undefined) {
+      const assigneeValidation = await validateAssignee(input.assignedTo);
+      if (!assigneeValidation.success) {
+        return assigneeValidation;
+      }
+
       updates.assignedTo = input.assignedTo ?? undefined;
     }
 
@@ -382,6 +439,18 @@ export const reportsService = {
         .catch((error) => {
           logger.error('Failed to send assignment notification', error, { reportId: id });
         });
+
+      notificationsService
+        .notifyReporterAssignment(
+          report,
+          (changes.assignedTo.old as string | undefined) ?? undefined,
+          changes.assignedTo.new as string,
+        )
+        .catch((error) => {
+          logger.error('Failed to send reporter assignment notification', error, {
+            reportId: id,
+          });
+        });
     }
 
     // If report has GitHub issue and there are changes, queue update sync (async, don't block)
@@ -446,6 +515,7 @@ export const reportsService = {
   async bulkUpdate(
     ids: string[],
     updates: Pick<UpdateReportInput, 'status' | 'priority' | 'assignedTo'>,
+    userId?: string,
   ): Promise<Result<number>> {
     if (ids.length === 0) {
       return Result.fail('No report IDs provided', 'INVALID_INPUT');
@@ -466,7 +536,26 @@ export const reportsService = {
     }
 
     if (updates.assignedTo !== undefined) {
+      const assigneeValidation = await validateAssignee(updates.assignedTo);
+      if (!assigneeValidation.success) {
+        return assigneeValidation;
+      }
+
       reportUpdates.assignedTo = updates.assignedTo ?? undefined;
+    }
+
+    if (updates.assignedTo !== undefined) {
+      let count = 0;
+
+      for (const id of ids) {
+        const result = await this.update(id, updates, userId);
+        if (result.success) {
+          count += 1;
+        }
+      }
+
+      logger.info('Bulk update completed', { count, updates: Object.keys(reportUpdates) });
+      return Result.ok(count);
     }
 
     const count = await reportsRepo.bulkUpdate(ids, reportUpdates);

@@ -100,6 +100,26 @@ export function ReporterNotificationSettingsForm({
           </div>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
+              <Label htmlFor="reporter-assignment-change" className="text-sm font-normal">
+                Assignment Changes
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Notify reporters when a report is assigned or reassigned
+              </p>
+            </div>
+            <Switch
+              id="reporter-assignment-change"
+              checked={
+                value.notifyOnAssignment ??
+                globalSettings?.reporterNotifications?.notifyOnAssignment ??
+                true
+              }
+              onCheckedChange={(checked) => onChange({ ...value, notifyOnAssignment: checked })}
+              disabled={disabled}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
               <Label htmlFor="reporter-messaging" className="text-sm font-normal">
                 Messaging System
               </Label>

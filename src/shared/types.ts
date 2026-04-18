@@ -81,6 +81,7 @@ export interface Report {
   reporterEmail?: string;
   reporterName?: string;
   assignedTo?: string;
+  assignee?: ReportAssignee;
   customFields?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -101,6 +102,13 @@ export interface ForwardedReference {
   id: string;
   url?: string;
   forwardedAt?: string;
+}
+
+export interface ReportAssignee {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
 }
 
 // Shared color settings type (used by ThemeColorPicker)
@@ -177,6 +185,7 @@ export interface ScreenshotSettings {
 // Project Types
 
 export interface ProjectSettings {
+  defaultAssigneeUserId?: string | null;
   widgetLauncherButton?: WidgetLauncherButtonSettings;
   widgetDialog?: WidgetDialogSettings;
   screenshot?: ScreenshotSettings;
@@ -233,6 +242,11 @@ export interface Project {
   deletedAt?: string;
 }
 
+export interface DefaultProjectReference {
+  id: string;
+  name: string;
+}
+
 // User Types
 
 export interface User {
@@ -247,6 +261,7 @@ export interface User {
   lastLoginAt?: string;
   invitationSentAt?: string;
   invitationAcceptedAt?: string;
+  defaultProjects?: DefaultProjectReference[];
 }
 
 export interface Session {
@@ -352,6 +367,7 @@ export interface ReporterNotificationSettings {
   notifyOnNewReport: boolean;
   notifyOnStatusChange: boolean;
   notifyOnPriorityChange: boolean;
+  notifyOnAssignment: boolean;
   messagingEnabled: boolean;
 }
 

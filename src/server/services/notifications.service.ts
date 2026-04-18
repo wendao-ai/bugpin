@@ -52,6 +52,7 @@ function getEffectiveReporterSettings(
     notifyOnNewReport: true,
     notifyOnStatusChange: true,
     notifyOnPriorityChange: true,
+    notifyOnAssignment: true,
     messagingEnabled: true,
   };
 
@@ -62,6 +63,7 @@ function getEffectiveReporterSettings(
       notifyOnNewReport: false,
       notifyOnStatusChange: false,
       notifyOnPriorityChange: false,
+      notifyOnAssignment: false,
       messagingEnabled: false,
     };
   }
@@ -74,6 +76,8 @@ function getEffectiveReporterSettings(
     notifyOnStatusChange: projectReporter?.notifyOnStatusChange ?? globalReporter.notifyOnStatusChange,
     notifyOnPriorityChange:
       projectReporter?.notifyOnPriorityChange ?? globalReporter.notifyOnPriorityChange,
+    notifyOnAssignment:
+      projectReporter?.notifyOnAssignment ?? globalReporter.notifyOnAssignment,
     messagingEnabled: projectReporter?.messagingEnabled ?? globalReporter.messagingEnabled,
   };
 }
@@ -620,6 +624,60 @@ export const notificationsService = {
       }
     } catch (error) {
       logger.error('Failed to send reporter status change notification', {
+        reportId: report.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  },
+
+  /**
+   * Send assignment change email to reporter
+   */
+  async notifyReporterAssignment(
+    report: Report,
+    oldAssignedToUserId: string | undefined,
+    newAssignedToUserId: string,
+  ): Promise<void> {
+    try {
+      const ctx = await getReporterContext(report, 'notifyOnAssignment');
+      if (!ctx) return;
+
+      const [newAssignee, previousAssignee] = await Promise.all([
+        usersRepo.findById(newAssignedToUserId),
+        oldAssignedToUserId ? usersRepo.findById(oldAssignedToUserId) : Promise.resolve(null),
+      ]);
+
+      if (!newAssignee) {
+        logger.error('New assignee user not found for reporter assignment notification', {
+          userId: newAssignedToUserId,
+          reportId: report.id,
+        });
+        return;
+      }
+
+      const result = await emailService.sendReporterAssignmentEmail(report.reporterEmail!, {
+        report,
+        projectName: ctx.project.name,
+        appName: ctx.settings.appName || 'BugPin',
+        appUrl: ctx.settings.appUrl || '',
+        assigneeName: newAssignee.name,
+        previousAssigneeName: previousAssignee?.name,
+      });
+
+      if (result.success) {
+        logger.info('Reporter assignment notification sent', {
+          reportId: report.id,
+          reporterEmail: report.reporterEmail,
+          assignedTo: newAssignedToUserId,
+        });
+      } else {
+        logger.warn('Reporter assignment notification failed', {
+          reportId: report.id,
+          error: result.error,
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to send reporter assignment notification', {
         reportId: report.id,
         error: error instanceof Error ? error.message : 'Unknown error',
       });

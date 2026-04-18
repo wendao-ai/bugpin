@@ -207,4 +207,21 @@ describe('emailService notification helpers', () => {
     expect(sendEmailSpy).toHaveBeenCalled();
     emailService.sendEmail = originalSendEmail;
   });
+
+  it('sends reporter assignment notification', async () => {
+    const sendEmailSpy = mock(async () => ({ success: true }));
+    const originalSendEmail = emailService.sendEmail;
+    emailService.sendEmail = sendEmailSpy;
+
+    await emailService.sendReporterAssignmentEmail('reporter@example.com', {
+      report: baseReport,
+      projectName: 'Project',
+      appName: 'BugPin',
+      appUrl: 'https://example.com',
+      assigneeName: 'User',
+    });
+
+    expect(sendEmailSpy).toHaveBeenCalled();
+    emailService.sendEmail = originalSendEmail;
+  });
 });

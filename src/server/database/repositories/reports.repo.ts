@@ -3,6 +3,7 @@ import { generateReportId } from '../../utils/id.js';
 import type { CreateReportData } from './interfaces.js';
 import type {
   Report,
+  ReportAssignee,
   ReportFilter,
   ReportStatus,
   ReportPriority,
@@ -37,11 +38,24 @@ interface ReportRow {
   github_issue_number: number | null;
   github_issue_url: string | null;
   github_synced_at: string | null;
+  assignee_id?: string | null;
+  assignee_name?: string | null;
+  assignee_email?: string | null;
+  assignee_avatar_url?: string | null;
 }
 
 // Row to Entity Mapping
 
 function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
+  const assignee: ReportAssignee | undefined = row.assignee_id
+    ? {
+        id: row.assignee_id,
+        name: row.assignee_name ?? row.assignee_email ?? row.assignee_id,
+        email: row.assignee_email ?? '',
+        avatarUrl: row.assignee_avatar_url ?? undefined,
+      }
+    : undefined;
+
   return {
     id: row.id,
     projectId: row.project_id,
@@ -55,6 +69,7 @@ function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
     reporterEmail: row.reporter_email ?? undefined,
     reporterName: row.reporter_name ?? undefined,
     assignedTo: row.assigned_to ?? undefined,
+    assignee,
     customFields: row.custom_fields ? JSON.parse(row.custom_fields) : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -88,9 +103,9 @@ export const reportsRepo = {
     db.run(
       `INSERT INTO reports (
         id, project_id, title, description, status, priority,
-        annotations, metadata, reporter_email, reporter_name,
+        annotations, metadata, reporter_email, reporter_name, assigned_to,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.projectId,
@@ -102,6 +117,7 @@ export const reportsRepo = {
         JSON.stringify(data.metadata),
         data.reporterEmail ?? null,
         data.reporterName ?? null,
+        data.assignedTo ?? null,
         now,
         now,
       ],
@@ -119,7 +135,18 @@ export const reportsRepo = {
    */
   async findById(id: string): Promise<Report | null> {
     const db = getDb();
-    const row = db.query('SELECT * FROM reports WHERE id = ?').get(id) as ReportRow | null;
+    const row = db
+      .query(
+        `SELECT reports.*,
+                users.id as assignee_id,
+                users.name as assignee_name,
+                users.email as assignee_email,
+                users.avatar_url as assignee_avatar_url
+         FROM reports
+         LEFT JOIN users ON users.id = reports.assigned_to
+         WHERE reports.id = ?`,
+      )
+      .get(id) as ReportRow | null;
     return row ? mapRowToReport(row) : null;
   },
 
@@ -192,9 +219,15 @@ export const reportsRepo = {
 
     // Get data
     const dataQuery = `
-      SELECT reports.*, projects.name as project_name
+      SELECT reports.*,
+             projects.name as project_name,
+             users.id as assignee_id,
+             users.name as assignee_name,
+             users.email as assignee_email,
+             users.avatar_url as assignee_avatar_url
       FROM reports
       LEFT JOIN projects ON reports.project_id = projects.id
+      LEFT JOIN users ON users.id = reports.assigned_to
       ${searchJoin}
       ${whereClause}
       ORDER BY ${orderBy} ${sortOrder}
@@ -255,9 +288,9 @@ export const reportsRepo = {
       params.push(updates.priority);
     }
 
-    if (updates.assignedTo !== undefined) {
+    if (Object.prototype.hasOwnProperty.call(updates, 'assignedTo')) {
       sets.push('assigned_to = ?');
-      params.push(updates.assignedTo ?? null);
+      params.push((updates as { assignedTo?: string | null }).assignedTo ?? null);
     }
 
     if (updates.annotations !== undefined) {

@@ -31,6 +31,7 @@ export interface CreateReportData {
   title: string;
   description?: string;
   priority?: ReportPriority;
+  assignedTo?: string;
   annotations?: object;
   metadata: ReportMetadata;
   reporterEmail?: string;
@@ -114,6 +115,7 @@ export interface IUsersRepository {
   findByEmailWithPassword(email: string): Promise<UserWithPassword | null>;
   findByRole(role: UserRole): Promise<User[]>;
   findAll(): Promise<User[]>;
+  findAssignable(): Promise<User[]>;
   update(id: string, updates: Partial<User>): Promise<User | null>;
   updatePassword(id: string, passwordHash: string): Promise<boolean>;
   updateLastLogin(id: string): Promise<boolean>;

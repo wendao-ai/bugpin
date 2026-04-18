@@ -3,6 +3,8 @@ import { projectsService } from '../../src/server/services/projects.service';
 import { projectsRepo } from '../../src/server/database/repositories/projects.repo';
 import { reportsRepo } from '../../src/server/database/repositories/reports.repo';
 import { webhooksRepo } from '../../src/server/database/repositories/webhooks.repo';
+import { usersService } from '../../src/server/services/users.service';
+import { Result } from '../../src/server/utils/result';
 import type { Project } from '../../src/shared/types';
 
 const baseProject: Project = {
@@ -24,6 +26,7 @@ const baseProject: Project = {
 const originalProjectsRepo = { ...projectsRepo };
 const originalReportsRepo = { ...reportsRepo };
 const originalWebhooksRepo = { ...webhooksRepo };
+const originalUsersService = { ...usersService };
 
 let projectById: Project | null = baseProject;
 let projectByApiKey: Project | null = baseProject;
@@ -58,12 +61,24 @@ beforeEach(() => {
 
   reportsRepo.countByProject = async () => 7;
   webhooksRepo.findByProjectId = async () => [{ id: 'whk_1' }] as never;
+  usersService.getAssignableById = async (id) =>
+    Result.ok({
+      id,
+      email: `${id}@example.com`,
+      name: 'Assignee',
+      role: 'viewer',
+      isActive: true,
+      invitationAcceptedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 });
 
 afterEach(() => {
   Object.assign(projectsRepo, originalProjectsRepo);
   Object.assign(reportsRepo, originalReportsRepo);
   Object.assign(webhooksRepo, originalWebhooksRepo);
+  Object.assign(usersService, originalUsersService);
 });
 
 describe('projectsService.create', () => {
@@ -128,6 +143,31 @@ describe('projectsService.update', () => {
         security: { allowedOrigins: ['https://example.com'] },
       },
     });
+  });
+
+  it('accepts a valid default assignee', async () => {
+    const result = await projectsService.update('prj_1', {
+      settings: { defaultAssigneeUserId: 'usr_2' },
+    });
+
+    expect(result.success).toBe(true);
+    expect(lastProjectUpdates).toMatchObject({
+      settings: {
+        security: { allowedOrigins: [] },
+        defaultAssigneeUserId: 'usr_2',
+      },
+    });
+  });
+
+  it('rejects an invalid default assignee', async () => {
+    usersService.getAssignableById = async () =>
+      Result.fail('Assigned user must be active', 'USER_INACTIVE');
+
+    const result = await projectsService.update('prj_1', {
+      settings: { defaultAssigneeUserId: 'usr_2' },
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it('returns UPDATE_FAILED when repo update fails', async () => {

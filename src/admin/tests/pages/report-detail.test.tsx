@@ -27,6 +27,7 @@ describe('ReportDetail', () => {
     );
 
     expect(await screen.findByText('Button not working')).toBeInTheDocument();
+    expect(screen.getByText('Editor User')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Edit' }));
     const [statusSelect, prioritySelect] = screen.getAllByRole('combobox');
@@ -37,6 +38,28 @@ describe('ReportDetail', () => {
     await user.click(prioritySelect);
     await user.click(await screen.findByText('Low'));
 
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Report updated successfully');
+    });
+  });
+
+  it('updates the assignee', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <Routes>
+        <Route path="/reports/:id" element={<ReportDetail />} />
+      </Routes>,
+      { initialEntries: ['/reports/report-1'] },
+    );
+
+    expect(await screen.findByText('Button not working')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    const assigneeSelect = screen.getAllByRole('combobox')[2];
+    await user.click(assigneeSelect);
+    await user.click(await screen.findByText('Admin User'));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {

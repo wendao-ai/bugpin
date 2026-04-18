@@ -164,6 +164,7 @@ export const schemas = {
     name: z.string().min(2, 'Name must be at least 2 characters').optional(),
     role: z.enum(['admin', 'editor', 'viewer']).optional(),
     isActive: z.boolean().optional(),
+    defaultProjectIds: z.array(z.string().min(1, 'Project ID is required')).optional(),
   }),
 
   // Update profile request (for current user)
@@ -251,6 +252,7 @@ export const schemas = {
         notifyOnNewReport: z.boolean().optional(),
         notifyOnStatusChange: z.boolean().optional(),
         notifyOnPriorityChange: z.boolean().optional(),
+        notifyOnAssignment: z.boolean().optional(),
         messagingEnabled: z.boolean().optional(),
       })
       .optional(),

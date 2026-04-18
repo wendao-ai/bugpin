@@ -79,6 +79,26 @@ describe('UsersSettings', () => {
     });
   });
 
+  it('updates default projects for a user', async () => {
+    const user = userEvent.setup();
+    const patchSpy = vi.spyOn(api, 'patch').mockResolvedValue({ data: { success: true } } as unknown);
+
+    renderWithProviders(<UsersSettings />);
+
+    const viewerEmail = await screen.findByText('viewer@example.com');
+    const viewerRow = viewerEmail.closest('tr');
+    expect(viewerRow).toBeTruthy();
+
+    await user.click(within(viewerRow!).getByRole('button', { name: /no default projects/i }));
+    await user.click(await screen.findByText('Test Project'));
+
+    await waitFor(() => {
+      expect(patchSpy).toHaveBeenCalledWith('/users/user-3', {
+        defaultProjectIds: ['project-1'],
+      });
+    });
+  });
+
   it('displays pending invitation status for users who have not accepted', async () => {
     renderWithProviders(<UsersSettings />);
 

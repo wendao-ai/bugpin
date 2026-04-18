@@ -115,11 +115,14 @@ function createApp() {
 describe('reports routes', () => {
   it('lists reports with filter params', async () => {
     const app = createApp();
-    const res = await app.request('http://localhost/reports?status=open,closed&limit=10', {
+    const res = await app.request(
+      'http://localhost/reports?status=open,closed&assignedTo=usr_2&limit=10',
+      {
       headers: { cookie: 'session=sess_1' },
-    });
+      },
+    );
     expect(res.status).toBe(200);
-    expect(listFilter).toMatchObject({ status: ['open', 'closed'], limit: 10 });
+    expect(listFilter).toMatchObject({ status: ['open', 'closed'], assignedTo: 'usr_2', limit: 10 });
   });
 
   it('returns 404 for missing report', async () => {

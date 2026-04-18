@@ -125,9 +125,10 @@ reports.post(
   authorize(['admin', 'editor']),
   validate({ body: schemas.bulkUpdateReports }),
   async (c) => {
+    const user = c.get('user');
     const { ids, updates } = await c.req.json();
 
-    const result = await reportsService.bulkUpdate(ids, updates);
+    const result = await reportsService.bulkUpdate(ids, updates, user.id);
 
     if (!result.success) {
       return c.json({ success: false, error: result.code, message: result.error }, 400);

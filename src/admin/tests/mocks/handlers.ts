@@ -6,25 +6,38 @@ export const mockUsers = {
     id: 'user-1',
     email: 'admin@example.com',
     name: 'Admin User',
+    avatarUrl: 'https://example.com/avatars/admin.png',
     role: 'admin' as const,
+    isActive: true,
+    invitationAcceptedAt: '2024-01-01T00:00:00Z',
+    defaultProjects: [{ id: 'project-2', name: 'Another Project' }],
   },
   editor: {
     id: 'user-2',
     email: 'editor@example.com',
     name: 'Editor User',
+    avatarUrl: 'https://example.com/avatars/editor.png',
     role: 'editor' as const,
+    isActive: true,
+    invitationAcceptedAt: '2024-01-01T00:00:00Z',
+    defaultProjects: [{ id: 'project-1', name: 'Test Project' }],
   },
   viewer: {
     id: 'user-3',
     email: 'viewer@example.com',
     name: 'Viewer User',
+    avatarUrl: 'https://example.com/avatars/viewer.png',
     role: 'viewer' as const,
+    isActive: true,
+    invitationAcceptedAt: '2024-01-01T00:00:00Z',
+    defaultProjects: [],
   },
   pending: {
     id: 'user-4',
     email: 'pending@example.com',
     name: 'Pending User',
     role: 'viewer' as const,
+    defaultProjects: [],
     invitationSentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
   },
 };
@@ -34,6 +47,9 @@ export const mockProjects = [
     id: 'project-1',
     name: 'Test Project',
     apiKey: 'test-api-key-123',
+    settings: {
+      defaultAssigneeUserId: 'user-2',
+    },
     reportsCount: 5,
     isActive: true,
     position: 0,
@@ -42,6 +58,9 @@ export const mockProjects = [
     id: 'project-2',
     name: 'Another Project',
     apiKey: 'test-api-key-456',
+    settings: {
+      defaultAssigneeUserId: 'user-1',
+    },
     reportsCount: 12,
     isActive: true,
     position: 1,
@@ -56,6 +75,13 @@ export const mockReports = [
     status: 'open',
     priority: 'high',
     projectId: 'project-1',
+    assignedTo: 'user-2',
+    assignee: {
+      id: 'user-2',
+      name: 'Editor User',
+      email: 'editor@example.com',
+      avatarUrl: 'https://example.com/avatars/editor.png',
+    },
     reporterEmail: 'user@example.com',
     reporterName: 'John Doe',
     createdAt: '2024-01-15T10:30:00Z',
@@ -79,6 +105,13 @@ export const mockReports = [
     status: 'in_progress',
     priority: 'medium',
     projectId: 'project-1',
+    assignedTo: 'user-1',
+    assignee: {
+      id: 'user-1',
+      name: 'Admin User',
+      email: 'admin@example.com',
+      avatarUrl: 'https://example.com/avatars/admin.png',
+    },
     reporterEmail: 'another@example.com',
     reporterName: 'Jane Smith',
     createdAt: '2024-01-14T09:00:00Z',
@@ -223,11 +256,13 @@ export const handlers = [
     const url = new URL(request.url);
     const status = url.searchParams.get('status');
     const priority = url.searchParams.get('priority');
+    const assignedTo = url.searchParams.get('assignedTo');
     const limit = parseInt(url.searchParams.get('limit') || '20', 10);
 
     let filtered = [...mockReports];
     if (status) filtered = filtered.filter((r) => r.status === status);
     if (priority) filtered = filtered.filter((r) => r.priority === priority);
+    if (assignedTo) filtered = filtered.filter((r) => r.assignedTo === assignedTo);
 
     // Apply limit
     const limited = filtered.slice(0, limit);
@@ -253,6 +288,13 @@ export const handlers = [
       success: true,
       report,
       files: [],
+    });
+  }),
+
+  http.get('/api/reports/:id/reporter-messages', () => {
+    return HttpResponse.json({
+      success: true,
+      messages: [],
     });
   }),
 
@@ -304,6 +346,19 @@ export const handlers = [
     });
   }),
 
+  http.get('/api/projects/:id', ({ params }) => {
+    const project = mockProjects.find((p) => p.id === params.id);
+
+    if (!project) {
+      return HttpResponse.json({ success: false, message: 'Project not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      project,
+    });
+  }),
+
   http.post('/api/projects/:id/regenerate-key', ({ params }) => {
     const project = mockProjects.find((p) => p.id === params.id);
 
@@ -335,6 +390,17 @@ export const handlers = [
         { ...mockUsers.admin, isActive: true },
         { ...mockUsers.viewer, isActive: true },
         { ...mockUsers.pending, isActive: false },
+      ],
+    });
+  }),
+
+  http.get('/api/users/assignable', () => {
+    return HttpResponse.json({
+      success: true,
+      users: [
+        { ...mockUsers.admin, isActive: true },
+        { ...mockUsers.editor, isActive: true },
+        { ...mockUsers.viewer, isActive: true },
       ],
     });
   }),

@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { usersService } from '../../src/server/services/users.service';
 import { usersRepo } from '../../src/server/database/repositories/users.repo';
 import { sessionsRepo } from '../../src/server/database/repositories/sessions.repo';
-import type { User } from '../../src/shared/types';
+import { projectsRepo } from '../../src/server/database/repositories/projects.repo';
+import type { Project, User } from '../../src/shared/types';
 
 const baseUser: User = {
   id: 'usr_1',
@@ -16,6 +17,7 @@ const baseUser: User = {
 
 const originalUsersRepo = { ...usersRepo };
 const originalSessionsRepo = { ...sessionsRepo };
+const originalProjectsRepo = { ...projectsRepo };
 const originalHash = Bun.password.hash;
 
 let lastCreateInput: unknown;
@@ -26,6 +28,7 @@ let emailExistsValue = false;
 let userById: User | null = baseUser;
 let userByEmail: User | null = baseUser;
 let usersByRole: User[] = [baseUser];
+let projects: Project[] = [];
 
 beforeEach(() => {
   lastCreateInput = undefined;
@@ -36,12 +39,14 @@ beforeEach(() => {
   userById = baseUser;
   userByEmail = baseUser;
   usersByRole = [baseUser];
+  projects = [];
 
   usersRepo.emailExists = async () => emailExistsValue;
   usersRepo.findById = async () => userById;
   usersRepo.findByEmail = async () => userByEmail;
   usersRepo.findAll = async () => [baseUser];
   usersRepo.findByRole = async () => usersByRole;
+  projectsRepo.findAll = async () => projects;
   usersRepo.create = async (input) => {
     lastCreateInput = input;
     return { ...baseUser, ...input, id: 'usr_new' } as User;
@@ -72,6 +77,7 @@ beforeEach(() => {
 afterEach(() => {
   Object.assign(usersRepo, originalUsersRepo);
   Object.assign(sessionsRepo, originalSessionsRepo);
+  Object.assign(projectsRepo, originalProjectsRepo);
   Bun.password.hash = originalHash;
 });
 
@@ -167,6 +173,77 @@ describe('usersService.update', () => {
       isActive: false,
       avatarUrl: 'https://cdn.test/avatar.png',
     });
+  });
+
+  it('updates project default assignments for a user', async () => {
+    userById = { ...baseUser, role: 'viewer' };
+    projects = [
+      {
+        id: 'prj_1',
+        name: 'Alpha',
+        apiKey: 'key-1',
+        settings: { defaultAssigneeUserId: 'usr_1' },
+        reportsCount: 0,
+        isActive: true,
+        position: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'prj_2',
+        name: 'Beta',
+        apiKey: 'key-2',
+        settings: {},
+        reportsCount: 0,
+        isActive: true,
+        position: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+
+    const projectUpdates: Array<{ id: string; settings: Project['settings'] }> = [];
+    projectsRepo.update = async (id, updates) => {
+      projectUpdates.push({ id, settings: updates.settings ?? {} });
+      return projects.find((project) => project.id === id) ?? null;
+    };
+
+    const result = await usersService.update('usr_1', {
+      defaultProjectIds: ['prj_2'],
+    });
+
+    expect(result.success).toBe(true);
+    expect(projectUpdates).toEqual([
+      { id: 'prj_1', settings: {} },
+      { id: 'prj_2', settings: { defaultAssigneeUserId: 'usr_1' } },
+    ]);
+  });
+
+  it('rejects non-assignable users for new default assignments', async () => {
+    userById = {
+      ...baseUser,
+      isActive: false,
+      invitationAcceptedAt: undefined,
+    };
+    projects = [
+      {
+        id: 'prj_1',
+        name: 'Alpha',
+        apiKey: 'key-1',
+        settings: {},
+        reportsCount: 0,
+        isActive: true,
+        position: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+
+    const result = await usersService.update('usr_1', {
+      defaultProjectIds: ['prj_1'],
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 
@@ -266,8 +343,24 @@ describe('usersService.profile and avatar', () => {
 
 describe('usersService lookups', () => {
   it('returns user by id', async () => {
+    projects = [
+      {
+        id: 'prj_1',
+        name: 'Alpha',
+        apiKey: 'key-1',
+        settings: { defaultAssigneeUserId: 'usr_1' },
+        reportsCount: 0,
+        isActive: true,
+        position: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
     const result = await usersService.getById('usr_1');
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.value.defaultProjects).toEqual([{ id: 'prj_1', name: 'Alpha' }]);
+    }
   });
 
   it('returns user by email', async () => {
@@ -276,10 +369,24 @@ describe('usersService lookups', () => {
   });
 
   it('lists users', async () => {
+    projects = [
+      {
+        id: 'prj_1',
+        name: 'Alpha',
+        apiKey: 'key-1',
+        settings: { defaultAssigneeUserId: 'usr_1' },
+        reportsCount: 0,
+        isActive: true,
+        position: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
     const result = await usersService.list();
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value.length).toBe(1);
+      expect(result.value[0].defaultProjects).toEqual([{ id: 'prj_1', name: 'Alpha' }]);
     }
   });
 

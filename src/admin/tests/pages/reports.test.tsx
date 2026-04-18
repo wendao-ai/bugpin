@@ -88,7 +88,7 @@ describe('Reports Page - GitHub Sync Status', () => {
 
     // Check for all column headers
     const headers = screen.getAllByRole('columnheader');
-    expect(headers.length).toBe(7); // Checkbox, Report, Project, Status, Priority, GitHub, Created
+    expect(headers.length).toBe(8); // Checkbox, Report, Project, Status, Priority, Assignee, GitHub, Created
   });
 
   it('shows synced status with link to GitHub issue', async () => {
@@ -177,6 +177,14 @@ describe('Reports Page - Bulk Actions', () => {
     expect(checkboxes.length).toBeGreaterThan(1);
   });
 
+  it('shows assignee names in the list', async () => {
+    renderWithProviders(<Reports />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Editor User')[0]).toBeInTheDocument();
+    });
+  });
+
   it('shows bulk actions toolbar when reports are selected', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Reports />);
@@ -200,7 +208,27 @@ describe('Reports Page - Bulk Actions', () => {
     // Action buttons should be visible
     expect(screen.getByRole('button', { name: /Set Status/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Set Priority/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Assign/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
+  });
+
+  it('filters reports by assignee', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Reports />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Button not working')[0]).toBeInTheDocument();
+    });
+
+    const assigneeComboboxes = screen.getAllByRole('combobox');
+    await user.click(assigneeComboboxes[3]);
+    const assigneeOptions = await screen.findAllByText('Editor User');
+    await user.click(assigneeOptions[assigneeOptions.length - 1]);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Button not working')[0]).toBeInTheDocument();
+      expect(screen.queryByText('Page layout broken')).not.toBeInTheDocument();
+    });
   });
 
   it('selects all reports when header checkbox is clicked', async () => {

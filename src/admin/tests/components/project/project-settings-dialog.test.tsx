@@ -124,6 +124,7 @@ const baseProject: Project = {
     security: {
       allowedOrigins: ['example.com'],
     },
+    defaultAssigneeUserId: 'user-2',
   },
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -150,6 +151,16 @@ function setupMockResponses(defaults: ProjectNotificationDefaults | null) {
     if (url === '/settings') {
       return Promise.resolve({
         data: { settings: { widgetDialog: {}, widgetLauncherButton: {}, screenshot: {} } },
+      });
+    }
+    if (url === '/users/assignable') {
+      return Promise.resolve({
+        data: {
+          users: [
+            { id: 'user-1', name: 'Admin User', email: 'admin@example.com' },
+            { id: 'user-2', name: 'Editor User', email: 'editor@example.com' },
+          ],
+        },
       });
     }
     if (url === '/notification-preferences/projects/project-1/defaults') {
@@ -188,6 +199,7 @@ describe('ProjectSettingsDialog', () => {
     await waitFor(() => {
       expect(mockPatch).toHaveBeenCalledWith('/projects/project-1', {
         settings: expect.objectContaining({
+          defaultAssigneeUserId: 'user-2',
           widgetDialog: baseProject.settings?.widgetDialog,
           widgetLauncherButton: baseProject.settings?.widgetLauncherButton,
           screenshot: baseProject.settings?.screenshot,
@@ -226,6 +238,7 @@ describe('ProjectSettingsDialog', () => {
 
     await screen.findByRole('tab', { name: /widget dialog/i });
 
+    await user.click(screen.getByRole('tab', { name: /widget dialog/i }));
     await user.click(screen.getByRole('button', { name: /disable widget dialog/i }));
 
     await user.click(screen.getByRole('tab', { name: /widget button/i }));
@@ -253,5 +266,33 @@ describe('ProjectSettingsDialog', () => {
     expect(mockDelete).toHaveBeenCalledWith(
       '/notification-preferences/projects/project-1/defaults',
     );
+  });
+
+  it('updates the default assignee', async () => {
+    setupMockResponses(notificationDefaults);
+    const user = userEvent.setup();
+
+    renderWithQuery(
+      <ProjectSettingsDialog
+        project={{ id: 'project-1', name: 'Project' }}
+        open={true}
+        onOpenChange={() => undefined}
+      />,
+    );
+
+    await screen.findByRole('tab', { name: /assignments/i });
+
+    await user.click(screen.getByRole('tab', { name: /assignments/i }));
+    await user.click(screen.getByRole('combobox', { name: /default assignee/i }));
+    await user.click(await screen.findByText('Admin User'));
+    await user.click(screen.getByRole('button', { name: /save settings/i }));
+
+    await waitFor(() => {
+      expect(mockPatch).toHaveBeenCalledWith('/projects/project-1', {
+        settings: expect.objectContaining({
+          defaultAssigneeUserId: 'user-1',
+        }),
+      });
+    });
   });
 });

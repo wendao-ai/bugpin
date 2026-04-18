@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Checkbox } from '../components/ui/checkbox';
 import {
   Select,
@@ -43,22 +45,7 @@ import { Search, RefreshCw, CheckCircle, AlertCircle, Trash2, X } from 'lucide-r
 import { Spinner } from '../components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { formatDate as formatAbsoluteDate } from '../lib/utils';
-
-interface ReportItem {
-  id: string;
-  projectId: string;
-  projectName?: string;
-  title: string;
-  status: string;
-  priority: string;
-  createdAt: string;
-  metadata?: { url?: string };
-  reporterEmail?: string;
-  reporterName?: string;
-  githubSyncStatus?: 'pending' | 'synced' | 'error' | null;
-  githubIssueNumber?: number | null;
-  githubIssueUrl?: string | null;
-}
+import type { Report, User } from '@shared/types';
 
 interface Project {
   id: string;
@@ -66,6 +53,8 @@ interface Project {
 }
 
 export function Reports() {
+  const { user } = useAuth();
+  const canAssign = user?.role === 'admin' || user?.role === 'editor';
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -77,6 +66,7 @@ export function Reports() {
   const status = searchParams.get('status') || '';
   const priority = searchParams.get('priority') || '';
   const projectId = searchParams.get('projectId') || '';
+  const assignedTo = searchParams.get('assignedTo') || '';
 
   // Fetch projects for filter
   const { data: projectsData } = useQuery({
@@ -87,16 +77,26 @@ export function Reports() {
     },
   });
 
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: async () => {
+      const response = await api.get('/users/assignable');
+      return response.data.users as User[];
+    },
+    enabled: canAssign,
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: [
       'reports',
-      { page, status, priority, projectId, search: searchParams.get('search') },
+      { page, status, priority, projectId, assignedTo, search: searchParams.get('search') },
     ],
     queryFn: async () => {
       const params: Record<string, string> = { page: String(page), limit: '20' };
       if (status) params.status = status;
       if (priority) params.priority = priority;
       if (projectId) params.projectId = projectId;
+      if (assignedTo) params.assignedTo = assignedTo;
       if (searchParams.get('search')) params.search = searchParams.get('search')!;
 
       const response = await api.get('/reports', { params });
@@ -129,6 +129,17 @@ export function Reports() {
         toast.success(`Updated status to "${statusLabel}" for ${count} ${reportText}`);
       } else if (updates.priority) {
         toast.success(`Updated priority to "${updates.priority}" for ${count} ${reportText}`);
+      } else if (updates.assignedTo !== undefined) {
+        const assigneeName =
+          updates.assignedTo === null
+            ? 'unassigned'
+            : assignableUsers.find((assignee) => assignee.id === updates.assignedTo)?.name ||
+              'updated assignee';
+        toast.success(
+          updates.assignedTo === null
+            ? `Unassigned ${count} ${reportText}`
+            : `Assigned ${count} ${reportText} to ${assigneeName}`,
+        );
       }
     },
     onError: () => {
@@ -158,7 +169,7 @@ export function Reports() {
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked && data?.data) {
-      setSelectedIds(new Set(data.data.map((r: ReportItem) => r.id)));
+      setSelectedIds(new Set(data.data.map((r: Report) => r.id)));
     } else {
       setSelectedIds(new Set());
     }
@@ -190,6 +201,13 @@ export function Reports() {
     bulkUpdateMutation.mutate({
       ids: Array.from(selectedIds),
       updates: { priority: newPriority },
+    });
+  };
+
+  const handleBulkAssigneeUpdate = (assigneeId: string | null) => {
+    bulkUpdateMutation.mutate({
+      ids: Array.from(selectedIds),
+      updates: { assignedTo: assigneeId },
     });
   };
 
@@ -297,6 +315,25 @@ export function Reports() {
                 ))}
               </SelectContent>
             </Select>
+
+            {canAssign && (
+              <Select
+                value={assignedTo || 'all'}
+                onValueChange={(value) => handleFilterChange('assignedTo', value)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Assignees" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Assignees</SelectItem>
+                  {assignableUsers.map((assignee) => (
+                    <SelectItem key={assignee.id} value={assignee.id}>
+                      <AssigneeDisplay user={assignee} compact />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -365,6 +402,29 @@ export function Reports() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {canAssign && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={bulkUpdateMutation.isPending}>
+                        Assign
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleBulkAssigneeUpdate(null)}>
+                        Unassign
+                      </DropdownMenuItem>
+                      {assignableUsers.map((assignee) => (
+                        <DropdownMenuItem
+                          key={assignee.id}
+                          onClick={() => handleBulkAssigneeUpdate(assignee.id)}
+                        >
+                          <AssigneeDisplay user={assignee} />
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
                 {/* Delete button */}
                 <Button
                   variant="destructive"
@@ -422,7 +482,7 @@ export function Reports() {
             <CardContent className="p-12 text-center text-muted-foreground">No reports found</CardContent>
           </Card>
         ) : (
-          data?.data?.map((report: ReportItem) => (
+          data?.data?.map((report: Report) => (
             <Card
               key={report.id}
               className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(report.id) ? 'bg-muted/30' : ''}`}
@@ -447,6 +507,9 @@ export function Reports() {
                         {report.reporterName || report.reporterEmail}
                       </p>
                     )}
+                    <div className="mt-1">
+                      <AssigneeDisplay user={report.assignee} compact />
+                    </div>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <StatusBadge status={report.status} />
                       <PriorityBadge priority={report.priority} />
@@ -486,7 +549,7 @@ export function Reports() {
                 <Checkbox
                   checked={
                     data?.data?.length > 0 &&
-                    data.data.every((r: ReportItem) => selectedIds.has(r.id))
+                    data.data.every((r: Report) => selectedIds.has(r.id))
                   }
                   onCheckedChange={handleSelectAll}
                   aria-label="Select all"
@@ -496,6 +559,7 @@ export function Reports() {
               <TableHead>Project</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
+              <TableHead>Assignee</TableHead>
               <TableHead className="w-[50px]">
                 <RefreshCw className="h-4 w-4" />
               </TableHead>
@@ -505,18 +569,18 @@ export function Reports() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={8} className="text-center py-12">
                   <Spinner className="mx-auto text-primary" />
                 </TableCell>
               </TableRow>
             ) : data?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                   No reports found
                 </TableCell>
               </TableRow>
             ) : (
-              data?.data?.map((report: ReportItem) => (
+              data?.data?.map((report: Report) => (
                 <TableRow
                   key={report.id}
                   className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(report.id) ? 'bg-muted/30' : ''}`}
@@ -550,6 +614,9 @@ export function Reports() {
                   </TableCell>
                   <TableCell>
                     <PriorityBadge priority={report.priority} />
+                  </TableCell>
+                  <TableCell>
+                    <AssigneeDisplay user={report.assignee} compact />
                   </TableCell>
                   <TableCell>
                     <GitHubSyncIcon report={report} />
@@ -634,7 +701,7 @@ function formatDate(dateString: string): string {
   }
 }
 
-function GitHubSyncIcon({ report }: { report: ReportItem }) {
+function GitHubSyncIcon({ report }: { report: Report }) {
   if (!report.githubSyncStatus && !report.githubIssueUrl) {
     return null;
   }
@@ -697,4 +764,35 @@ function GitHubSyncIcon({ report }: { report: ReportItem }) {
   }
 
   return null;
+}
+
+function AssigneeDisplay({
+  user,
+  compact = false,
+}: {
+  user?: Pick<User, 'name' | 'email' | 'avatarUrl'>;
+  compact?: boolean;
+}) {
+  if (!user) {
+    return <span className="text-sm text-muted-foreground">Unassigned</span>;
+  }
+
+  const fallback = user.name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || '?';
+
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <Avatar className={compact ? 'h-6 w-6' : 'h-8 w-8'}>
+        {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.name} /> : null}
+        <AvatarFallback className="bg-bugpin-primary-100 text-bugpin-primary-700 dark:bg-bugpin-primary-900 dark:text-bugpin-primary-300 text-[10px]">
+          {fallback}
+        </AvatarFallback>
+      </Avatar>
+      <span className="text-sm text-muted-foreground truncate">{user.name}</span>
+    </div>
+  );
 }
