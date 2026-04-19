@@ -24,10 +24,43 @@ export function normalizeUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
+/**
+ * True for absolute http(s) URLs with a conventional host (registrable name, localhost, or IP).
+ * Does not use {@link normalizeUrl}; bare host strings are invalid.
+ */
+function isValidUrlHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (!h) {
+    return false;
+  }
+  if (h === 'localhost') {
+    return true;
+  }
+  if (h.includes('.')) {
+    return true;
+  }
+  // IPv4
+  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(h)) {
+    return true;
+  }
+  // IPv6 (WHATWG hostname omits brackets)
+  if (h.includes(':')) {
+    return true;
+  }
+  return false;
+}
+
 export function isValidUrl(url: string): boolean {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return false;
+  }
   try {
-    const parsed = new URL(normalizeUrl(url));
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    return isValidUrlHost(parsed.hostname);
   } catch {
     return false;
   }
