@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
 import { z, ZodSchema } from 'zod';
+import { isValidUrl, normalizeUrl } from '../utils/validators.js';
 
 // Types
 
@@ -129,6 +130,7 @@ export const schemas = {
   // Report filter query
   reportFilter: z.object({
     projectId: z.string().optional(),
+    source: z.enum(['widget', 'manual']).optional(),
     status: z.string().optional(), // comma-separated list
     priority: z.string().optional(), // comma-separated list
     assignedTo: z.string().optional(),
@@ -203,6 +205,24 @@ export const schemas = {
       priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).optional(),
       assignedTo: z.string().nullable().optional(),
     }),
+  }),
+
+  createManualReport: z.object({
+    projectId: z.string().min(1, 'Project ID is required'),
+    title: z.string().min(4, 'Title must be at least 4 characters').max(200),
+    description: z.string().optional(),
+    priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).optional(),
+    assignedTo: z.string().nullable().optional(),
+    reporterName: z.string().optional(),
+    reporterEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
+    url: z
+      .string()
+      .trim()
+      .optional()
+      .or(z.literal(''))
+      .transform((value) => (typeof value === 'string' ? normalizeUrl(value) : value))
+      .refine((value) => !value || isValidUrl(value), 'Invalid URL'),
+    channel: z.enum(['email', 'chat', 'phone', 'qa', 'other']).optional(),
   }),
 
   // Create webhook request

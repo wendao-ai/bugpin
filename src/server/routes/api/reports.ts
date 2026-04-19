@@ -17,6 +17,7 @@ reports.get('/', validate({ query: schemas.reportFilter }), async (c) => {
 
   const filter = {
     projectId: query.projectId,
+    source: query.source as 'widget' | 'manual' | undefined,
     status: query.status?.split(',') as ReportStatus[],
     priority: query.priority?.split(',') as ReportPriority[],
     assignedTo: query.assignedTo,
@@ -37,6 +38,115 @@ reports.get('/', validate({ query: schemas.reportFilter }), async (c) => {
     success: true,
     ...result.value,
   });
+});
+
+// Create Manual Report (Admin and Editor)
+
+reports.post('/', authorize(['admin', 'editor']), async (c) => {
+  const user = c.get('user');
+  const contentType = c.req.header('content-type') ?? '';
+  let body: Record<string, unknown> = {};
+  let files: File[] = [];
+
+  if (contentType.includes('multipart/form-data')) {
+    const formData = await c.req.parseBody({ all: true });
+    const dataField = formData.data;
+
+    if (typeof dataField === 'string') {
+      try {
+        body = JSON.parse(dataField);
+      } catch {
+        return c.json(
+          {
+            success: false,
+            error: 'INVALID_JSON',
+            message: 'Invalid JSON in data field',
+          },
+          400,
+        );
+      }
+    } else {
+      body = Object.fromEntries(
+        Object.entries(formData).filter(([key, value]) => key !== 'files' && !(value instanceof File)),
+      );
+    }
+
+    const fileField = formData.files;
+    if (Array.isArray(fileField)) {
+      files = fileField.filter((file): file is File => file instanceof File);
+    } else if (fileField instanceof File) {
+      files = [fileField];
+    }
+  } else {
+    body = await c.req.json().catch(() => ({}));
+  }
+
+  const validation = schemas.createManualReport.safeParse(body);
+  if (!validation.success) {
+    return c.json(
+      {
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: validation.error.issues.map((issue) => ({
+          field: issue.path.join('.') || 'body',
+          message: issue.message,
+        })),
+      },
+      400,
+    );
+  }
+
+  const parsedFiles: Array<{ data: Buffer; filename: string; mimeType: string }> = [];
+  for (const file of files) {
+    try {
+      parsedFiles.push({
+        data: Buffer.from(await file.arrayBuffer()),
+        filename: file.name,
+        mimeType: file.type,
+      });
+    } catch {
+      return c.json(
+        {
+          success: false,
+          error: 'FILE_READ_ERROR',
+          message: `Failed to read uploaded file "${file.name}"`,
+        },
+        400,
+      );
+    }
+  }
+
+  const result = await reportsService.createManual(
+    {
+      projectId: validation.data.projectId,
+      title: validation.data.title,
+      description: validation.data.description,
+      priority: validation.data.priority,
+      assignedTo:
+        validation.data.assignedTo === undefined ? undefined : validation.data.assignedTo || null,
+      reporterName: validation.data.reporterName || undefined,
+      reporterEmail: validation.data.reporterEmail || undefined,
+      url: validation.data.url || undefined,
+      channel: validation.data.channel,
+      files: parsedFiles,
+    },
+    user.id,
+  );
+
+  if (!result.success) {
+    const status =
+      result.code === 'PROJECT_NOT_FOUND' ? 404 : result.code === 'PROJECT_INACTIVE' ? 400 : 400;
+    return c.json({ success: false, error: result.code, message: result.error }, status);
+  }
+
+  return c.json(
+    {
+      success: true,
+      report: result.value,
+    },
+    201,
+  );
 });
 
 // Get Report Statistics (must be before /:id to avoid matching "stats" as an ID)

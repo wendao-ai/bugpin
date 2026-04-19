@@ -6,9 +6,27 @@ import { Result } from '../utils/result.js';
 /**
  * Simple URL validation
  */
+export function normalizeUrl(url: string): string {
+  const trimmed = url.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+
+  return `https://${trimmed}`;
+}
+
 export function isValidUrl(url: string): boolean {
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(normalizeUrl(url));
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
     return false;

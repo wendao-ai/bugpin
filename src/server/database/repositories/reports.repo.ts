@@ -16,6 +16,7 @@ import type {
 interface ReportRow {
   id: string;
   project_id: string;
+  source: 'widget' | 'manual';
   title: string;
   description: string | null;
   status: ReportStatus;
@@ -60,6 +61,7 @@ function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
     id: row.id,
     projectId: row.project_id,
     projectName: row.project_name ?? undefined,
+    source: row.source ?? 'widget',
     title: row.title,
     description: row.description ?? undefined,
     status: row.status,
@@ -102,13 +104,14 @@ export const reportsRepo = {
 
     db.run(
       `INSERT INTO reports (
-        id, project_id, title, description, status, priority,
+        id, project_id, source, title, description, status, priority,
         annotations, metadata, reporter_email, reporter_name, assigned_to,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.projectId,
+        data.source ?? 'widget',
         data.title,
         data.description ?? null,
         'open',
@@ -162,6 +165,11 @@ export const reportsRepo = {
     if (filter.projectId) {
       conditions.push('project_id = ?');
       params.push(filter.projectId);
+    }
+
+    if (filter.source) {
+      conditions.push('source = ?');
+      params.push(filter.source);
     }
 
     if (filter.status && filter.status.length > 0) {

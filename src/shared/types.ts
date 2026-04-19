@@ -2,6 +2,8 @@
 
 export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 export type ReportPriority = 'lowest' | 'low' | 'medium' | 'high' | 'highest';
+export type ReportSource = 'widget' | 'manual';
+export type ManualReportChannel = 'email' | 'chat' | 'phone' | 'qa' | 'other';
 export type UserRole = 'admin' | 'editor' | 'viewer';
 export type FileType = 'screenshot' | 'video' | 'attachment';
 export type GitHubSyncStatus = 'pending' | 'synced' | 'error';
@@ -9,21 +11,26 @@ export type GitHubSyncMode = 'manual' | 'automatic';
 
 // Report Types
 
+export interface ManualReportContext {
+  channel?: ManualReportChannel;
+  submittedByUserId?: string;
+}
+
 export interface ReportMetadata {
-  url: string;
+  url?: string;
   title?: string;
   referrer?: string;
-  browser: {
+  browser?: {
     name: string;
     version: string;
     userAgent: string;
   };
-  device: {
+  device?: {
     type: 'desktop' | 'tablet' | 'mobile';
     os: string;
     osVersion?: string;
   };
-  viewport: {
+  viewport?: {
     width: number;
     height: number;
     devicePixelRatio: number;
@@ -36,6 +43,7 @@ export interface ReportMetadata {
   networkErrors?: NetworkError[];
   userActivity?: UserActivity[];
   storageKeys?: StorageKeys;
+  manualContext?: ManualReportContext;
 }
 
 export interface ConsoleError {
@@ -72,6 +80,7 @@ export interface Report {
   id: string;
   projectId: string;
   projectName?: string; // Only populated in list queries with JOIN
+  source: ReportSource;
   title: string;
   description?: string;
   status: ReportStatus;
@@ -331,6 +340,7 @@ export interface CreateReportRequest {
 
 export interface ReportFilter {
   projectId?: string;
+  source?: ReportSource;
   status?: ReportStatus[];
   priority?: ReportPriority[];
   assignedTo?: string;

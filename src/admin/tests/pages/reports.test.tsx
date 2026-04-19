@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/server';
 import { renderWithProviders } from '../utils';
 import { Reports } from '../../pages/Reports';
+import { api } from '../../api/client';
 
 describe('Reports Page', () => {
   it('renders reports page heading', async () => {
@@ -58,10 +59,11 @@ describe('Reports Page', () => {
       http.get('/api/reports', () => {
         return HttpResponse.json({
           success: true,
-          reports: [],
+          data: [],
           total: 0,
           page: 1,
           limit: 20,
+          totalPages: 0,
         });
       }),
     );
@@ -229,6 +231,78 @@ describe('Reports Page - Bulk Actions', () => {
       expect(screen.getAllByText('Button not working')[0]).toBeInTheDocument();
       expect(screen.queryByText('Page layout broken')).not.toBeInTheDocument();
     });
+  });
+
+  it('filters reports by source', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Reports />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Button not working')[0]).toBeInTheDocument();
+    });
+
+    const comboboxes = screen.getAllByRole('combobox');
+    await user.click(comboboxes[4]);
+    await user.click(await screen.findByText('Manual'));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Form validation issue')[0]).toBeInTheDocument();
+      expect(screen.queryByText('Button not working')).not.toBeInTheDocument();
+    });
+  });
+
+  it('creates a manual report from the modal', async () => {
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValue({
+      data: {
+        success: true,
+        report: {
+          id: 'report-new',
+          source: 'manual',
+          title: 'Escalated QA issue',
+          status: 'open',
+          priority: 'medium',
+          projectId: 'project-1',
+          createdAt: '2024-01-17T12:00:00Z',
+          updatedAt: '2024-01-17T12:00:00Z',
+          metadata: {
+            timestamp: '2024-01-17T12:00:00Z',
+            manualContext: {
+              channel: 'qa',
+              submittedByUserId: 'user-1',
+            },
+          },
+        },
+      },
+    } as never);
+
+    const user = userEvent.setup();
+    renderWithProviders(<Reports />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Create Report' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Create Report' }));
+    await user.type(screen.getByLabelText('Title'), 'Escalated QA issue');
+    await user.type(screen.getByLabelText('Description'), 'Created manually from support.');
+    await user.type(screen.getByLabelText('URL'), 'bugpin.io');
+    await user.tab();
+    const createButtons = screen.getAllByRole('button', { name: 'Create Report' });
+    await user.click(createButtons[createButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(postSpy).toHaveBeenCalled();
+    });
+
+    const formData = postSpy.mock.calls[0]?.[1] as FormData;
+    const data = JSON.parse(String(formData.get('data') ?? '{}')) as { title?: string; url?: string };
+    expect(data.title).toBe('Escalated QA issue');
+    expect(data.url).toBe('https://bugpin.io');
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Reports' })).toBeInTheDocument();
+    });
+    postSpy.mockRestore();
   });
 
   it('selects all reports when header checkbox is clicked', async () => {

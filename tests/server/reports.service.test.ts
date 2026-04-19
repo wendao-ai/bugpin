@@ -50,6 +50,7 @@ const baseProject: Project = {
 const baseReport: Report = {
   id: 'rpt_1',
   projectId: 'prj_1',
+  source: 'widget',
   title: 'Bug report',
   description: 'Details',
   status: 'open',
@@ -79,6 +80,7 @@ let webhooksCreatedCalls = 0;
 let webhooksUpdatedArgs: Array<{ reportId: string; changes: Record<string, unknown> }> = [];
 let webhooksDeletedCalls = 0;
 let notifyNewReportCalls = 0;
+let notifyReporterSubmissionCalls = 0;
 let notifyStatusCalls = 0;
 let notifyPriorityCalls = 0;
 let notifyAssignmentCalls = 0;
@@ -96,6 +98,7 @@ beforeEach(() => {
   webhooksUpdatedArgs = [];
   webhooksDeletedCalls = 0;
   notifyNewReportCalls = 0;
+  notifyReporterSubmissionCalls = 0;
   notifyStatusCalls = 0;
   notifyPriorityCalls = 0;
   notifyAssignmentCalls = 0;
@@ -146,6 +149,9 @@ beforeEach(() => {
 
   notificationsService.notifyNewReport = async () => {
     notifyNewReportCalls += 1;
+  };
+  notificationsService.notifyReporterSubmission = async () => {
+    notifyReporterSubmissionCalls += 1;
   };
   notificationsService.notifyStatusChange = async () => {
     notifyStatusCalls += 1;
@@ -257,6 +263,7 @@ describe('reportsService.create', () => {
     await Promise.resolve();
     expect(webhooksCreatedCalls).toBe(1);
     expect(notifyNewReportCalls).toBe(1);
+    expect(notifyReporterSubmissionCalls).toBe(1);
   });
 
   it('applies project default assignee when creating a report', async () => {
@@ -313,7 +320,7 @@ describe('reportsService.create', () => {
       apiKey: 'proj_key',
       title: 'Media Bug',
       metadata: baseMetadata,
-      media: [
+      files: [
         {
           filename: 'screen.png',
           mimeType: 'image/png',
@@ -334,7 +341,7 @@ describe('reportsService.create', () => {
       apiKey: 'proj_key',
       title: 'Media Types',
       metadata: baseMetadata,
-      media: [
+      files: [
         {
           filename: 'screen.png',
           mimeType: 'image/png',
@@ -349,6 +356,51 @@ describe('reportsService.create', () => {
     });
     expect(result.success).toBe(true);
     expect(fileCreateTypes).toEqual(['screenshot', 'video']);
+  });
+
+  it('creates manual reports without reporter submission confirmation', async () => {
+    projectsRepo.findById = async () => baseProject;
+
+    const result = await reportsService.createManual(
+      {
+        projectId: 'prj_1',
+        title: 'Manual report',
+        reporterEmail: 'reporter@example.com',
+        channel: 'email',
+      },
+      'usr_1',
+    );
+
+    expect(result.success).toBe(true);
+    expect(createdReportInput).toMatchObject({
+      projectId: 'prj_1',
+      source: 'manual',
+      metadata: {
+        manualContext: {
+          channel: 'email',
+          submittedByUserId: 'usr_1',
+        },
+      },
+    });
+    await Promise.resolve();
+    expect(notifyNewReportCalls).toBe(1);
+    expect(notifyReporterSubmissionCalls).toBe(0);
+  });
+
+  it('rejects invalid manual assignees', async () => {
+    projectsRepo.findById = async () => baseProject;
+    usersService.getAssignableById = async () => Result.fail('Not assignable', 'USER_INACTIVE');
+
+    const result = await reportsService.createManual(
+      {
+        projectId: 'prj_1',
+        title: 'Manual report',
+        assignedTo: 'usr_2',
+      },
+      'usr_1',
+    );
+
+    expect(result.success).toBe(false);
   });
 });
 

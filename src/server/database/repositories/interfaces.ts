@@ -4,6 +4,7 @@ import type {
   ReportStatus,
   ReportPriority,
   ReportMetadata,
+  ReportSource,
   Project,
   ProjectSettings,
   User,
@@ -28,6 +29,7 @@ import type {
 
 export interface CreateReportData {
   projectId: string;
+  source?: ReportSource;
   title: string;
   description?: string;
   priority?: ReportPriority;

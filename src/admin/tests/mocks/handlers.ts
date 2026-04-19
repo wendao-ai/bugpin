@@ -70,6 +70,7 @@ export const mockProjects = [
 export const mockReports = [
   {
     id: 'report-1',
+    source: 'widget' as const,
     title: 'Button not working',
     description: 'The submit button does not respond to clicks',
     status: 'open',
@@ -88,9 +89,10 @@ export const mockReports = [
     updatedAt: '2024-01-15T10:30:00Z',
     metadata: {
       url: 'https://example.com/page',
-      browser: { name: 'Chrome', version: '120.0.0' },
+      browser: { name: 'Chrome', version: '120.0.0', userAgent: 'Chrome/120.0.0' },
       device: { type: 'desktop', os: 'macOS', osVersion: '14.0' },
-      viewport: { width: 1920, height: 1080 },
+      viewport: { width: 1920, height: 1080, devicePixelRatio: 1 },
+      timestamp: '2024-01-15T10:30:00Z',
       consoleErrors: [],
     },
     githubSyncStatus: 'synced' as const,
@@ -100,6 +102,7 @@ export const mockReports = [
   },
   {
     id: 'report-2',
+    source: 'widget' as const,
     title: 'Page layout broken',
     description: 'The page layout is broken on mobile',
     status: 'in_progress',
@@ -118,9 +121,10 @@ export const mockReports = [
     updatedAt: '2024-01-15T11:00:00Z',
     metadata: {
       url: 'https://example.com/mobile',
-      browser: { name: 'Safari', version: '17.0' },
+      browser: { name: 'Safari', version: '17.0', userAgent: 'Safari/17.0' },
       device: { type: 'mobile', os: 'iOS', osVersion: '17.0' },
-      viewport: { width: 390, height: 844 },
+      viewport: { width: 390, height: 844, devicePixelRatio: 3 },
+      timestamp: '2024-01-14T09:00:00Z',
       consoleErrors: [{ message: 'TypeError: Cannot read property' }],
     },
     githubSyncStatus: 'error' as const,
@@ -128,6 +132,7 @@ export const mockReports = [
   },
   {
     id: 'report-3',
+    source: 'manual' as const,
     title: 'Form validation issue',
     description: 'Form does not validate email properly',
     status: 'open',
@@ -139,10 +144,11 @@ export const mockReports = [
     updatedAt: '2024-01-16T08:00:00Z',
     metadata: {
       url: 'https://example.com/form',
-      browser: { name: 'Firefox', version: '121.0' },
-      device: { type: 'desktop', os: 'Windows', osVersion: '11' },
-      viewport: { width: 1440, height: 900 },
-      consoleErrors: [],
+      timestamp: '2024-01-16T08:00:00Z',
+      manualContext: {
+        channel: 'email',
+        submittedByUserId: 'user-1',
+      },
     },
     githubSyncStatus: 'pending' as const,
   },
@@ -257,12 +263,14 @@ export const handlers = [
     const status = url.searchParams.get('status');
     const priority = url.searchParams.get('priority');
     const assignedTo = url.searchParams.get('assignedTo');
+    const source = url.searchParams.get('source');
     const limit = parseInt(url.searchParams.get('limit') || '20', 10);
 
     let filtered = [...mockReports];
     if (status) filtered = filtered.filter((r) => r.status === status);
     if (priority) filtered = filtered.filter((r) => r.priority === priority);
     if (assignedTo) filtered = filtered.filter((r) => r.assignedTo === assignedTo);
+    if (source) filtered = filtered.filter((r) => r.source === source);
 
     // Apply limit
     const limited = filtered.slice(0, limit);
@@ -310,6 +318,41 @@ export const handlers = [
       success: true,
       report: { ...report, ...updates },
     });
+  }),
+
+  http.post('/api/reports', async ({ request }) => {
+    const formData = await request.formData();
+    const dataField = formData.get('data');
+    const body = typeof dataField === 'string' ? JSON.parse(dataField) : {};
+
+    return HttpResponse.json(
+      {
+        success: true,
+        report: {
+          id: 'report-new',
+          source: 'manual',
+          title: body.title,
+          description: body.description,
+          status: 'open',
+          priority: body.priority || 'medium',
+          projectId: body.projectId,
+          assignedTo: body.assignedTo ?? undefined,
+          reporterEmail: body.reporterEmail,
+          reporterName: body.reporterName,
+          createdAt: '2024-01-17T12:00:00Z',
+          updatedAt: '2024-01-17T12:00:00Z',
+          metadata: {
+            url: body.url,
+            timestamp: '2024-01-17T12:00:00Z',
+            manualContext: {
+              channel: body.channel,
+              submittedByUserId: 'user-1',
+            },
+          },
+        },
+      },
+      { status: 201 },
+    );
   }),
 
   http.delete('/api/reports/:id', ({ params }) => {

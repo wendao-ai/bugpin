@@ -145,6 +145,7 @@ export async function initSchema(): Promise<void> {
     CREATE TABLE IF NOT EXISTS reports (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      source TEXT DEFAULT 'widget' NOT NULL CHECK(source IN ('widget', 'manual')),
       title TEXT NOT NULL,
       description TEXT,
       status TEXT DEFAULT 'open' NOT NULL CHECK(status IN ('open', 'in_progress', 'resolved', 'closed')),
@@ -168,9 +169,18 @@ export async function initSchema(): Promise<void> {
       github_synced_at TEXT NULL
     )
   `);
+
+  // Add source column to existing databases before creating indexes that depend on it.
+  try {
+    db.exec(`ALTER TABLE reports ADD COLUMN source TEXT NOT NULL DEFAULT 'widget'`);
+  } catch {
+    // Column already exists
+  }
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_project ON reports(project_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_priority ON reports(priority)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_source ON reports(source)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_assigned_to ON reports(assigned_to)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_project_status ON reports(project_id, status)`);

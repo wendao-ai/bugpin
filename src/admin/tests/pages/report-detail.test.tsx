@@ -142,4 +142,38 @@ describe('ReportDetail', () => {
       expect(toast.success).toHaveBeenCalledWith('Sync retry initiated');
     });
   });
+
+  it('renders manual reports without empty environment placeholders', async () => {
+    server.use(
+      http.get('/api/reports/:id', () => {
+        return HttpResponse.json({
+          success: true,
+          report: {
+            ...mockReports[2],
+            source: 'manual',
+            metadata: {
+              timestamp: '2024-01-16T08:00:00Z',
+              manualContext: {
+                channel: 'email',
+                submittedByUserId: 'user-1',
+              },
+            },
+          },
+          files: [],
+        });
+      }),
+    );
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/reports/:id" element={<ReportDetail />} />
+      </Routes>,
+      { initialEntries: ['/reports/report-3'] },
+    );
+
+    expect(await screen.findByText('Form validation issue')).toBeInTheDocument();
+    expect(screen.getAllByText('manual')[0]).toBeInTheDocument();
+    expect(screen.getByText('Manual Report')).toBeInTheDocument();
+    expect(screen.queryByText('Environment')).not.toBeInTheDocument();
+  });
 });

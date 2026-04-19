@@ -94,7 +94,7 @@ export const emailService = {
       });
 
       // Send individual emails per recipient in batches to avoid overwhelming the SMTP server
-      const fromAddress = `"${settings.appName}" <${settings.smtpConfig.from}>`;
+      const fromAddress = `"${settings.appName || 'BugPin'}" <${settings.smtpConfig.from}>`;
       const batchSize = 10;
 
       for (let i = 0; i < options.to.length; i += batchSize) {
@@ -737,7 +737,7 @@ export const emailService = {
   async sendTestEmail(
     config: SMTPConfig,
     recipientEmail: string,
-    appName: string = 'BugPin',
+    appName?: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
       if (!config.host || !config.from) {
@@ -761,10 +761,11 @@ export const emailService = {
 
       // Get template and compile
       const settings = await settingsCacheService.getAll();
+      const resolvedAppName = appName || settings.appName || 'BugPin';
       const template = await this.getTemplate('testEmail');
       const templateData = {
         app: {
-          name: appName,
+          name: resolvedAppName,
         },
       };
 
@@ -778,11 +779,11 @@ export const emailService = {
 
       // Send test email
       await transporter.sendMail({
-        from: `"${appName}" <${config.from}>`,
+        from: `"${resolvedAppName}" <${config.from}>`,
         to: recipientEmail,
         subject,
         html,
-        text: `This is a test email from ${appName} to verify your SMTP configuration is working correctly.`,
+        text: `This is a test email from ${resolvedAppName} to verify your SMTP configuration is working correctly.`,
       });
 
       logger.info('Test email sent successfully', { to: recipientEmail });

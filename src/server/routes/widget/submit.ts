@@ -222,7 +222,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
     title: data.title,
     description: data.description,
     priority: data.priority,
-    media,
+    files: media,
     annotations: data.annotations as object,
     metadata: data.metadata as ReportMetadata,
     reporterEmail: data.reporterEmail || undefined,

@@ -53,7 +53,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../componen
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Spinner } from '../components/ui/spinner';
 import { formatDate, formatDateTime } from '../lib/utils';
-import type { AppSettings, Project, Report, User } from '@shared/types';
+import type { AppSettings, Project, Report, ReportSource, User } from '@shared/types';
 
 const UNASSIGNED_VALUE = '__unassigned__';
 
@@ -205,6 +205,24 @@ export function ReportDetail() {
   const consoleErrors = report.metadata.consoleErrors ?? [];
   const networkErrors = report.metadata.networkErrors ?? [];
   const userActivity = report.metadata.userActivity ?? [];
+  const appName = settingsData?.appName || 'BugPin';
+  const manualChannel = report.metadata.manualContext?.channel;
+  const hasPageInfo = Boolean(
+    report.metadata?.url ||
+      report.metadata?.title ||
+      report.metadata?.referrer ||
+      report.metadata?.pageLoadTime ||
+      report.metadata?.timezone,
+  );
+  const hasEnvironment = Boolean(
+    report.metadata?.browser?.name ||
+      report.metadata?.browser?.version ||
+      report.metadata?.device?.os ||
+      report.metadata?.device?.osVersion ||
+      report.metadata?.device?.type ||
+      report.metadata?.viewport?.width ||
+      report.metadata?.viewport?.height,
+  );
 
   const messagingEnabled = (() => {
     if (projectData?.settings?.notifyReporter === false) return false;
@@ -867,6 +885,18 @@ export function ReportDetail() {
               </div>
               <Separator />
               <div className="space-y-1">
+                <Label className="text-muted-foreground">Source</Label>
+                <div>
+                  <SourceBadge source={report.source} />
+                </div>
+              </div>
+              {manualChannel && (
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground">Channel</Label>
+                  <p className="text-sm capitalize">{manualChannel}</p>
+                </div>
+              )}
+              <div className="space-y-1">
                 <Label className="text-muted-foreground">Created</Label>
                 <p className="text-sm">{formatDateTime(report.createdAt)}</p>
               </div>
@@ -885,45 +915,73 @@ export function ReportDetail() {
           </Card>
 
           {/* Page Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Page Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <InfoRow label="URL" value={report.metadata?.url} isLink />
-              <InfoRow label="Page Title" value={report.metadata?.title} />
-              <InfoRow label="Referrer" value={report.metadata?.referrer} isLink />
-              <InfoRow
-                label="Load Time"
-                value={
-                  report.metadata?.pageLoadTime ? `${report.metadata.pageLoadTime}ms` : undefined
-                }
-              />
-              <InfoRow label="Timezone" value={report.metadata?.timezone} />
-            </CardContent>
-          </Card>
+          {hasPageInfo && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Page Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <InfoRow label="URL" value={report.metadata?.url} isLink />
+                <InfoRow label="Page Title" value={report.metadata?.title} />
+                <InfoRow label="Referrer" value={report.metadata?.referrer} isLink />
+                <InfoRow
+                  label="Load Time"
+                  value={
+                    report.metadata?.pageLoadTime ? `${report.metadata.pageLoadTime}ms` : undefined
+                  }
+                />
+                <InfoRow label="Timezone" value={report.metadata?.timezone} />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Environment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Environment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <InfoRow
-                label="Browser"
-                value={`${report.metadata?.browser?.name} ${report.metadata?.browser?.version}`}
-              />
-              <InfoRow
-                label="OS"
-                value={`${report.metadata?.device?.os} ${report.metadata?.device?.osVersion || ''}`}
-              />
-              <InfoRow label="Device" value={report.metadata?.device?.type} />
-              <InfoRow
-                label="Viewport"
-                value={`${report.metadata?.viewport?.width}x${report.metadata?.viewport?.height}`}
-              />
-            </CardContent>
-          </Card>
+          {hasEnvironment && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Environment</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <InfoRow
+                  label="Browser"
+                  value={formatEnvironmentValue(
+                    report.metadata?.browser?.name,
+                    report.metadata?.browser?.version,
+                  )}
+                />
+                <InfoRow
+                  label="OS"
+                  value={formatEnvironmentValue(
+                    report.metadata?.device?.os,
+                    report.metadata?.device?.osVersion,
+                  )}
+                />
+                <InfoRow label="Device" value={report.metadata?.device?.type} />
+                <InfoRow
+                  label="Viewport"
+                  value={
+                    report.metadata?.viewport?.width && report.metadata?.viewport?.height
+                      ? `${report.metadata.viewport.width}x${report.metadata.viewport.height}`
+                      : undefined
+                  }
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {report.source === 'manual' && !hasPageInfo && !hasEnvironment && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Manual Report</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="text-muted-foreground">
+                  This report was created manually in {appName} and does not include widget capture data.
+                </p>
+                {manualChannel && <InfoRow label="Channel" value={manualChannel} />}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Reporter Messages */}
           {report.reporterEmail && messagingEnabled && (
@@ -1204,6 +1262,21 @@ function PriorityBadge({ priority }: { priority: string }) {
       {priority}
     </Badge>
   );
+}
+
+function SourceBadge({ source }: { source?: ReportSource }) {
+  const resolvedSource = source ?? 'widget';
+
+  return (
+    <Badge variant="secondary" className="uppercase text-[10px] tracking-wide">
+      {resolvedSource}
+    </Badge>
+  );
+}
+
+function formatEnvironmentValue(...parts: Array<string | undefined>) {
+  const value = parts.filter(Boolean).join(' ').trim();
+  return value || undefined;
 }
 
 function AssigneeDisplay({
