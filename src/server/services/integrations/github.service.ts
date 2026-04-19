@@ -163,6 +163,7 @@ async function uploadFileToGitHub(
   fileName: string,
   reportId: string,
   githubConfig: GitHubConfig,
+  appName: string,
 ): Promise<UploadResult> {
   const { owner, repo, accessToken } = githubConfig;
   const path = `.bugpin/files/${reportId}/${fileName}`;
@@ -193,7 +194,7 @@ async function uploadFileToGitHub(
         method: 'PUT',
         headers,
         body: JSON.stringify({
-          message: `[BugPin] Add file for report ${reportId}`,
+          message: `[${appName}] Add file for report ${reportId}`,
           content,
         }),
       },
@@ -250,6 +251,8 @@ async function uploadReportFiles(
   reportId: string,
   githubConfig: GitHubConfig,
 ): Promise<UploadFilesResult> {
+  const settings = await settingsRepo.getAll();
+  const appName = settings.appName || 'BugPin';
   const uploadedUrls = new Map<string, string>();
   let lastError: string | undefined;
 
@@ -274,7 +277,7 @@ async function uploadReportFiles(
       continue;
     }
 
-    const result = await uploadFileToGitHub(buffer, file.filename, reportId, githubConfig);
+    const result = await uploadFileToGitHub(buffer, file.filename, reportId, githubConfig, appName);
     if (result.url) {
       uploadedUrls.set(file.filename, result.url);
     } else {
@@ -320,6 +323,7 @@ async function buildIssueBody(
   };
 
   const settings = await settingsRepo.getAll();
+  const appName = settings.appName || 'BugPin';
   const appUrl = settings.appUrl || '';
   const reportUrl = appUrl ? `${appUrl}/admin/reports/${report.id}` : '';
 
@@ -453,7 +457,7 @@ ${metadata.userActivity
             body += `\n![${screenshot.filename}](${imageUrl})`;
             if (uploadResult) {
               const reason = uploadResult.uploadError || 'unknown error';
-              body += `\n_File hosted on BugPin server (GitHub upload failed: ${reason}). File may not display if the server is not publicly accessible._`;
+              body += `\n_File hosted on ${appName} server (GitHub upload failed: ${reason}). File may not display if the server is not publicly accessible._`;
             }
             body += '\n';
           }
@@ -492,7 +496,7 @@ ${metadata.userActivity
             }
             if (uploadResult) {
               const reason = uploadResult.uploadError || 'unknown error';
-              body += `\n_File hosted on BugPin server (GitHub upload failed: ${reason}). File may not display if the server is not publicly accessible._`;
+              body += `\n_File hosted on ${appName} server (GitHub upload failed: ${reason}). File may not display if the server is not publicly accessible._`;
             }
             body += '\n';
           }
@@ -501,16 +505,16 @@ ${metadata.userActivity
     }
   }
 
-  // Add link to BugPin report if available
+  // Add link to the report if available
   if (reportUrl) {
     body += `
-> [View full report in BugPin](${reportUrl})
+> [View full report in ${appName}](${reportUrl})
 `;
   }
 
   body += `
 ---
-*Reported via [BugPin](https://github.com/AranticDev/bugpin)*`;
+*Reported via ${appName}*`;
 
   return body;
 }

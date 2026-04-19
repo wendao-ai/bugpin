@@ -31,6 +31,6 @@ export default defineConfig({
     },
     minify: 'esbuild',
     cssCodeSplit: false,
-    sourcemap: true,
+    sourcemap: false,
   },
 });

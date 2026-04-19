@@ -42,6 +42,9 @@ CLAUDE.md
 AGENT.md
 GEMINI.md
 
+# Obsidian files
+.obsidian/
+
 # Build automation
 Makefile
 

@@ -11,6 +11,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Badge } from '../../components/ui/badge';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import {
   Table,
   TableBody,
@@ -45,19 +47,9 @@ import {
   AlertDialogTitle,
 } from '../../components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Trash2, RefreshCw, Mail } from 'lucide-react';
+import { Trash2, RefreshCw, Mail, ChevronsUpDown } from 'lucide-react';
 import { Spinner } from '../../components/ui/spinner';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-  role: string;
-  isActive: boolean;
-  invitationSentAt?: string;
-  invitationAcceptedAt?: string;
-}
+import type { DefaultProjectReference, Project, User } from '@shared/types';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -84,6 +76,14 @@ export function UsersSettings() {
     queryFn: async () => {
       const response = await api.get('/users');
       return response.data.users as User[];
+    },
+  });
+
+  const { data: projects = [], isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const response = await api.get('/projects');
+      return response.data.projects as Project[];
     },
   });
 
@@ -125,12 +125,21 @@ export function UsersSettings() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; role?: string; isActive?: boolean }) => {
+    mutationFn: async ({
+      id,
+      ...data
+    }: {
+      id: string;
+      role?: string;
+      isActive?: boolean;
+      defaultProjectIds?: string[];
+    }) => {
       const response = await api.patch(`/users/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('User updated successfully');
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
@@ -156,6 +165,20 @@ export function UsersSettings() {
     return !!(user.invitationSentAt && !user.invitationAcceptedAt);
   };
 
+  const isAssignableUser = (user: User): boolean => {
+    return user.isActive && !isPendingInvitation(user);
+  };
+
+  const getDefaultProjects = (user: User): DefaultProjectReference[] => {
+    return user.defaultProjects ?? [];
+  };
+
+  const getDefaultProjectsLabel = (defaultProjects: DefaultProjectReference[]): string => {
+    if (defaultProjects.length === 0) return 'No default projects';
+    if (defaultProjects.length === 1) return defaultProjects[0].name;
+    return `${defaultProjects.length} default projects`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -175,6 +198,7 @@ export function UsersSettings() {
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
+              <TableHead>Default Projects</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -183,7 +207,7 @@ export function UsersSettings() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12">
+                <TableCell colSpan={5} className="text-center py-12">
                   <Spinner className="mx-auto text-primary" />
                 </TableCell>
               </TableRow>
@@ -206,6 +230,79 @@ export function UsersSettings() {
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell className="align-top">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="h-11 w-[240px] justify-between text-left"
+                        >
+                          <span className="truncate">
+                            {getDefaultProjectsLabel(getDefaultProjects(user))}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-80 p-0">
+                        <div className="border-b px-4 py-3">
+                          <p className="text-sm font-medium">Default Projects</p>
+                          <p className="text-xs text-muted-foreground">
+                            New reports from selected projects are assigned to {user.name}.
+                          </p>
+                          {!isAssignableUser(user) ? (
+                            <p className="mt-2 text-xs text-amber-600">
+                              This user must be active and have accepted their invitation before
+                              they can be added to new default projects.
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="max-h-72 overflow-y-auto p-2">
+                          {isLoadingProjects ? (
+                            <div className="py-4 text-center">
+                              <Spinner className="mx-auto text-primary" />
+                            </div>
+                          ) : projects.length === 0 ? (
+                            <p className="px-2 py-3 text-sm text-muted-foreground">
+                              No projects available.
+                            </p>
+                          ) : (
+                            projects.map((project) => {
+                              const selectedProjectIds = new Set(
+                                getDefaultProjects(user).map((item) => item.id),
+                              );
+                              const checked = selectedProjectIds.has(project.id);
+                              const disabled = !checked && !isAssignableUser(user);
+
+                              return (
+                                <label
+                                  key={project.id}
+                                  className={`flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-accent ${
+                                    disabled ? 'cursor-not-allowed opacity-60' : ''
+                                  }`}
+                                >
+                                  <Checkbox
+                                    checked={checked}
+                                    disabled={disabled || updateMutation.isPending}
+                                    onCheckedChange={(nextChecked) => {
+                                      const nextProjectIds = nextChecked
+                                        ? [...selectedProjectIds, project.id]
+                                        : [...selectedProjectIds].filter((id) => id !== project.id);
+
+                                      updateMutation.mutate({
+                                        id: user.id,
+                                        defaultProjectIds: nextProjectIds,
+                                      });
+                                    }}
+                                  />
+                                  <span className="flex-1">{project.name}</span>
+                                </label>
+                              );
+                            })
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </TableCell>
                   <TableCell>
                     <Select

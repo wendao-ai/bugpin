@@ -88,6 +88,70 @@ describe('database lifecycle', () => {
     expect(fs.existsSync(config.screenshotsDir)).toBe(true);
   });
 
+  it('adds missing report source column before creating source indexes', async () => {
+    const snapshot = { ...config };
+    const baseDir = fs.mkdtempSync(path.join(tmpdir(), 'bugpin-db-legacy-reports-'));
+
+    Object.assign(config, {
+      dataDir: baseDir,
+      dbPath: path.join(baseDir, 'bugpin.db'),
+      uploadsDir: path.join(baseDir, 'uploads'),
+      screenshotsDir: path.join(baseDir, 'uploads', 'screenshots'),
+      attachmentsDir: path.join(baseDir, 'uploads', 'attachments'),
+      brandingDir: path.join(baseDir, 'uploads', 'branding'),
+      avatarsDir: path.join(baseDir, 'uploads', 'avatars'),
+    });
+
+    try {
+      await initDatabase();
+
+      const db = getDb();
+      db.exec(`
+        CREATE TABLE reports (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT,
+          status TEXT DEFAULT 'open' NOT NULL,
+          priority TEXT DEFAULT 'medium' NOT NULL,
+          annotations JSON,
+          metadata JSON NOT NULL,
+          reporter_email TEXT,
+          reporter_name TEXT,
+          assigned_to TEXT,
+          custom_fields JSON DEFAULT '{}',
+          created_at TEXT DEFAULT (datetime('now')) NOT NULL,
+          updated_at TEXT DEFAULT (datetime('now')) NOT NULL,
+          resolved_at TEXT,
+          resolved_by TEXT,
+          closed_at TEXT,
+          forwarded_to JSON DEFAULT '[]',
+          github_sync_status TEXT NULL,
+          github_sync_error TEXT NULL,
+          github_issue_number INTEGER NULL,
+          github_issue_url TEXT NULL,
+          github_synced_at TEXT NULL
+        )
+      `);
+
+      await initSchema();
+
+      const sourceColumn = db
+        .query("SELECT name FROM pragma_table_info('reports') WHERE name = 'source'")
+        .get() as { name?: string } | undefined;
+      const sourceIndex = db
+        .query("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_reports_source'")
+        .get() as { name?: string } | undefined;
+
+      expect(sourceColumn?.name).toBe('source');
+      expect(sourceIndex?.name).toBe('idx_reports_source');
+    } finally {
+      closeDatabase();
+      fs.rmSync(baseDir, { recursive: true, force: true });
+      Object.assign(config, snapshot);
+    }
+  });
+
   it('runs migrations when none exist', async () => {
     await initDatabase();
     await initSchema();

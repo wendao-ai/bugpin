@@ -701,7 +701,10 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
   }, [handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp]);
 
   const handleSave = useCallback(() => {
-    if (!fabricRef.current) return;
+    if (!fabricRef.current) {
+      onSave(screenshot, { objects: [] });
+      return;
+    }
 
     const canvas = fabricRef.current;
 

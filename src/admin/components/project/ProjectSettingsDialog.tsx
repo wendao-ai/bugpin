@@ -30,15 +30,18 @@ import { WidgetLauncherButtonSettingsForm } from '../WidgetLauncherButtonSetting
 import { ScreenshotSettingsForm } from '../ScreenshotSettingsForm';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { NotificationSettingsForm } from '../NotificationSettingsForm';
 import { ReporterNotificationSettingsForm } from '../ReporterNotificationSettingsForm';
 import { ProjectWhitelistForm } from './ProjectWhitelistForm';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface ProjectSettingsDialogProps {
   project: { id: string; name: string; settings?: ProjectSettings };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultTab?:
+    | 'assignments'
     | 'widgetDialog'
     | 'widgetLauncherButton'
     | 'screenshot'
@@ -48,11 +51,13 @@ interface ProjectSettingsDialogProps {
 
 import type { NotificationDefaultSettings } from '@shared/types';
 
+const UNASSIGNED_VALUE = '__unassigned__';
+
 export function ProjectSettingsDialog({
   project,
   open,
   onOpenChange,
-  defaultTab = 'widgetDialog',
+  defaultTab = 'assignments',
 }: ProjectSettingsDialogProps) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -77,6 +82,9 @@ export function ProjectSettingsDialog({
 
   // Reporter notification settings state
   const [reporterSettings, setReporterSettings] = useState<Partial<ReporterNotificationSettings>>({});
+
+  // Assignment settings state
+  const [defaultAssigneeUserId, setDefaultAssigneeUserId] = useState<string | null>(null);
 
   // Whitelist settings state
   const [useCustomWhitelist, setUseCustomWhitelist] = useState(false);
@@ -120,6 +128,20 @@ export function ProjectSettingsDialog({
     enabled: open,
   });
 
+  const { data: assignableUsers, isLoading: isLoadingAssignableUsers } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: async () => {
+      const response = await api.get('/users/assignable');
+      return response.data.users as Array<{
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl?: string;
+      }>;
+    },
+    enabled: open,
+  });
+
   // Initialize state when data loads
   useEffect(() => {
     if (projectDetail) {
@@ -158,6 +180,9 @@ export function ProjectSettingsDialog({
       // Reporter notification settings
       const reporterConf = projectDetail.settings?.reporterNotifications;
       setReporterSettings(reporterConf || {});
+
+      // Default assignee
+      setDefaultAssigneeUserId(projectDetail.settings?.defaultAssigneeUserId ?? null);
     }
   }, [projectDetail]);
 
@@ -262,6 +287,8 @@ export function ProjectSettingsDialog({
         newSettings.reporterNotifications = undefined;
       }
 
+      newSettings.defaultAssigneeUserId = defaultAssigneeUserId;
+
       // Save project settings
       await projectMutation.mutateAsync({
         settings: newSettings,
@@ -291,15 +318,25 @@ export function ProjectSettingsDialog({
   };
 
   const isLoading =
-    isLoadingProject || isLoadingGlobal || isLoadingNotifications || isLoadingBranding;
+    isLoadingProject ||
+    isLoadingGlobal ||
+    isLoadingNotifications ||
+    isLoadingBranding ||
+    isLoadingAssignableUsers;
   const isSaving =
     projectMutation.isPending ||
     notificationMutation.isPending ||
     deleteNotificationMutation.isPending;
 
+  const assignableUserIds = new Set(assignableUsers?.map((user) => user.id) ?? []);
+  const isMissingAssignedUser =
+    !!defaultAssigneeUserId && !assignableUserIds.has(defaultAssigneeUserId);
+  const defaultAssigneeSelectValue = defaultAssigneeUserId ?? UNASSIGNED_VALUE;
+  const selectedAssignee = assignableUsers?.find((user) => user.id === defaultAssigneeUserId);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] min-h-[67vh]">
+      <DialogContent className="max-w-4xl max-h-[85vh] min-h-[67vh]">
         <DialogHeader>
           <DialogTitle>Project Settings</DialogTitle>
           <DialogDescription>Configure settings for "{project.name}"</DialogDescription>
@@ -315,15 +352,105 @@ export function ProjectSettingsDialog({
             onValueChange={(v) => setActiveTab(v as typeof activeTab)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <TabsList className="grid w-full flex-shrink-0 grid-cols-5">
-              <TabsTrigger value="widgetDialog">Widget Dialog</TabsTrigger>
-              <TabsTrigger value="widgetLauncherButton">Widget Button</TabsTrigger>
-              <TabsTrigger value="screenshot">Screenshot</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
-              <TabsTrigger value="whitelists">Whitelists</TabsTrigger>
+            <TabsList className="flex h-auto w-full flex-shrink-0 flex-wrap justify-start gap-2 rounded-xl p-2">
+              <TabsTrigger value="assignments" className="px-4 py-2">
+                Assignments
+              </TabsTrigger>
+              <TabsTrigger value="widgetDialog" className="px-4 py-2">
+                Widget Dialog
+              </TabsTrigger>
+              <TabsTrigger value="widgetLauncherButton" className="px-4 py-2">
+                Widget Button
+              </TabsTrigger>
+              <TabsTrigger value="screenshot" className="px-4 py-2">
+                Screenshot
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="px-4 py-2">
+                Notifications
+              </TabsTrigger>
+              <TabsTrigger value="whitelists" className="px-4 py-2">
+                Whitelists
+              </TabsTrigger>
             </TabsList>
 
             <DialogBody className="flex-1 pt-4">
+              <TabsContent value="assignments" className="mt-0">
+                <div className="space-y-5 rounded-xl border bg-card p-5">
+                  <div className="space-y-1">
+                    <Label htmlFor="default-assignee">Default Assignee</Label>
+                    <p className="text-sm text-muted-foreground">
+                      New reports from this project are assigned automatically to this user.
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    {selectedAssignee ? (
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          {selectedAssignee.avatarUrl ? (
+                            <AvatarImage src={selectedAssignee.avatarUrl} alt={selectedAssignee.name} />
+                          ) : null}
+                          <AvatarFallback>
+                            {selectedAssignee.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="font-medium">{selectedAssignee.name}</p>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {selectedAssignee.email}
+                          </p>
+                        </div>
+                      </div>
+                    ) : isMissingAssignedUser ? (
+                      <div className="space-y-1">
+                        <p className="font-medium">Current assignee unavailable</p>
+                        <p className="text-sm text-muted-foreground">
+                          This user can no longer receive default assignments for new reports.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="font-medium">No default assignee</p>
+                        <p className="text-sm text-muted-foreground">
+                          New reports stay unassigned until somebody picks them up manually.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <Select
+                    value={defaultAssigneeSelectValue}
+                    onValueChange={(value) =>
+                      setDefaultAssigneeUserId(value === UNASSIGNED_VALUE ? null : value)
+                    }
+                  >
+                    <SelectTrigger id="default-assignee" className="h-11 max-w-xl">
+                      <SelectValue placeholder="Choose a default assignee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNASSIGNED_VALUE}>No default assignee</SelectItem>
+                      {isMissingAssignedUser && defaultAssigneeUserId ? (
+                        <SelectItem value={defaultAssigneeUserId}>
+                          Unavailable user (current setting)
+                        </SelectItem>
+                      ) : null}
+                      {assignableUsers?.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {isMissingAssignedUser ? (
+                    <p className="text-sm text-amber-600">
+                      The current default assignee is no longer assignable. New reports stay
+                      unassigned until you choose another user.
+                    </p>
+                  ) : null}
+                </div>
+              </TabsContent>
+
               {/* Widget Dialog Tab (dialog colors) */}
               <TabsContent value="widgetDialog" className="mt-0">
                 <WidgetDialogSettingsForm

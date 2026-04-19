@@ -73,6 +73,7 @@ const sendReporterStatusChangeEmail = mock(async () => ({ success: true }));
 const sendReporterMessageEmail = mock(async () => ({ success: true }));
 const sendReporterMessageCcEmail = mock(async () => ({ success: true }));
 const sendReporterPriorityChangeEmail = mock(async () => ({ success: true }));
+const sendReporterAssignmentEmail = mock(async () => ({ success: true }));
 
 beforeEach(() => {
   projectById = baseProject;
@@ -93,12 +94,14 @@ beforeEach(() => {
   emailService.sendReporterMessageEmail = sendReporterMessageEmail;
   emailService.sendReporterMessageCcEmail = sendReporterMessageCcEmail;
   emailService.sendReporterPriorityChangeEmail = sendReporterPriorityChangeEmail;
+  emailService.sendReporterAssignmentEmail = sendReporterAssignmentEmail;
 
   sendReporterConfirmationEmail.mockClear();
   sendReporterStatusChangeEmail.mockClear();
   sendReporterMessageEmail.mockClear();
   sendReporterMessageCcEmail.mockClear();
   sendReporterPriorityChangeEmail.mockClear();
+  sendReporterAssignmentEmail.mockClear();
 
   logger.info = () => undefined;
   logger.error = () => undefined;
@@ -304,5 +307,28 @@ describe('notificationsService.notifyReporterPriorityChange', () => {
     };
     await notificationsService.notifyReporterPriorityChange(baseReport, 'low', 'high');
     expect(sendReporterPriorityChangeEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe('notificationsService.notifyReporterAssignment', () => {
+  it('sends assignment email to reporter', async () => {
+    await notificationsService.notifyReporterAssignment(baseReport, undefined, 'usr_1');
+    expect(sendReporterAssignmentEmail).toHaveBeenCalledWith(
+      'reporter@example.com',
+      expect.objectContaining({
+        report: baseReport,
+        projectName: 'Project',
+        assigneeName: 'Admin User',
+      }),
+    );
+  });
+
+  it('respects reporter assignment settings', async () => {
+    projectById = {
+      ...baseProject,
+      settings: { reporterNotifications: { notifyOnAssignment: false } },
+    };
+    await notificationsService.notifyReporterAssignment(baseReport, undefined, 'usr_1');
+    expect(sendReporterAssignmentEmail).not.toHaveBeenCalled();
   });
 });

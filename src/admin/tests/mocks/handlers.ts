@@ -6,25 +6,38 @@ export const mockUsers = {
     id: 'user-1',
     email: 'admin@example.com',
     name: 'Admin User',
+    avatarUrl: 'https://example.com/avatars/admin.png',
     role: 'admin' as const,
+    isActive: true,
+    invitationAcceptedAt: '2024-01-01T00:00:00Z',
+    defaultProjects: [{ id: 'project-2', name: 'Another Project' }],
   },
   editor: {
     id: 'user-2',
     email: 'editor@example.com',
     name: 'Editor User',
+    avatarUrl: 'https://example.com/avatars/editor.png',
     role: 'editor' as const,
+    isActive: true,
+    invitationAcceptedAt: '2024-01-01T00:00:00Z',
+    defaultProjects: [{ id: 'project-1', name: 'Test Project' }],
   },
   viewer: {
     id: 'user-3',
     email: 'viewer@example.com',
     name: 'Viewer User',
+    avatarUrl: 'https://example.com/avatars/viewer.png',
     role: 'viewer' as const,
+    isActive: true,
+    invitationAcceptedAt: '2024-01-01T00:00:00Z',
+    defaultProjects: [],
   },
   pending: {
     id: 'user-4',
     email: 'pending@example.com',
     name: 'Pending User',
     role: 'viewer' as const,
+    defaultProjects: [],
     invitationSentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
   },
 };
@@ -34,6 +47,9 @@ export const mockProjects = [
     id: 'project-1',
     name: 'Test Project',
     apiKey: 'test-api-key-123',
+    settings: {
+      defaultAssigneeUserId: 'user-2',
+    },
     reportsCount: 5,
     isActive: true,
     position: 0,
@@ -42,6 +58,9 @@ export const mockProjects = [
     id: 'project-2',
     name: 'Another Project',
     apiKey: 'test-api-key-456',
+    settings: {
+      defaultAssigneeUserId: 'user-1',
+    },
     reportsCount: 12,
     isActive: true,
     position: 1,
@@ -51,20 +70,29 @@ export const mockProjects = [
 export const mockReports = [
   {
     id: 'report-1',
+    source: 'widget' as const,
     title: 'Button not working',
     description: 'The submit button does not respond to clicks',
     status: 'open',
     priority: 'high',
     projectId: 'project-1',
+    assignedTo: 'user-2',
+    assignee: {
+      id: 'user-2',
+      name: 'Editor User',
+      email: 'editor@example.com',
+      avatarUrl: 'https://example.com/avatars/editor.png',
+    },
     reporterEmail: 'user@example.com',
     reporterName: 'John Doe',
     createdAt: '2024-01-15T10:30:00Z',
     updatedAt: '2024-01-15T10:30:00Z',
     metadata: {
       url: 'https://example.com/page',
-      browser: { name: 'Chrome', version: '120.0.0' },
+      browser: { name: 'Chrome', version: '120.0.0', userAgent: 'Chrome/120.0.0' },
       device: { type: 'desktop', os: 'macOS', osVersion: '14.0' },
-      viewport: { width: 1920, height: 1080 },
+      viewport: { width: 1920, height: 1080, devicePixelRatio: 1 },
+      timestamp: '2024-01-15T10:30:00Z',
       consoleErrors: [],
     },
     githubSyncStatus: 'synced' as const,
@@ -74,20 +102,29 @@ export const mockReports = [
   },
   {
     id: 'report-2',
+    source: 'widget' as const,
     title: 'Page layout broken',
     description: 'The page layout is broken on mobile',
     status: 'in_progress',
     priority: 'medium',
     projectId: 'project-1',
+    assignedTo: 'user-1',
+    assignee: {
+      id: 'user-1',
+      name: 'Admin User',
+      email: 'admin@example.com',
+      avatarUrl: 'https://example.com/avatars/admin.png',
+    },
     reporterEmail: 'another@example.com',
     reporterName: 'Jane Smith',
     createdAt: '2024-01-14T09:00:00Z',
     updatedAt: '2024-01-15T11:00:00Z',
     metadata: {
       url: 'https://example.com/mobile',
-      browser: { name: 'Safari', version: '17.0' },
+      browser: { name: 'Safari', version: '17.0', userAgent: 'Safari/17.0' },
       device: { type: 'mobile', os: 'iOS', osVersion: '17.0' },
-      viewport: { width: 390, height: 844 },
+      viewport: { width: 390, height: 844, devicePixelRatio: 3 },
+      timestamp: '2024-01-14T09:00:00Z',
       consoleErrors: [{ message: 'TypeError: Cannot read property' }],
     },
     githubSyncStatus: 'error' as const,
@@ -95,6 +132,7 @@ export const mockReports = [
   },
   {
     id: 'report-3',
+    source: 'manual' as const,
     title: 'Form validation issue',
     description: 'Form does not validate email properly',
     status: 'open',
@@ -106,10 +144,11 @@ export const mockReports = [
     updatedAt: '2024-01-16T08:00:00Z',
     metadata: {
       url: 'https://example.com/form',
-      browser: { name: 'Firefox', version: '121.0' },
-      device: { type: 'desktop', os: 'Windows', osVersion: '11' },
-      viewport: { width: 1440, height: 900 },
-      consoleErrors: [],
+      timestamp: '2024-01-16T08:00:00Z',
+      manualContext: {
+        channel: 'email',
+        submittedByUserId: 'user-1',
+      },
     },
     githubSyncStatus: 'pending' as const,
   },
@@ -223,11 +262,15 @@ export const handlers = [
     const url = new URL(request.url);
     const status = url.searchParams.get('status');
     const priority = url.searchParams.get('priority');
+    const assignedTo = url.searchParams.get('assignedTo');
+    const source = url.searchParams.get('source');
     const limit = parseInt(url.searchParams.get('limit') || '20', 10);
 
     let filtered = [...mockReports];
     if (status) filtered = filtered.filter((r) => r.status === status);
     if (priority) filtered = filtered.filter((r) => r.priority === priority);
+    if (assignedTo) filtered = filtered.filter((r) => r.assignedTo === assignedTo);
+    if (source) filtered = filtered.filter((r) => r.source === source);
 
     // Apply limit
     const limited = filtered.slice(0, limit);
@@ -256,6 +299,13 @@ export const handlers = [
     });
   }),
 
+  http.get('/api/reports/:id/reporter-messages', () => {
+    return HttpResponse.json({
+      success: true,
+      messages: [],
+    });
+  }),
+
   http.patch('/api/reports/:id', async ({ params, request }) => {
     const report = mockReports.find((r) => r.id === params.id);
     const updates = (await request.json()) as Record<string, unknown>;
@@ -268,6 +318,41 @@ export const handlers = [
       success: true,
       report: { ...report, ...updates },
     });
+  }),
+
+  http.post('/api/reports', async ({ request }) => {
+    const formData = await request.formData();
+    const dataField = formData.get('data');
+    const body = typeof dataField === 'string' ? JSON.parse(dataField) : {};
+
+    return HttpResponse.json(
+      {
+        success: true,
+        report: {
+          id: 'report-new',
+          source: 'manual',
+          title: body.title,
+          description: body.description,
+          status: 'open',
+          priority: body.priority || 'medium',
+          projectId: body.projectId,
+          assignedTo: body.assignedTo ?? undefined,
+          reporterEmail: body.reporterEmail,
+          reporterName: body.reporterName,
+          createdAt: '2024-01-17T12:00:00Z',
+          updatedAt: '2024-01-17T12:00:00Z',
+          metadata: {
+            url: body.url,
+            timestamp: '2024-01-17T12:00:00Z',
+            manualContext: {
+              channel: body.channel,
+              submittedByUserId: 'user-1',
+            },
+          },
+        },
+      },
+      { status: 201 },
+    );
   }),
 
   http.delete('/api/reports/:id', ({ params }) => {
@@ -304,6 +389,19 @@ export const handlers = [
     });
   }),
 
+  http.get('/api/projects/:id', ({ params }) => {
+    const project = mockProjects.find((p) => p.id === params.id);
+
+    if (!project) {
+      return HttpResponse.json({ success: false, message: 'Project not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      project,
+    });
+  }),
+
   http.post('/api/projects/:id/regenerate-key', ({ params }) => {
     const project = mockProjects.find((p) => p.id === params.id);
 
@@ -335,6 +433,17 @@ export const handlers = [
         { ...mockUsers.admin, isActive: true },
         { ...mockUsers.viewer, isActive: true },
         { ...mockUsers.pending, isActive: false },
+      ],
+    });
+  }),
+
+  http.get('/api/users/assignable', () => {
+    return HttpResponse.json({
+      success: true,
+      users: [
+        { ...mockUsers.admin, isActive: true },
+        { ...mockUsers.editor, isActive: true },
+        { ...mockUsers.viewer, isActive: true },
       ],
     });
   }),

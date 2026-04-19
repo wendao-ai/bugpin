@@ -9,12 +9,16 @@ import { getEEHooks } from '../utils/ee-hooks.js';
 import { notificationsService } from './notifications.service.js';
 import { githubSyncService } from './integrations/github-sync.service.js';
 import { syncQueueService } from './integrations/sync-queue.service.js';
+import { usersService } from './users.service.js';
+import { normalizeUrl } from '../utils/validators.js';
 import type {
   Report,
   ReportFilter,
   ReportStatus,
   ReportPriority,
   ReportMetadata,
+  ReportSource,
+  ManualReportChannel,
   PaginatedResponse,
   FileType,
   FileRecord,
@@ -34,11 +38,24 @@ export interface CreateReportInput {
   title: string;
   description?: string;
   priority?: ReportPriority;
-  media?: MediaFile[];
+  files?: MediaFile[];
   annotations?: object;
   metadata: ReportMetadata;
   reporterEmail?: string;
   reporterName?: string;
+}
+
+export interface CreateManualReportInput {
+  projectId: string;
+  title: string;
+  description?: string;
+  priority?: ReportPriority;
+  assignedTo?: string | null;
+  reporterEmail?: string;
+  reporterName?: string;
+  url?: string;
+  channel?: ManualReportChannel;
+  files?: MediaFile[];
 }
 
 export interface UpdateReportInput {
@@ -51,6 +68,286 @@ export interface UpdateReportInput {
   forwardedTo?: ForwardedReference[];
 }
 
+async function validateAssignee(assignedTo: string | null | undefined): Promise<Result<void>> {
+  if (assignedTo === undefined || assignedTo === null) {
+    return Result.ok(undefined);
+  }
+
+  const assigneeResult = await usersService.getAssignableById(assignedTo);
+  if (!assigneeResult.success) {
+    return Result.fail(assigneeResult.error, 'INVALID_ASSIGNEE');
+  }
+
+  return Result.ok(undefined);
+}
+
+async function resolveDefaultAssignee(projectId: string, userId: string | null | undefined) {
+  if (!userId) {
+    return undefined;
+  }
+
+  const assigneeResult = await usersService.getAssignableById(userId);
+  if (!assigneeResult.success) {
+    logger.warn('Skipping invalid project default assignee during report creation', {
+      projectId,
+      userId,
+      code: assigneeResult.code,
+    });
+    return undefined;
+  }
+
+  return userId;
+}
+
+function normalizeOptionalText(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function normalizeOptionalUrl(value: string | undefined): string | undefined {
+  const normalized = value ? normalizeUrl(value) : '';
+  return normalized || undefined;
+}
+
+function determineFileType(mimeType: string): FileType {
+  if (mimeType.startsWith('video/')) {
+    return 'video';
+  }
+
+  if (mimeType.startsWith('image/')) {
+    return 'screenshot';
+  }
+
+  return 'attachment';
+}
+
+async function validateSubmittedFiles(
+  files: MediaFile[] | undefined,
+  strict: boolean,
+): Promise<Result<void>> {
+  if (!files?.length) {
+    return Result.ok(undefined);
+  }
+
+  const settings = await settingsCacheService.getAll();
+  const maxImageSizeMb = settings.screenshot.maxImageUploadSizeMb ?? 10;
+  const maxVideoSizeMb = settings.screenshot.maxVideoUploadSizeMb ?? 50;
+
+  for (const file of files) {
+    const fileType = determineFileType(file.mimeType);
+    const validation = validateFile({
+      data: file.data,
+      mimeType: file.mimeType,
+      type: fileType,
+      maxSizeMb: fileType === 'video' ? maxVideoSizeMb : maxImageSizeMb,
+    });
+
+    if (!validation.success) {
+      if (strict) {
+        return Result.fail(validation.error, validation.code);
+      }
+
+      logger.warn('Submitted file rejected', {
+        filename: file.filename,
+        mimeType: file.mimeType,
+        reason: validation.error,
+        code: validation.code,
+      });
+    }
+  }
+
+  return Result.ok(undefined);
+}
+
+async function saveSubmittedFiles(
+  reportId: string,
+  files: MediaFile[] | undefined,
+  strict: boolean,
+): Promise<Result<void>> {
+  if (!files?.length) {
+    return Result.ok(undefined);
+  }
+
+  for (const file of files) {
+    const fileType = determineFileType(file.mimeType);
+
+    const validation = await validateSubmittedFiles([file], strict);
+    if (!validation.success) {
+      return validation;
+    }
+
+    try {
+      const savedFile = await saveFile({
+        reportId,
+        type: fileType,
+        filename: file.filename,
+        mimeType: file.mimeType,
+        data: file.data,
+      });
+
+      await filesRepo.create({
+        reportId,
+        type: fileType,
+        filename: savedFile.filename,
+        path: savedFile.path,
+        mimeType: savedFile.mimeType,
+        sizeBytes: savedFile.sizeBytes,
+        width: savedFile.width,
+        height: savedFile.height,
+      });
+
+      logger.info('Submitted file saved for report', {
+        reportId,
+        fileId: savedFile.id,
+        type: fileType,
+      });
+    } catch (error) {
+      logger.error('Failed to save submitted file', error, {
+        reportId,
+        filename: file.filename,
+      });
+
+      if (strict) {
+        return Result.fail('Failed to save uploaded file', 'FILE_SAVE_FAILED');
+      }
+    }
+  }
+
+  return Result.ok(undefined);
+}
+
+async function createForProject(
+  project: Awaited<ReturnType<typeof projectsRepo.findById>> extends infer T ? NonNullable<T> : never,
+  input: {
+    title: string;
+    description?: string;
+    priority?: ReportPriority;
+    annotations?: object;
+    metadata: ReportMetadata;
+    reporterEmail?: string;
+    reporterName?: string;
+    files?: MediaFile[];
+  },
+  options: {
+    source: ReportSource;
+    requestedAssignee?: string | null;
+    sendReporterSubmission: boolean;
+    strictFileValidation: boolean;
+  },
+): Promise<Result<Report>> {
+  if (!input.title || input.title.trim().length < 4) {
+    return Result.fail('Title must be at least 4 characters', 'INVALID_TITLE');
+  }
+
+  if (input.title.length > 200) {
+    return Result.fail('Title must be at most 200 characters', 'INVALID_TITLE');
+  }
+
+  let assignedTo: string | undefined;
+  if (options.requestedAssignee === undefined) {
+    assignedTo = await resolveDefaultAssignee(project.id, project.settings?.defaultAssigneeUserId);
+  } else if (options.requestedAssignee !== null) {
+    const assigneeValidation = await validateAssignee(options.requestedAssignee);
+    if (!assigneeValidation.success) {
+      return assigneeValidation;
+    }
+
+    assignedTo = options.requestedAssignee;
+  }
+
+  const fileValidation = await validateSubmittedFiles(input.files, options.strictFileValidation);
+  if (!fileValidation.success) {
+    return fileValidation;
+  }
+
+  const reportData: CreateReportData = {
+    projectId: project.id,
+    source: options.source,
+    title: input.title.trim(),
+    description: normalizeOptionalText(input.description),
+    priority: input.priority ?? 'medium',
+    assignedTo,
+    annotations: input.annotations,
+    metadata: input.metadata,
+    reporterEmail: normalizeOptionalText(input.reporterEmail),
+    reporterName: normalizeOptionalText(input.reporterName),
+  };
+
+  const report = await reportsRepo.create(reportData);
+
+  const saveFilesResult = await saveSubmittedFiles(
+    report.id,
+    input.files,
+    options.strictFileValidation,
+  );
+  if (!saveFilesResult.success) {
+    if (options.strictFileValidation) {
+      deleteReportFiles(report.id);
+      await filesRepo.deleteByReportId(report.id);
+      await reportsRepo.delete(report.id);
+    }
+    return saveFilesResult;
+  }
+
+  logger.info('Report created', {
+    reportId: report.id,
+    projectId: project.id,
+    title: report.title,
+    source: report.source,
+  });
+
+  getEEHooks()
+    .onReportCreated(report)
+    .catch((error) => {
+      logger.error('Failed to trigger webhooks for report creation', error, {
+        reportId: report.id,
+      });
+    });
+
+  notificationsService.notifyNewReport(report).catch((error) => {
+    logger.error('Failed to send email notification for new report', error, {
+      reportId: report.id,
+    });
+  });
+
+  if (options.sendReporterSubmission) {
+    notificationsService.notifyReporterSubmission(report).catch((error) => {
+      logger.error('Failed to send reporter submission confirmation', error, {
+        reportId: report.id,
+      });
+    });
+  }
+
+  if (assignedTo) {
+    notificationsService.notifyAssignment(report, assignedTo).catch((error) => {
+      logger.error('Failed to send assignment notification', error, { reportId: report.id });
+    });
+
+    notificationsService
+      .notifyReporterAssignment(report, undefined, assignedTo)
+      .catch((error) => {
+        logger.error('Failed to send reporter assignment notification', error, {
+          reportId: report.id,
+        });
+      });
+  }
+
+  githubSyncService
+    .getAutoSyncIntegration(project.id)
+    .then((integration) => {
+      if (integration) {
+        syncQueueService.enqueue(report.id, integration.id).catch((error) => {
+          logger.error('Failed to queue report for auto-sync', error, { reportId: report.id });
+        });
+      }
+    })
+    .catch((error) => {
+      logger.error('Failed to check for auto-sync integration', error, { projectId: project.id });
+    });
+
+  return Result.ok(report);
+}
+
 // Service
 
 export const reportsService = {
@@ -58,146 +355,70 @@ export const reportsService = {
    * Create a new bug report (from widget submission)
    */
   async create(input: CreateReportInput): Promise<Result<Report>> {
-    // Validate API key and get project
     const project = await projectsRepo.findByApiKey(input.apiKey);
-
     if (!project) {
       logger.warn('Invalid API key', { apiKey: input.apiKey });
       return Result.fail('Invalid API key', 'INVALID_API_KEY');
     }
 
-    // Validate title
-    if (!input.title || input.title.trim().length < 4) {
-      return Result.fail('Title must be at least 4 characters', 'INVALID_TITLE');
+    return createForProject(
+      project,
+      {
+        title: input.title,
+        description: input.description,
+        priority: input.priority,
+        annotations: input.annotations,
+        metadata: input.metadata,
+        reporterEmail: input.reporterEmail,
+        reporterName: input.reporterName,
+        files: input.files,
+      },
+      {
+        source: 'widget',
+        sendReporterSubmission: true,
+        strictFileValidation: false,
+      },
+    );
+  },
+
+  async createManual(input: CreateManualReportInput, userId: string): Promise<Result<Report>> {
+    const project = await projectsRepo.findById(input.projectId);
+
+    if (!project) {
+      return Result.fail('Project not found', 'PROJECT_NOT_FOUND');
     }
 
-    if (input.title.length > 200) {
-      return Result.fail('Title must be at most 200 characters', 'INVALID_TITLE');
+    if (!project.isActive) {
+      return Result.fail('Project is inactive', 'PROJECT_INACTIVE');
     }
 
-    // Create report
-    const reportData: CreateReportData = {
-      projectId: project.id,
-      title: input.title.trim(),
-      description: input.description?.trim(),
-      priority: input.priority ?? 'medium',
-      annotations: input.annotations,
-      metadata: input.metadata,
-      reporterEmail: input.reporterEmail?.trim(),
-      reporterName: input.reporterName?.trim(),
+    const metadata: ReportMetadata = {
+      timestamp: new Date().toISOString(),
+      url: normalizeOptionalUrl(input.url),
+      manualContext: {
+        channel: input.channel,
+        submittedByUserId: userId,
+      },
     };
 
-    const report = await reportsRepo.create(reportData);
-
-    // Save media files if provided
-    if (input.media && input.media.length > 0) {
-      const settings = await settingsCacheService.getAll();
-      const maxImageSizeMb = settings.screenshot.maxImageUploadSizeMb ?? 10;
-      const maxVideoSizeMb = settings.screenshot.maxVideoUploadSizeMb ?? 50;
-
-      for (const mediaFile of input.media) {
-        try {
-          // Determine file type from mime type
-          const fileType: FileType = mediaFile.mimeType.startsWith('video/')
-            ? 'video'
-            : 'screenshot';
-
-          // Validate file before saving
-          const validation = validateFile({
-            data: mediaFile.data,
-            mimeType: mediaFile.mimeType,
-            type: fileType,
-            maxSizeMb: fileType === 'video' ? maxVideoSizeMb : maxImageSizeMb,
-          });
-
-          if (!validation.success) {
-            logger.warn('Media file rejected', {
-              reportId: report.id,
-              filename: mediaFile.filename,
-              reason: validation.error,
-              code: validation.code,
-            });
-            continue;
-          }
-
-          const savedFile = await saveFile({
-            reportId: report.id,
-            type: fileType,
-            filename: mediaFile.filename,
-            mimeType: mediaFile.mimeType,
-            data: mediaFile.data,
-          });
-
-          await filesRepo.create({
-            reportId: report.id,
-            type: fileType,
-            filename: savedFile.filename,
-            path: savedFile.path,
-            mimeType: savedFile.mimeType,
-            sizeBytes: savedFile.sizeBytes,
-            width: savedFile.width,
-            height: savedFile.height,
-          });
-
-          logger.info('Media file saved for report', {
-            reportId: report.id,
-            fileId: savedFile.id,
-            type: fileType,
-          });
-        } catch (error) {
-          logger.error('Failed to save media file', error, {
-            reportId: report.id,
-            filename: mediaFile.filename,
-          });
-          // Don't fail the report creation if media save fails
-        }
-      }
-    }
-
-    logger.info('Report created', {
-      reportId: report.id,
-      projectId: project.id,
-      title: report.title,
-    });
-
-    // Trigger webhooks via EE hooks (async, don't block)
-    getEEHooks()
-      .onReportCreated(report)
-      .catch((error) => {
-        logger.error('Failed to trigger webhooks for report creation', error, {
-          reportId: report.id,
-        });
-      });
-
-    // Send email notifications (async, don't block)
-    notificationsService.notifyNewReport(report).catch((error) => {
-      logger.error('Failed to send email notification for new report', error, {
-        reportId: report.id,
-      });
-    });
-
-    // Send confirmation email to reporter (async, don't block)
-    notificationsService.notifyReporterSubmission(report).catch((error) => {
-      logger.error('Failed to send reporter submission confirmation', error, {
-        reportId: report.id,
-      });
-    });
-
-    // Check for auto-sync integration and queue sync (async, don't block)
-    githubSyncService
-      .getAutoSyncIntegration(project.id)
-      .then((integration) => {
-        if (integration) {
-          syncQueueService.enqueue(report.id, integration.id).catch((error) => {
-            logger.error('Failed to queue report for auto-sync', error, { reportId: report.id });
-          });
-        }
-      })
-      .catch((error) => {
-        logger.error('Failed to check for auto-sync integration', error, { projectId: project.id });
-      });
-
-    return Result.ok(report);
+    return createForProject(
+      project,
+      {
+        title: input.title,
+        description: input.description,
+        priority: input.priority,
+        metadata,
+        reporterEmail: input.reporterEmail,
+        reporterName: input.reporterName,
+        files: input.files,
+      },
+      {
+        source: 'manual',
+        requestedAssignee: input.assignedTo,
+        sendReporterSubmission: false,
+        strictFileValidation: true,
+      },
+    );
   },
 
   /**
@@ -293,6 +514,11 @@ export const reportsService = {
     }
 
     if (input.assignedTo !== undefined) {
+      const assigneeValidation = await validateAssignee(input.assignedTo);
+      if (!assigneeValidation.success) {
+        return assigneeValidation;
+      }
+
       updates.assignedTo = input.assignedTo ?? undefined;
     }
 
@@ -382,6 +608,18 @@ export const reportsService = {
         .catch((error) => {
           logger.error('Failed to send assignment notification', error, { reportId: id });
         });
+
+      notificationsService
+        .notifyReporterAssignment(
+          report,
+          (changes.assignedTo.old as string | undefined) ?? undefined,
+          changes.assignedTo.new as string,
+        )
+        .catch((error) => {
+          logger.error('Failed to send reporter assignment notification', error, {
+            reportId: id,
+          });
+        });
     }
 
     // If report has GitHub issue and there are changes, queue update sync (async, don't block)
@@ -446,6 +684,7 @@ export const reportsService = {
   async bulkUpdate(
     ids: string[],
     updates: Pick<UpdateReportInput, 'status' | 'priority' | 'assignedTo'>,
+    userId?: string,
   ): Promise<Result<number>> {
     if (ids.length === 0) {
       return Result.fail('No report IDs provided', 'INVALID_INPUT');
@@ -466,7 +705,26 @@ export const reportsService = {
     }
 
     if (updates.assignedTo !== undefined) {
+      const assigneeValidation = await validateAssignee(updates.assignedTo);
+      if (!assigneeValidation.success) {
+        return assigneeValidation;
+      }
+
       reportUpdates.assignedTo = updates.assignedTo ?? undefined;
+    }
+
+    if (updates.assignedTo !== undefined) {
+      let count = 0;
+
+      for (const id of ids) {
+        const result = await this.update(id, updates, userId);
+        if (result.success) {
+          count += 1;
+        }
+      }
+
+      logger.info('Bulk update completed', { count, updates: Object.keys(reportUpdates) });
+      return Result.ok(count);
     }
 
     const count = await reportsRepo.bulkUpdate(ids, reportUpdates);

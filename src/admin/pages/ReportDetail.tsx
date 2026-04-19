@@ -50,9 +50,12 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../components/ui/collapsible';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Spinner } from '../components/ui/spinner';
 import { formatDate, formatDateTime } from '../lib/utils';
-import type { AppSettings, Project } from '@shared/types';
+import type { AppSettings, Project, Report, ReportSource, User } from '@shared/types';
+
+const UNASSIGNED_VALUE = '__unassigned__';
 
 export function ReportDetail() {
   const { id } = useParams<{ id: string }>();
@@ -63,7 +66,11 @@ export function ReportDetail() {
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ status: '', priority: '' });
+  const [editData, setEditData] = useState({
+    status: '',
+    priority: '',
+    assignedTo: UNASSIGNED_VALUE,
+  });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [composeMessage, setComposeMessage] = useState('');
@@ -83,6 +90,15 @@ export function ReportDetail() {
 
   // Load integrations for this report's project
   const { data: integrations } = useIntegrations(data?.report?.projectId);
+
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: async () => {
+      const response = await api.get('/users/assignable');
+      return response.data.users as User[];
+    },
+    enabled: canEdit,
+  });
 
   // Fetch global settings for messaging enabled check
   const { data: settingsData } = useQuery({
@@ -130,7 +146,7 @@ export function ReportDetail() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (updates: { status?: string; priority?: string }) => {
+    mutationFn: async (updates: { status?: string; priority?: string; assignedTo?: string | null }) => {
       const response = await api.patch(`/reports/${id}`, updates);
       return response.data;
     },
@@ -182,7 +198,31 @@ export function ReportDetail() {
     );
   }
 
-  const { report, files } = data;
+  const { report, files } = data as {
+    report: Report;
+    files: Array<{ id: string; mimeType: string; filename: string }>;
+  };
+  const consoleErrors = report.metadata.consoleErrors ?? [];
+  const networkErrors = report.metadata.networkErrors ?? [];
+  const userActivity = report.metadata.userActivity ?? [];
+  const appName = settingsData?.appName || 'BugPin';
+  const manualChannel = report.metadata.manualContext?.channel;
+  const hasPageInfo = Boolean(
+    report.metadata?.url ||
+      report.metadata?.title ||
+      report.metadata?.referrer ||
+      report.metadata?.pageLoadTime ||
+      report.metadata?.timezone,
+  );
+  const hasEnvironment = Boolean(
+    report.metadata?.browser?.name ||
+      report.metadata?.browser?.version ||
+      report.metadata?.device?.os ||
+      report.metadata?.device?.osVersion ||
+      report.metadata?.device?.type ||
+      report.metadata?.viewport?.width ||
+      report.metadata?.viewport?.height,
+  );
 
   const messagingEnabled = (() => {
     if (projectData?.settings?.notifyReporter === false) return false;
@@ -199,10 +239,14 @@ export function ReportDetail() {
   })();
 
   const handleSave = async () => {
-    const updates: Record<string, string> = {};
+    const updates: { status?: string; priority?: string; assignedTo?: string | null } = {};
     if (editData.status && editData.status !== report.status) updates.status = editData.status;
     if (editData.priority && editData.priority !== report.priority)
       updates.priority = editData.priority;
+    const nextAssignedTo = editData.assignedTo === UNASSIGNED_VALUE ? null : editData.assignedTo;
+    if ((report.assignedTo ?? null) !== nextAssignedTo) {
+      updates.assignedTo = nextAssignedTo;
+    }
 
     if (Object.keys(updates).length > 0) {
       const shouldSendResolveMessage =
@@ -282,7 +326,11 @@ export function ReportDetail() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setEditData({ status: report.status, priority: report.priority });
+                    setEditData({
+                      status: report.status,
+                      priority: report.priority,
+                      assignedTo: report.assignedTo ?? UNASSIGNED_VALUE,
+                    });
                     setIsEditing(true);
                   }}
                 >
@@ -428,7 +476,7 @@ export function ReportDetail() {
           </Card>
 
           {/* Console Output */}
-          {report.metadata?.consoleErrors?.length > 0 && (
+          {consoleErrors.length > 0 && (
             <Collapsible>
               <Card>
                 <CollapsibleTrigger className="w-full">
@@ -436,7 +484,7 @@ export function ReportDetail() {
                     <CardTitle>
                       Console Output
                       <span className="ml-2 text-sm font-normal text-muted-foreground">
-                        ({report.metadata.consoleErrors.length})
+                        ({consoleErrors.length})
                       </span>
                     </CardTitle>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
@@ -445,7 +493,7 @@ export function ReportDetail() {
                 <CollapsibleContent>
                   <CardContent>
                     <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-                      {report.metadata.consoleErrors.map(
+                      {consoleErrors.map(
                         (
                           err: { type: string; message: string; source?: string; line?: number },
                           i: number,
@@ -479,7 +527,7 @@ export function ReportDetail() {
           )}
 
           {/* Network Errors */}
-          {report.metadata?.networkErrors?.length > 0 && (
+          {networkErrors.length > 0 && (
             <Collapsible>
               <Card>
                 <CollapsibleTrigger className="w-full">
@@ -487,7 +535,7 @@ export function ReportDetail() {
                     <CardTitle>
                       Network Errors
                       <span className="ml-2 text-sm font-normal text-muted-foreground">
-                        ({report.metadata.networkErrors.length})
+                        ({networkErrors.length})
                       </span>
                     </CardTitle>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
@@ -495,7 +543,7 @@ export function ReportDetail() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="space-y-2">
-                    {report.metadata.networkErrors.map(
+                    {networkErrors.map(
                       (
                         err: { url: string; method: string; status: number; statusText: string },
                         i: number,
@@ -526,7 +574,7 @@ export function ReportDetail() {
           )}
 
           {/* User Activity Trail */}
-          {report.metadata?.userActivity?.length > 0 && (
+          {userActivity.length > 0 && (
             <Collapsible>
               <Card>
                 <CollapsibleTrigger className="w-full">
@@ -534,7 +582,7 @@ export function ReportDetail() {
                     <CardTitle>
                       User Activity Trail
                       <span className="ml-2 text-sm font-normal text-muted-foreground">
-                        ({report.metadata.userActivity.length} events)
+                        ({userActivity.length} events)
                       </span>
                     </CardTitle>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
@@ -543,7 +591,7 @@ export function ReportDetail() {
                 <CollapsibleContent>
                   <CardContent>
                     <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2">
-                      {report.metadata.userActivity.map(
+                      {userActivity.map(
                         (
                           activity: {
                             type: string;
@@ -812,7 +860,42 @@ export function ReportDetail() {
                   </div>
                 )}
               </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground block">Assignee</Label>
+                {isEditing ? (
+                  <Select
+                    value={editData.assignedTo}
+                    onValueChange={(value) => setEditData({ ...editData, assignedTo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNASSIGNED_VALUE}>Unassigned</SelectItem>
+                      {assignableUsers.map((assignee) => (
+                        <SelectItem key={assignee.id} value={assignee.id}>
+                          <AssigneeDisplay user={assignee} />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <AssigneeDisplay user={report.assignee} showEmail />
+                )}
+              </div>
               <Separator />
+              <div className="space-y-1">
+                <Label className="text-muted-foreground">Source</Label>
+                <div>
+                  <SourceBadge source={report.source} />
+                </div>
+              </div>
+              {manualChannel && (
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground">Channel</Label>
+                  <p className="text-sm capitalize">{manualChannel}</p>
+                </div>
+              )}
               <div className="space-y-1">
                 <Label className="text-muted-foreground">Created</Label>
                 <p className="text-sm">{formatDateTime(report.createdAt)}</p>
@@ -832,45 +915,73 @@ export function ReportDetail() {
           </Card>
 
           {/* Page Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Page Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <InfoRow label="URL" value={report.metadata?.url} isLink />
-              <InfoRow label="Page Title" value={report.metadata?.title} />
-              <InfoRow label="Referrer" value={report.metadata?.referrer} isLink />
-              <InfoRow
-                label="Load Time"
-                value={
-                  report.metadata?.pageLoadTime ? `${report.metadata.pageLoadTime}ms` : undefined
-                }
-              />
-              <InfoRow label="Timezone" value={report.metadata?.timezone} />
-            </CardContent>
-          </Card>
+          {hasPageInfo && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Page Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <InfoRow label="URL" value={report.metadata?.url} isLink />
+                <InfoRow label="Page Title" value={report.metadata?.title} />
+                <InfoRow label="Referrer" value={report.metadata?.referrer} isLink />
+                <InfoRow
+                  label="Load Time"
+                  value={
+                    report.metadata?.pageLoadTime ? `${report.metadata.pageLoadTime}ms` : undefined
+                  }
+                />
+                <InfoRow label="Timezone" value={report.metadata?.timezone} />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Environment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Environment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <InfoRow
-                label="Browser"
-                value={`${report.metadata?.browser?.name} ${report.metadata?.browser?.version}`}
-              />
-              <InfoRow
-                label="OS"
-                value={`${report.metadata?.device?.os} ${report.metadata?.device?.osVersion || ''}`}
-              />
-              <InfoRow label="Device" value={report.metadata?.device?.type} />
-              <InfoRow
-                label="Viewport"
-                value={`${report.metadata?.viewport?.width}x${report.metadata?.viewport?.height}`}
-              />
-            </CardContent>
-          </Card>
+          {hasEnvironment && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Environment</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <InfoRow
+                  label="Browser"
+                  value={formatEnvironmentValue(
+                    report.metadata?.browser?.name,
+                    report.metadata?.browser?.version,
+                  )}
+                />
+                <InfoRow
+                  label="OS"
+                  value={formatEnvironmentValue(
+                    report.metadata?.device?.os,
+                    report.metadata?.device?.osVersion,
+                  )}
+                />
+                <InfoRow label="Device" value={report.metadata?.device?.type} />
+                <InfoRow
+                  label="Viewport"
+                  value={
+                    report.metadata?.viewport?.width && report.metadata?.viewport?.height
+                      ? `${report.metadata.viewport.width}x${report.metadata.viewport.height}`
+                      : undefined
+                  }
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {report.source === 'manual' && !hasPageInfo && !hasEnvironment && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Manual Report</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="text-muted-foreground">
+                  This report was created manually in {appName} and does not include widget capture data.
+                </p>
+                {manualChannel && <InfoRow label="Channel" value={manualChannel} />}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Reporter Messages */}
           {report.reporterEmail && messagingEnabled && (
@@ -985,11 +1096,7 @@ export function ReportDetail() {
                 <CardTitle>Forwarded To</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {report.forwardedTo.map(
-                  (
-                    ref: { type: string; id: string; url?: string; forwardedAt: string },
-                    i: number,
-                  ) => (
+                {report.forwardedTo.map((ref, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between p-2 bg-muted rounded-lg"
@@ -1012,8 +1119,7 @@ export function ReportDetail() {
                         </a>
                       )}
                     </div>
-                  ),
-                )}
+                ))}
               </CardContent>
             </Card>
           )}
@@ -1155,6 +1261,57 @@ function PriorityBadge({ priority }: { priority: string }) {
     <Badge variant="outline" className={`priority-${priority} uppercase text-xs`}>
       {priority}
     </Badge>
+  );
+}
+
+function SourceBadge({ source }: { source?: ReportSource }) {
+  const resolvedSource = source ?? 'widget';
+
+  return (
+    <Badge variant="secondary" className="uppercase text-[10px] tracking-wide">
+      {resolvedSource}
+    </Badge>
+  );
+}
+
+function formatEnvironmentValue(...parts: Array<string | undefined>) {
+  const value = parts.filter(Boolean).join(' ').trim();
+  return value || undefined;
+}
+
+function AssigneeDisplay({
+  user,
+  showEmail = false,
+}: {
+  user?: Pick<User, 'name' | 'email' | 'avatarUrl'>;
+  showEmail?: boolean;
+}) {
+  if (!user) {
+    return <p className="text-sm text-muted-foreground">Unassigned</p>;
+  }
+
+  const fallback = user.name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || '?';
+
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar className="h-8 w-8">
+        {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.name} /> : null}
+        <AvatarFallback className="bg-bugpin-primary-100 text-bugpin-primary-700 dark:bg-bugpin-primary-900 dark:text-bugpin-primary-300 text-xs">
+          {fallback}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="text-sm">{user.name}</p>
+        {showEmail && user.email ? (
+          <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

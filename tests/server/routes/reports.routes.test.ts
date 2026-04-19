@@ -28,6 +28,7 @@ const baseSession: Session = {
 const baseReport: Report = {
   id: 'rpt_1',
   projectId: 'prj_1',
+  source: 'widget',
   title: 'Bug report',
   status: 'open',
   priority: 'medium',
@@ -49,12 +50,14 @@ const originalFilesRepo = { ...filesRepo };
 let listFilter: unknown;
 let reportResult: Report | null = baseReport;
 let reportUpdatePayload: unknown;
+let createManualPayload: unknown;
 let userRole: User['role'] = 'admin';
 
 beforeEach(() => {
   listFilter = undefined;
   reportResult = baseReport;
   reportUpdatePayload = undefined;
+  createManualPayload = undefined;
   userRole = 'admin';
 
   authService.validateSession = async () =>
@@ -93,6 +96,10 @@ beforeEach(() => {
     return Result.ok(undefined);
   };
   reportsService.bulkUpdate = async () => Result.ok(2);
+  reportsService.createManual = async (body) => {
+    createManualPayload = body;
+    return Result.ok({ ...baseReport, ...body, id: 'rpt_new', source: 'manual' });
+  };
   reportsService.getStats = async () =>
     Result.ok({ total: 1, byStatus: { open: 1 }, byPriority: { medium: 1 } } as never);
 
@@ -115,11 +122,64 @@ function createApp() {
 describe('reports routes', () => {
   it('lists reports with filter params', async () => {
     const app = createApp();
-    const res = await app.request('http://localhost/reports?status=open,closed&limit=10', {
+    const res = await app.request(
+      'http://localhost/reports?status=open,closed&assignedTo=usr_2&source=manual&limit=10',
+      {
       headers: { cookie: 'session=sess_1' },
-    });
+      },
+    );
     expect(res.status).toBe(200);
-    expect(listFilter).toMatchObject({ status: ['open', 'closed'], limit: 10 });
+    expect(listFilter).toMatchObject({
+      status: ['open', 'closed'],
+      assignedTo: 'usr_2',
+      source: 'manual',
+      limit: 10,
+    });
+  });
+
+  it('creates a manual report for admin/editor', async () => {
+    userRole = 'editor';
+    const app = createApp();
+    const formData = new FormData();
+    formData.append(
+      'data',
+      JSON.stringify({
+        projectId: 'prj_1',
+        title: 'Manual report',
+        priority: 'medium',
+        channel: 'email',
+        url: 'bugpin.io',
+      }),
+    );
+
+    const res = await app.request('http://localhost/reports', {
+      method: 'POST',
+      headers: { cookie: 'session=sess_1' },
+      body: formData,
+    });
+
+    expect(res.status).toBe(201);
+    expect(createManualPayload).toMatchObject({
+      projectId: 'prj_1',
+      title: 'Manual report',
+      channel: 'email',
+      url: 'https://bugpin.io',
+    });
+  });
+
+  it('blocks manual report creation for viewers', async () => {
+    userRole = 'viewer';
+    const app = createApp();
+    const res = await app.request('http://localhost/reports', {
+      method: 'POST',
+      headers: {
+        cookie: 'session=sess_1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ projectId: 'prj_1', title: 'Manual report' }),
+    });
+
+    expect(res.status).toBe(403);
   });
 
   it('returns 404 for missing report', async () => {

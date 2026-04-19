@@ -29,6 +29,21 @@ users.get('/', authorize(['admin']), async (c) => {
   });
 });
 
+// List assignable users (Admin and Editor)
+
+users.get('/assignable', authorize(['admin', 'editor']), async (c) => {
+  const result = await usersService.listAssignable();
+
+  if (!result.success) {
+    return c.json({ success: false, error: result.code, message: result.error }, 400);
+  }
+
+  return c.json({
+    success: true,
+    users: result.value,
+  });
+});
+
 // Get User by ID (Admin only)
 
 users.get('/:id', authorize(['admin']), validate({ params: schemas.id }), async (c) => {

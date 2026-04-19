@@ -27,6 +27,7 @@ describe('ReportDetail', () => {
     );
 
     expect(await screen.findByText('Button not working')).toBeInTheDocument();
+    expect(screen.getByText('Editor User')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Edit' }));
     const [statusSelect, prioritySelect] = screen.getAllByRole('combobox');
@@ -37,6 +38,28 @@ describe('ReportDetail', () => {
     await user.click(prioritySelect);
     await user.click(await screen.findByText('Low'));
 
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Report updated successfully');
+    });
+  });
+
+  it('updates the assignee', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <Routes>
+        <Route path="/reports/:id" element={<ReportDetail />} />
+      </Routes>,
+      { initialEntries: ['/reports/report-1'] },
+    );
+
+    expect(await screen.findByText('Button not working')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    const assigneeSelect = screen.getAllByRole('combobox')[2];
+    await user.click(assigneeSelect);
+    await user.click(await screen.findByText('Admin User'));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -118,5 +141,39 @@ describe('ReportDetail', () => {
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Sync retry initiated');
     });
+  });
+
+  it('renders manual reports without empty environment placeholders', async () => {
+    server.use(
+      http.get('/api/reports/:id', () => {
+        return HttpResponse.json({
+          success: true,
+          report: {
+            ...mockReports[2],
+            source: 'manual',
+            metadata: {
+              timestamp: '2024-01-16T08:00:00Z',
+              manualContext: {
+                channel: 'email',
+                submittedByUserId: 'user-1',
+              },
+            },
+          },
+          files: [],
+        });
+      }),
+    );
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/reports/:id" element={<ReportDetail />} />
+      </Routes>,
+      { initialEntries: ['/reports/report-3'] },
+    );
+
+    expect(await screen.findByText('Form validation issue')).toBeInTheDocument();
+    expect(screen.getAllByText('manual')[0]).toBeInTheDocument();
+    expect(screen.getByText('Manual Report')).toBeInTheDocument();
+    expect(screen.queryByText('Environment')).not.toBeInTheDocument();
   });
 });

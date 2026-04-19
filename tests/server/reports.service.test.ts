@@ -11,6 +11,8 @@ import { notificationsService } from '../../src/server/services/notifications.se
 import { githubSyncService } from '../../src/server/services/integrations/github-sync.service';
 import { syncQueueService } from '../../src/server/services/integrations/sync-queue.service';
 import { settingsCacheService } from '../../src/server/services/settings-cache.service';
+import { usersService } from '../../src/server/services/users.service';
+import { Result } from '../../src/server/utils/result';
 import { config } from '../../src/server/config';
 import type { Report, ReportMetadata, Project, AppSettings } from '../../src/shared/types';
 import type { EEHooks } from '../../src/server/types/ee-plugin';
@@ -48,6 +50,7 @@ const baseProject: Project = {
 const baseReport: Report = {
   id: 'rpt_1',
   projectId: 'prj_1',
+  source: 'widget',
   title: 'Bug report',
   description: 'Details',
   status: 'open',
@@ -63,6 +66,7 @@ const originalFilesRepo = { ...filesRepo };
 const originalNotificationsService = { ...notificationsService };
 const originalGithubSyncService = { ...githubSyncService };
 const originalSyncQueueService = { ...syncQueueService };
+const originalUsersService = { ...usersService };
 const originalSettingsCacheGetAll = settingsCacheService.getAll.bind(settingsCacheService);
 const originalConfig = { ...config };
 let tempDir = '';
@@ -76,9 +80,11 @@ let webhooksCreatedCalls = 0;
 let webhooksUpdatedArgs: Array<{ reportId: string; changes: Record<string, unknown> }> = [];
 let webhooksDeletedCalls = 0;
 let notifyNewReportCalls = 0;
+let notifyReporterSubmissionCalls = 0;
 let notifyStatusCalls = 0;
 let notifyPriorityCalls = 0;
 let notifyAssignmentCalls = 0;
+let notifyReporterAssignmentCalls = 0;
 let syncQueueCalls: Array<{ reportId: string; integrationId: string }> = [];
 let fileCreateTypes: string[] = [];
 
@@ -92,9 +98,11 @@ beforeEach(() => {
   webhooksUpdatedArgs = [];
   webhooksDeletedCalls = 0;
   notifyNewReportCalls = 0;
+  notifyReporterSubmissionCalls = 0;
   notifyStatusCalls = 0;
   notifyPriorityCalls = 0;
   notifyAssignmentCalls = 0;
+  notifyReporterAssignmentCalls = 0;
   syncQueueCalls = [];
   fileCreateTypes = [];
 
@@ -142,6 +150,9 @@ beforeEach(() => {
   notificationsService.notifyNewReport = async () => {
     notifyNewReportCalls += 1;
   };
+  notificationsService.notifyReporterSubmission = async () => {
+    notifyReporterSubmissionCalls += 1;
+  };
   notificationsService.notifyStatusChange = async () => {
     notifyStatusCalls += 1;
   };
@@ -151,6 +162,20 @@ beforeEach(() => {
   notificationsService.notifyAssignment = async () => {
     notifyAssignmentCalls += 1;
   };
+  notificationsService.notifyReporterAssignment = async () => {
+    notifyReporterAssignmentCalls += 1;
+  };
+  usersService.getAssignableById = async (id) =>
+    Result.ok({
+      id,
+      email: `${id}@example.com`,
+      name: `User ${id}`,
+      role: 'viewer',
+      isActive: true,
+      invitationAcceptedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
   githubSyncService.getAutoSyncIntegration = async () => null;
   syncQueueService.enqueue = async (reportId, integrationId) => {
@@ -167,6 +192,7 @@ afterEach(() => {
   Object.assign(notificationsService, originalNotificationsService);
   Object.assign(githubSyncService, originalGithubSyncService);
   Object.assign(syncQueueService, originalSyncQueueService);
+  Object.assign(usersService, originalUsersService);
   settingsCacheService.getAll = originalSettingsCacheGetAll;
   resetEEHooks();
 });
@@ -237,6 +263,53 @@ describe('reportsService.create', () => {
     await Promise.resolve();
     expect(webhooksCreatedCalls).toBe(1);
     expect(notifyNewReportCalls).toBe(1);
+    expect(notifyReporterSubmissionCalls).toBe(1);
+  });
+
+  it('applies project default assignee when creating a report', async () => {
+    projectByApiKey = {
+      ...baseProject,
+      settings: { defaultAssigneeUserId: 'usr_2' },
+    };
+
+    const result = await reportsService.create({
+      apiKey: 'proj_key',
+      title: 'Assigned Bug',
+      metadata: baseMetadata,
+      reporterEmail: 'reporter@example.com',
+    });
+
+    expect(result.success).toBe(true);
+    expect(createdReportInput).toMatchObject({
+      assignedTo: 'usr_2',
+    });
+
+    await Promise.resolve();
+    expect(notifyAssignmentCalls).toBe(1);
+    expect(notifyReporterAssignmentCalls).toBe(1);
+  });
+
+  it('skips invalid project default assignees during report creation', async () => {
+    projectByApiKey = {
+      ...baseProject,
+      settings: { defaultAssigneeUserId: 'usr_2' },
+    };
+    usersService.getAssignableById = async () =>
+      Result.fail('Assigned user must be active', 'USER_INACTIVE');
+
+    const result = await reportsService.create({
+      apiKey: 'proj_key',
+      title: 'Assigned Bug',
+      metadata: baseMetadata,
+    });
+
+    expect(result.success).toBe(true);
+    expect(createdReportInput).toMatchObject({
+      assignedTo: undefined,
+    });
+    await Promise.resolve();
+    expect(notifyAssignmentCalls).toBe(0);
+    expect(notifyReporterAssignmentCalls).toBe(0);
   });
 
   it('creates report with media and continues on file errors', async () => {
@@ -247,7 +320,7 @@ describe('reportsService.create', () => {
       apiKey: 'proj_key',
       title: 'Media Bug',
       metadata: baseMetadata,
-      media: [
+      files: [
         {
           filename: 'screen.png',
           mimeType: 'image/png',
@@ -268,7 +341,7 @@ describe('reportsService.create', () => {
       apiKey: 'proj_key',
       title: 'Media Types',
       metadata: baseMetadata,
-      media: [
+      files: [
         {
           filename: 'screen.png',
           mimeType: 'image/png',
@@ -283,6 +356,51 @@ describe('reportsService.create', () => {
     });
     expect(result.success).toBe(true);
     expect(fileCreateTypes).toEqual(['screenshot', 'video']);
+  });
+
+  it('creates manual reports without reporter submission confirmation', async () => {
+    projectsRepo.findById = async () => baseProject;
+
+    const result = await reportsService.createManual(
+      {
+        projectId: 'prj_1',
+        title: 'Manual report',
+        reporterEmail: 'reporter@example.com',
+        channel: 'email',
+      },
+      'usr_1',
+    );
+
+    expect(result.success).toBe(true);
+    expect(createdReportInput).toMatchObject({
+      projectId: 'prj_1',
+      source: 'manual',
+      metadata: {
+        manualContext: {
+          channel: 'email',
+          submittedByUserId: 'usr_1',
+        },
+      },
+    });
+    await Promise.resolve();
+    expect(notifyNewReportCalls).toBe(1);
+    expect(notifyReporterSubmissionCalls).toBe(0);
+  });
+
+  it('rejects invalid manual assignees', async () => {
+    projectsRepo.findById = async () => baseProject;
+    usersService.getAssignableById = async () => Result.fail('Not assignable', 'USER_INACTIVE');
+
+    const result = await reportsService.createManual(
+      {
+        projectId: 'prj_1',
+        title: 'Manual report',
+        assignedTo: 'usr_2',
+      },
+      'usr_1',
+    );
+
+    expect(result.success).toBe(false);
   });
 });
 
@@ -352,6 +470,7 @@ describe('reportsService.update', () => {
     expect(notifyStatusCalls).toBe(1);
     expect(notifyPriorityCalls).toBe(1);
     expect(notifyAssignmentCalls).toBe(1);
+    expect(notifyReporterAssignmentCalls).toBe(1);
     await Promise.resolve();
     expect(syncQueueCalls.length).toBe(1);
   });
@@ -364,6 +483,7 @@ describe('reportsService.update', () => {
     expect(notifyStatusCalls).toBe(0);
     expect(notifyPriorityCalls).toBe(0);
     expect(notifyAssignmentCalls).toBe(0);
+    expect(notifyReporterAssignmentCalls).toBe(0);
   });
 
   it('clears assignedTo when null is provided', async () => {
@@ -371,6 +491,16 @@ describe('reportsService.update', () => {
     expect(result.success).toBe(true);
     expect(Object.prototype.hasOwnProperty.call(updatePayload as object, 'assignedTo')).toBe(true);
     expect((updatePayload as { assignedTo?: string }).assignedTo).toBeUndefined();
+  });
+
+  it('rejects invalid assignees', async () => {
+    usersService.getAssignableById = async () =>
+      Result.fail('Assigned user must be active', 'USER_INACTIVE');
+    const result = await reportsService.update('rpt_1', { assignedTo: 'usr_inactive' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.code).toBe('INVALID_ASSIGNEE');
+    }
   });
 });
 
@@ -404,6 +534,13 @@ describe('reportsService.bulkUpdate/getStats', () => {
   it('updates reports in bulk', async () => {
     const result = await reportsService.bulkUpdate(['rpt_1', 'rpt_2'], { status: 'closed' });
     expect(result.success).toBe(true);
+  });
+
+  it('rejects invalid assignees during bulk update', async () => {
+    usersService.getAssignableById = async () =>
+      Result.fail('Invitation pending', 'INVITATION_PENDING');
+    const result = await reportsService.bulkUpdate(['rpt_1', 'rpt_2'], { assignedTo: 'usr_2' });
+    expect(result.success).toBe(false);
   });
 
   it('returns stats', async () => {

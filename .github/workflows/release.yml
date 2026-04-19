@@ -30,7 +30,7 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
           CHANGELOG_FILE="Changelog/v${VERSION}.md"
-          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p' || echo "")
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
 
           if [ -f "$CHANGELOG_FILE" ]; then

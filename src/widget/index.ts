@@ -248,6 +248,6 @@ if (loadingScript?.hasAttribute('data-api-key')) {
   }
 }
 
-// Export for npm/module usage
+// Export for npm/module usage (default-only at runtime avoids Rollup mixed export warning)
 export default BugPin;
-export { BugPin, createWidget, type WidgetConfig };
+export type { WidgetConfig } from './config.js';

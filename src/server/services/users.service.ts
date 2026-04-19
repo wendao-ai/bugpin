@@ -1,9 +1,10 @@
 import { usersRepo, type CreateUserData } from '../database/repositories/users.repo.js';
 import { sessionsRepo } from '../database/repositories/sessions.repo.js';
+import { projectsRepo } from '../database/repositories/projects.repo.js';
 import { Result } from '../utils/result.js';
 import { logger } from '../utils/logger.js';
 import { isValidEmail } from '../utils/validators.js';
-import type { User, UserRole } from '@shared/types';
+import type { DefaultProjectReference, User, UserRole } from '@shared/types';
 
 // Types
 
@@ -19,6 +20,7 @@ export interface UpdateUserInput {
   role?: UserRole;
   isActive?: boolean;
   avatarUrl?: string;
+  defaultProjectIds?: string[];
 }
 
 export interface UpdateProfileInput {
@@ -37,9 +39,50 @@ async function hashPassword(password: string): Promise<string> {
   });
 }
 
+async function attachDefaultProjects(user: User): Promise<User> {
+  const projects = await projectsRepo.findAll();
+  const defaultProjects: DefaultProjectReference[] = projects
+    .filter((project) => project.settings?.defaultAssigneeUserId === user.id)
+    .map((project) => ({
+      id: project.id,
+      name: project.name,
+    }));
+
+  return {
+    ...user,
+    defaultProjects,
+  };
+}
+
+async function attachDefaultProjectsToMany(users: User[]): Promise<User[]> {
+  const projects = await projectsRepo.findAll();
+  const defaultsByUserId = new Map<string, DefaultProjectReference[]>();
+
+  for (const project of projects) {
+    const userId = project.settings?.defaultAssigneeUserId;
+    if (!userId) continue;
+
+    const existing = defaultsByUserId.get(userId) ?? [];
+    existing.push({ id: project.id, name: project.name });
+    defaultsByUserId.set(userId, existing);
+  }
+
+  return users.map((user) => ({
+    ...user,
+    defaultProjects: defaultsByUserId.get(user.id) ?? [],
+  }));
+}
+
 // Service
 
 export const usersService = {
+  /**
+   * Whether a user can be assigned to a report
+   */
+  isAssignable(user: User): boolean {
+    return user.isActive && (!user.invitationSentAt || !!user.invitationAcceptedAt);
+  },
+
   /**
    * Create a new user
    */
@@ -91,7 +134,7 @@ export const usersService = {
       return Result.fail('User not found', 'NOT_FOUND');
     }
 
-    return Result.ok(user);
+    return Result.ok(await attachDefaultProjects(user));
   },
 
   /**
@@ -112,7 +155,39 @@ export const usersService = {
    */
   async list(): Promise<Result<User[]>> {
     const users = await usersRepo.findAll();
+    return Result.ok(await attachDefaultProjectsToMany(users));
+  },
+
+  /**
+   * List users that can be assigned to reports
+   */
+  async listAssignable(): Promise<Result<User[]>> {
+    const users = await usersRepo.findAssignable();
     return Result.ok(users);
+  },
+
+  /**
+   * Get a user only if they can be assigned to a report
+   */
+  async getAssignableById(id: string): Promise<Result<User>> {
+    const user = await usersRepo.findById(id);
+
+    if (!user) {
+      return Result.fail('Assigned user not found', 'NOT_FOUND');
+    }
+
+    if (!user.isActive) {
+      return Result.fail('Assigned user must be active', 'USER_INACTIVE');
+    }
+
+    if (user.invitationSentAt && !user.invitationAcceptedAt) {
+      return Result.fail(
+        'Assigned user must accept their invitation before they can receive reports',
+        'INVITATION_PENDING',
+      );
+    }
+
+    return Result.ok(user);
   },
 
   /**
@@ -147,6 +222,38 @@ export const usersService = {
       }
     }
 
+    const updatedIsActive = input.isActive ?? existing.isActive;
+    const willBeAssignable =
+      updatedIsActive && (!existing.invitationSentAt || !!existing.invitationAcceptedAt);
+    let selectedProjectIds: Set<string> | undefined;
+    let projectsForDefaults:
+      | Array<Awaited<ReturnType<typeof projectsRepo.findAll>>[number]>
+      | undefined;
+
+    if (input.defaultProjectIds !== undefined) {
+      const projects = await projectsRepo.findAll();
+      selectedProjectIds = new Set(input.defaultProjectIds);
+      projectsForDefaults = projects;
+
+      if (selectedProjectIds.size !== input.defaultProjectIds.length) {
+        return Result.fail('Default projects contain duplicate entries', 'INVALID_PROJECT_IDS');
+      }
+
+      const validProjectIds = new Set(projects.map((project) => project.id));
+      for (const projectId of selectedProjectIds) {
+        if (!validProjectIds.has(projectId)) {
+          return Result.fail('One or more default projects are invalid', 'INVALID_PROJECT_IDS');
+        }
+      }
+
+      if (selectedProjectIds.size > 0 && !willBeAssignable) {
+        return Result.fail(
+          'Only active users with accepted invitations can be assigned as project defaults',
+          'INVALID_DEFAULT_ASSIGNEE',
+        );
+      }
+    }
+
     const updates: Partial<Pick<User, 'name' | 'role' | 'isActive' | 'avatarUrl'>> = {};
 
     if (input.name !== undefined) {
@@ -171,8 +278,29 @@ export const usersService = {
       return Result.fail('Failed to update user', 'UPDATE_FAILED');
     }
 
+    if (selectedProjectIds && projectsForDefaults) {
+      for (const project of projectsForDefaults) {
+        const isSelected = selectedProjectIds.has(project.id);
+        const isCurrentlyAssigned = project.settings?.defaultAssigneeUserId === id;
+
+        if (!isSelected && !isCurrentlyAssigned) {
+          continue;
+        }
+
+        const nextSettings = { ...project.settings };
+
+        if (isSelected) {
+          nextSettings.defaultAssigneeUserId = id;
+        } else {
+          delete nextSettings.defaultAssigneeUserId;
+        }
+
+        await projectsRepo.update(project.id, { settings: nextSettings });
+      }
+    }
+
     logger.info('User updated', { userId: id, updates: Object.keys(updates) });
-    return Result.ok(user);
+    return Result.ok(await attachDefaultProjects(user));
   },
 
   /**

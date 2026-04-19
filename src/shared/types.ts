@@ -2,6 +2,8 @@
 
 export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 export type ReportPriority = 'lowest' | 'low' | 'medium' | 'high' | 'highest';
+export type ReportSource = 'widget' | 'manual';
+export type ManualReportChannel = 'email' | 'chat' | 'phone' | 'qa' | 'other';
 export type UserRole = 'admin' | 'editor' | 'viewer';
 export type FileType = 'screenshot' | 'video' | 'attachment';
 export type GitHubSyncStatus = 'pending' | 'synced' | 'error';
@@ -9,21 +11,26 @@ export type GitHubSyncMode = 'manual' | 'automatic';
 
 // Report Types
 
+export interface ManualReportContext {
+  channel?: ManualReportChannel;
+  submittedByUserId?: string;
+}
+
 export interface ReportMetadata {
-  url: string;
+  url?: string;
   title?: string;
   referrer?: string;
-  browser: {
+  browser?: {
     name: string;
     version: string;
     userAgent: string;
   };
-  device: {
+  device?: {
     type: 'desktop' | 'tablet' | 'mobile';
     os: string;
     osVersion?: string;
   };
-  viewport: {
+  viewport?: {
     width: number;
     height: number;
     devicePixelRatio: number;
@@ -36,6 +43,7 @@ export interface ReportMetadata {
   networkErrors?: NetworkError[];
   userActivity?: UserActivity[];
   storageKeys?: StorageKeys;
+  manualContext?: ManualReportContext;
 }
 
 export interface ConsoleError {
@@ -72,6 +80,7 @@ export interface Report {
   id: string;
   projectId: string;
   projectName?: string; // Only populated in list queries with JOIN
+  source: ReportSource;
   title: string;
   description?: string;
   status: ReportStatus;
@@ -81,6 +90,7 @@ export interface Report {
   reporterEmail?: string;
   reporterName?: string;
   assignedTo?: string;
+  assignee?: ReportAssignee;
   customFields?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -101,6 +111,13 @@ export interface ForwardedReference {
   id: string;
   url?: string;
   forwardedAt?: string;
+}
+
+export interface ReportAssignee {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
 }
 
 // Shared color settings type (used by ThemeColorPicker)
@@ -177,6 +194,7 @@ export interface ScreenshotSettings {
 // Project Types
 
 export interface ProjectSettings {
+  defaultAssigneeUserId?: string | null;
   widgetLauncherButton?: WidgetLauncherButtonSettings;
   widgetDialog?: WidgetDialogSettings;
   screenshot?: ScreenshotSettings;
@@ -233,6 +251,11 @@ export interface Project {
   deletedAt?: string;
 }
 
+export interface DefaultProjectReference {
+  id: string;
+  name: string;
+}
+
 // User Types
 
 export interface User {
@@ -247,6 +270,7 @@ export interface User {
   lastLoginAt?: string;
   invitationSentAt?: string;
   invitationAcceptedAt?: string;
+  defaultProjects?: DefaultProjectReference[];
 }
 
 export interface Session {
@@ -316,6 +340,7 @@ export interface CreateReportRequest {
 
 export interface ReportFilter {
   projectId?: string;
+  source?: ReportSource;
   status?: ReportStatus[];
   priority?: ReportPriority[];
   assignedTo?: string;
@@ -352,6 +377,7 @@ export interface ReporterNotificationSettings {
   notifyOnNewReport: boolean;
   notifyOnStatusChange: boolean;
   notifyOnPriorityChange: boolean;
+  notifyOnAssignment: boolean;
   messagingEnabled: boolean;
 }
 
