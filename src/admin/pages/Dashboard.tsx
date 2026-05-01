@@ -19,7 +19,7 @@ export function Dashboard() {
       const response = await api.get('/reports/stats/overview');
       return response.data.stats as DashboardStats;
     },
-    refetchInterval: 1000,
+    refetchInterval: 10000,
     refetchIntervalInBackground: false,
   });
 
@@ -29,7 +29,7 @@ export function Dashboard() {
       const response = await api.get('/reports', { params: { limit: 5 } });
       return response.data.data;
     },
-    refetchInterval: 1000,
+    refetchInterval: 10000,
     refetchIntervalInBackground: false,
   });
 
