@@ -7,22 +7,39 @@
     Capture screenshots, annotate issues, and track bugs from your web applications.</p>
     <!-- <a target="_blank" href="https://github.com/aranticlabs/bugpin"><img src="https://img.shields.io/github/stars/aranticlabs/bugpin?style=flat" /></a> -->
     <a target="_blank" href="https://github.com/aranticlabs/bugpin"><img src="https://img.shields.io/github/last-commit/aranticlabs/bugpin" /></a>
-    <a target="_blank" href="https://github.com/aranticlabs/bugpin/blob/main/LICENCE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License" /></a>
+    <a target="_blank" href="https://github.com/aranticlabs/bugpin/blob/main/LICENSE"><img src="https://img.shields.io/badge/Admin%20Console%20license-AGPL--3.0-blue.svg" alt="Admin Console license: AGPL-3.0" /></a>
+    <a target="_blank" href="https://github.com/aranticlabs/bugpin/blob/main/src/widget/LICENSE"><img src="https://img.shields.io/badge/Widget%20license-MIT-yellow.svg" alt="Widget license: MIT" /></a>
 </div>
 <br />
 
-Dashboard — manage projects and triage reports in one place.
+### Admin Console
 
-_Light Mode_
-<img src="./src/admin/public/images/bugpin-dashboard.png" width="800" alt="BugPin Dashboard" />
+Manage projects and triage reports — light and dark mode out of the box.
 
-_Dark Mode_
-<img src="./src/admin/public/images/bugpin-dashboard-dark.png" width="800" alt="BugPin Dashboard" />
+**Light Mode**
+
+<img src="./src/admin/public/images/bugpin-dashboard.png" width="800" alt="BugPin Admin Console — Light Mode" />
+
+**Dark Mode**
+
+<img src="./src/admin/public/images/bugpin-dashboard-dark.png" width="800" alt="BugPin Admin Console — Dark Mode" />
+
+### Widget
+
+Capture screenshots and annotate issues from any page on your site.
+
+<img src="./src/admin/public/images/bugpin-widget-dialog.png" width="800" alt="BugPin Widget" />
+
+- Embeds with a single script tag — works with React, Vue, Angular, Svelte, or vanilla JS
+- Shadow DOM isolation — widget styles never leak into your site, and your CSS never bleeds into the widget
+- Offline-safe — reports are cached locally and synced when the connection returns
+- Annotation tools: pen, shapes, arrows, text, privacy blur
 
 # Features
 
 - **Visual Bug Reporting** - Capture screenshots with one click
 - **Annotation Tools** - Draw, highlight, and annotate screenshots
+- **Automated Metadata Collection** - Failed network requests (4xx, 5xx), console errors, and OS/browser/device info captured automatically
 - **Offline Support** - Reports are buffered and sent when back online
 - **Self-Hosted** - Your data stays on your servers
 - **Multi-Project** - Manage multiple projects with separate API keys
@@ -32,7 +49,7 @@ _Dark Mode_
 
 # Quick Start
 
-Get BugPin up and running in under 1 minute. This guide will walk you through the basic setup to start capturing and managing bug reports.
+Get BugPin up and running in under 5 minutes. This guide will walk you through the basic setup to start capturing and managing bug reports.
 
 ## Install
 
@@ -87,15 +104,50 @@ Log in with the default credentials:
 > 2. Select "Profile"
 > 3. Update your password
 
+## Create a Project
+
+Projects organize bug reports and provide the API key used by the widget.
+
+1. Open the Admin Console and go to **Projects**
+2. Click **Create Project** and enter a name
+3. Copy the **API Key** shown after creation — you'll need it in the next step
+
 ## Widget Integration
 
-Add the BugPin widget to your website by including this script tag before the closing `</body>` tag:
+Pick whichever method fits your stack. Replace `YOUR_API_KEY` with the key from the previous step.
+
+### Option 1: Script Tag
+
+Add this before the closing `</body>` tag:
 
 ```html
 <!-- Start of BugPin Widget -->
 <script src="http://localhost:7300/widget.js" data-api-key="YOUR_API_KEY"></script>
 <!-- End of BugPin Widget -->
 ```
+
+The widget auto-detects the server URL from the script `src`.
+
+### Option 2: npm Package
+
+Install via your bundler (Vite, webpack, etc.):
+
+```bash
+npm install @arantic/bugpin-widget
+```
+
+Then initialize in your app:
+
+```javascript
+import BugPin from '@arantic/bugpin-widget';
+
+await BugPin.init({
+  apiKey: 'YOUR_API_KEY',
+  serverUrl: 'http://localhost:7300',
+});
+```
+
+When using the npm package, `serverUrl` is required since the widget no longer loads from a `<script>` tag.
 
 ## Full Documentation
 
@@ -129,5 +181,5 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 BugPin uses a multi-license approach:
 
-- **Server & Admin Console**: [AGPL-3.0](LICENCE)
+- **Server & Admin Console**: [AGPL-3.0](LICENSE)
 - **Widget**: [MIT](https://github.com/aranticlabs/bugpin/blob/main/src/widget/LICENSE)
