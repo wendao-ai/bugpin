@@ -168,7 +168,7 @@ export function Reports() {
       const response = await api.get('/reports', { params });
       return response.data;
     },
-    refetchInterval: 1000,
+    refetchInterval: 2000,
     refetchIntervalInBackground: false,
   });
 

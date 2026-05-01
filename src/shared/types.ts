@@ -453,6 +453,7 @@ export interface AppSettings {
   rateLimitPerMinute: number;
   sessionMaxAgeDays: number;
   invitationExpirationDays: number;
+  updateCheckEnabled: boolean;
   // Security settings
   enforceHttps: boolean;
   // SMTP settings

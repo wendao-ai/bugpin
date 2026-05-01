@@ -171,7 +171,7 @@ function SMTPSettingsSection() {
               }
               placeholder="user@example.com"
             />
-            <p className="text-sm text-muted-foreground">Leave blank if not required</p>
+            <p className="text-xs text-muted-foreground">Leave blank if not required</p>
           </div>
 
           <div className="space-y-2">
@@ -188,7 +188,7 @@ function SMTPSettingsSection() {
               }
               placeholder="Enter password"
             />
-            <p className="text-sm text-muted-foreground">Leave blank if not required</p>
+            <p className="text-xs text-muted-foreground">Leave blank if not required</p>
           </div>
 
           <div className="space-y-2">

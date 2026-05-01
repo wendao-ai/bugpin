@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -16,12 +16,14 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Spinner } from '../../components/ui/spinner';
+import { Switch } from '../../components/ui/switch';
 import type { AppSettings } from '@shared/types';
 
 const systemSettingsSchema = z.object({
   appName: z.string().min(1, 'Application name is required'),
   appUrl: z.string().url('Please enter a valid URL').or(z.literal('')),
   retentionDays: z.number().min(0, 'Must be 0 or more').max(3650, 'Must be 3650 or less'),
+  updateCheckEnabled: z.boolean(),
 });
 
 type SystemSettingsFormData = z.infer<typeof systemSettingsSchema>;
@@ -37,6 +39,7 @@ function SystemSettingsSection() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<SystemSettingsFormData>({
     resolver: zodResolver(systemSettingsSchema),
@@ -44,6 +47,7 @@ function SystemSettingsSection() {
       appName: '',
       appUrl: '',
       retentionDays: 90,
+      updateCheckEnabled: true,
     },
   });
 
@@ -60,7 +64,8 @@ function SystemSettingsSection() {
       reset({
         appName: settings.appName || '',
         appUrl: settings.appUrl || '',
-        retentionDays: settings.retentionDays || 90,
+        retentionDays: settings.retentionDays ?? 90,
+        updateCheckEnabled: settings.updateCheckEnabled ?? true,
       });
     }
   }, [settings, reset]);
@@ -72,6 +77,7 @@ function SystemSettingsSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['version'] });
       toast.success('System settings saved successfully');
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
@@ -80,7 +86,12 @@ function SystemSettingsSection() {
   });
 
   const onSubmit = (data: SystemSettingsFormData) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      appName: data.appName,
+      appUrl: data.appUrl,
+      retentionDays: data.retentionDays,
+      updateCheckEnabled: data.updateCheckEnabled,
+    });
   };
 
   if (isLoading) {
@@ -112,7 +123,7 @@ function SystemSettingsSection() {
               aria-invalid={!!errors.appName}
             />
             {errors.appName && <p className="text-sm text-destructive">{errors.appName.message}</p>}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Used as the sender name in email notifications
             </p>
           </div>
@@ -127,7 +138,7 @@ function SystemSettingsSection() {
               aria-invalid={!!errors.appUrl}
             />
             {errors.appUrl && <p className="text-sm text-destructive">{errors.appUrl.message}</p>}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Used for generating links in email notifications and GitHub issues
             </p>
           </div>
@@ -147,10 +158,31 @@ function SystemSettingsSection() {
             {errors.retentionDays && (
               <p className="text-sm text-destructive">{errors.retentionDays.message}</p>
             )}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Time to keep bug reports before automatic deletion. (1-3650 days) Set to 0 to never
               delete.
             </p>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="update-check">Check for updates</Label>
+              <p className="text-xs text-muted-foreground">
+                When enabled, BugPin checks GitHub once a day for new releases and shows a banner
+                to administrators when an update is available.
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="updateCheckEnabled"
+              render={({ field }) => (
+                <Switch
+                  id="update-check"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
           </div>
 
           <Button type="submit" disabled={mutation.isPending}>

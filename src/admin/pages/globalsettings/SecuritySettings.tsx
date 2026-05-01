@@ -91,7 +91,7 @@ export function SecuritySettings() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="enforce-https">Enforce HTTPS</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Redirect HTTP requests to HTTPS and enable HSTS header
                 </p>
               </div>
@@ -138,7 +138,7 @@ export function SecuritySettings() {
               }
               required
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Maximum number of API requests allowed per minute from a single IP address (1-1000)
             </p>
           </div>
@@ -156,7 +156,7 @@ export function SecuritySettings() {
               }
               required
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Number of days before a user session expires and requires re-login (1-365)
             </p>
           </div>
@@ -177,7 +177,7 @@ export function SecuritySettings() {
               }
               required
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Number of days before an invitation link expires (1-30)
             </p>
           </div>
