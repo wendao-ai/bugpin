@@ -27,6 +27,7 @@ export interface UpdateSettingsInput {
   retentionDays?: number;
   rateLimitPerMinute?: number;
   sessionMaxAgeDays?: number;
+  updateCheckEnabled?: boolean;
   // Security settings
   enforceHttps?: boolean;
   // SMTP settings
@@ -193,6 +194,9 @@ export const settingsService = {
     }
     if (input.sessionMaxAgeDays !== undefined) {
       updates.sessionMaxAgeDays = input.sessionMaxAgeDays;
+    }
+    if (input.updateCheckEnabled !== undefined) {
+      updates.updateCheckEnabled = input.updateCheckEnabled;
     }
 
     // Security settings

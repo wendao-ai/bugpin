@@ -351,7 +351,8 @@ export async function initSchema(): Promise<void> {
       ('smtp_config', '{}'),
       ('retention_days', '90'),
       ('max_screenshot_size_mb', '5'),
-      ('rate_limit_per_minute', '10')
+      ('rate_limit_per_minute', '10'),
+      ('update_check_enabled', 'true')
   `);
 
   // Initialize full-text search

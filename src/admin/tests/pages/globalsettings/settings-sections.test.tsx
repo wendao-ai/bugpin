@@ -31,9 +31,10 @@ describe('Global settings sections', () => {
     const user = userEvent.setup();
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithQuery(<SystemSettings />);
+    renderWithProviders(<SystemSettings />);
 
-    const appNameInput = await screen.findByLabelText(/application name/i);
+    await screen.findByDisplayValue('BugPin');
+    const appNameInput = screen.getByLabelText(/application name/i);
     const retentionInput = screen.getByLabelText(/data retention/i);
 
     await user.clear(appNameInput);
@@ -49,6 +50,42 @@ describe('Global settings sections', () => {
           appName: 'New App Name',
           retentionDays: 120,
         }),
+      );
+    });
+  });
+
+  it('submits the update-check toggle when switched off and back on', async () => {
+    const user = userEvent.setup();
+    const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
+
+    renderWithProviders(<SystemSettings />);
+
+    const updateSwitch = await screen.findByRole('switch', { name: /check for updates/i });
+    expect(updateSwitch).toHaveAttribute('aria-checked', 'true');
+
+    await user.click(updateSwitch);
+    expect(updateSwitch).toHaveAttribute('aria-checked', 'false');
+
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(putSpy).toHaveBeenCalledWith(
+        '/settings',
+        expect.objectContaining({ updateCheckEnabled: false }),
+      );
+    });
+
+    putSpy.mockClear();
+
+    await user.click(updateSwitch);
+    expect(updateSwitch).toHaveAttribute('aria-checked', 'true');
+
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(putSpy).toHaveBeenCalledWith(
+        '/settings',
+        expect.objectContaining({ updateCheckEnabled: true }),
       );
     });
   });

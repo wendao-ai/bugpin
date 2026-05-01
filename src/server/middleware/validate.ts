@@ -282,6 +282,7 @@ export const schemas = {
     maxVideoUploadSizeMb: z.number().int().min(1).max(500).optional(),
     rateLimitPerMinute: z.number().int().min(1).max(1000).optional(),
     sessionMaxAgeDays: z.number().int().min(1).max(365).optional(),
+    updateCheckEnabled: z.boolean().optional(),
   }),
 
   // Create integration request

@@ -874,7 +874,7 @@ export function ReportDetail() {
                       <SelectItem value={UNASSIGNED_VALUE}>Unassigned</SelectItem>
                       {assignableUsers.map((assignee) => (
                         <SelectItem key={assignee.id} value={assignee.id}>
-                          <AssigneeDisplay user={assignee} />
+                          <AssigneeDisplay user={assignee} size="sm" />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1282,9 +1282,11 @@ function formatEnvironmentValue(...parts: Array<string | undefined>) {
 function AssigneeDisplay({
   user,
   showEmail = false,
+  size = 'md',
 }: {
   user?: Pick<User, 'name' | 'email' | 'avatarUrl'>;
   showEmail?: boolean;
+  size?: 'sm' | 'md';
 }) {
   if (!user) {
     return <p className="text-sm text-muted-foreground">Unassigned</p>;
@@ -1297,9 +1299,12 @@ function AssigneeDisplay({
     .map((part) => part[0]?.toUpperCase())
     .join('') || '?';
 
+  const avatarSizeClass = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
+  const gapClass = size === 'sm' ? 'gap-2' : 'gap-3';
+
   return (
-    <div className="flex items-center gap-3">
-      <Avatar className="h-8 w-8">
+    <div className={`flex items-center ${gapClass}`}>
+      <Avatar className={avatarSizeClass}>
         {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.name} /> : null}
         <AvatarFallback className="bg-bugpin-primary-100 text-bugpin-primary-700 dark:bg-bugpin-primary-900 dark:text-bugpin-primary-300 text-xs">
           {fallback}
