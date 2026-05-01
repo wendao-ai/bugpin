@@ -14,15 +14,15 @@
 
 ### Admin Console
 
-Manage projects and triage reports — light and dark mode out of the box.
+Manage projects and triage reports. Light and dark mode out of the box.
 
 **Light Mode**
 
-<img src="./src/admin/public/images/bugpin-dashboard.png" width="800" alt="BugPin Admin Console — Light Mode" />
+<img src="./src/admin/public/images/bugpin-dashboard.png" width="800" alt="BugPin Admin Console: Light Mode" />
 
 **Dark Mode**
 
-<img src="./src/admin/public/images/bugpin-dashboard-dark.png" width="800" alt="BugPin Admin Console — Dark Mode" />
+<img src="./src/admin/public/images/bugpin-dashboard-dark.png" width="800" alt="BugPin Admin Console: Dark Mode" />
 
 ### Widget
 
@@ -30,9 +30,9 @@ Capture screenshots and annotate issues from any page on your site.
 
 <img src="./src/admin/public/images/bugpin-widget-dialog.png" width="800" alt="BugPin Widget" />
 
-- Embeds with a single script tag — works with React, Vue, Angular, Svelte, or vanilla JS
-- Shadow DOM isolation — widget styles never leak into your site, and your CSS never bleeds into the widget
-- Offline-safe — reports are cached locally and synced when the connection returns
+- Embeds with a single script tag. Works with React, Vue, Angular, Svelte, or vanilla JS
+- Shadow DOM isolation: widget styles never leak into your site, and your CSS never bleeds into the widget
+- Offline-safe: reports are cached locally and synced when the connection returns
 - Annotation tools: pen, shapes, arrows, text, privacy blur
 
 # Features
@@ -110,7 +110,7 @@ Projects organize bug reports and provide the API key used by the widget.
 
 1. Open the Admin Console and go to **Projects**
 2. Click **Create Project** and enter a name
-3. Copy the **API Key** shown after creation — you'll need it in the next step
+3. Copy the **API Key** shown after creation. You'll need it in the next step.
 
 ## Widget Integration
 
@@ -126,7 +126,7 @@ Add this before the closing `</body>` tag:
 <!-- End of BugPin Widget -->
 ```
 
-The widget auto-detects the server URL from the script `src`.
+No `serverUrl` needed: the widget reads it from the script tag automatically.
 
 ### Option 2: npm Package
 
