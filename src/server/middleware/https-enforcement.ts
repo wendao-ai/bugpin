@@ -1,4 +1,4 @@
-import type { Context, Next } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 import { settingsCacheService } from '../services/settings-cache.service.js';
 
 /**
@@ -12,7 +12,7 @@ import { settingsCacheService } from '../services/settings-cache.service.js';
  * the x-forwarded-proto header. Without a TLS-terminating proxy,
  * enabling this setting will not provide actual HTTPS protection.
  */
-export async function httpsEnforcement(c: Context, next: Next): Promise<Response | void> {
+export const httpsEnforcement: MiddlewareHandler = async (c, next) => {
   const settings = await settingsCacheService.getAll();
 
   if (!settings.enforceHttps) {
@@ -34,4 +34,4 @@ export async function httpsEnforcement(c: Context, next: Next): Promise<Response
   c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
   return next();
-}
+};

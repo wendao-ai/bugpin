@@ -1,4 +1,4 @@
-import type { Context, Next } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 import { z, ZodSchema } from 'zod';
 import { isValidUrl, normalizeUrl } from '../utils/validators.js';
 
@@ -19,8 +19,8 @@ interface ValidationOptions {
  * @param options - Validation schemas for body, query, and params
  * @returns Middleware function
  */
-export function validate(options: ValidationOptions) {
-  return async (c: Context, next: Next): Promise<Response | void> => {
+export function validate(options: ValidationOptions): MiddlewareHandler {
+  return async (c, next) => {
     const errors: Array<{ field: string; message: string }> = [];
 
     // Validate body
@@ -104,7 +104,7 @@ export function validate(options: ValidationOptions) {
       );
     }
 
-    await next();
+    return next();
   };
 }
 
