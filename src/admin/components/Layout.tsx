@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from './ui/sidebar';
 import { Separator } from './ui/separator';
 import { AppSidebar } from './sidebar/AppSidebar';
 import { Footer } from './Footer';
+import { UpdateBanner } from './UpdateBanner';
 
 // Map hash to sub-tab label (for breadcrumb display)
 const hashToLabel: Record<string, string> = {
@@ -58,6 +59,7 @@ export function Layout() {
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="flex flex-col h-screen max-w-[100vw] min-w-0">
+        <UpdateBanner />
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />

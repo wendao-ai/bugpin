@@ -1,4 +1,4 @@
-import type { Context, Next } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { settingsCacheService } from '../services/settings-cache.service.js';
 
 // Types
@@ -39,14 +39,14 @@ cleanupInterval.unref?.();
  * @param options - Rate limit options
  * @returns Middleware function
  */
-export function rateLimiter(options: RateLimitOptions = {}) {
+export function rateLimiter(options: RateLimitOptions = {}): MiddlewareHandler {
   const max = options.max ?? 10; // Default: 10 requests
   const windowSeconds = options.window ?? 60; // Default: 60 seconds
   const windowMs = windowSeconds * 1000;
 
   const keyGenerator = options.keyGenerator ?? defaultKeyGenerator;
 
-  return async (c: Context, next: Next): Promise<Response | void> => {
+  return async (c, next) => {
     const key = keyGenerator(c);
     const now = Date.now();
 
@@ -88,7 +88,7 @@ export function rateLimiter(options: RateLimitOptions = {}) {
       );
     }
 
-    await next();
+    return next();
   };
 }
 
@@ -141,11 +141,13 @@ export function apiKeyGenerator(c: Context): string {
  * Dynamic rate limiter that fetches limit from database settings
  * Uses rateLimitPerMinute setting with 60 second window
  */
-export function dynamicRateLimiter(options: { keyGenerator?: (c: Context) => string } = {}) {
+export function dynamicRateLimiter(
+  options: { keyGenerator?: (c: Context) => string } = {},
+): MiddlewareHandler {
   const keyGenerator = options.keyGenerator ?? defaultKeyGenerator;
   const windowMs = 60 * 1000; // 1 minute window
 
-  return async (c: Context, next: Next): Promise<Response | void> => {
+  return async (c, next) => {
     // Fetch current rate limit from settings (cached)
     const settings = await settingsCacheService.getAll();
     const max = settings.rateLimitPerMinute;
@@ -190,7 +192,7 @@ export function dynamicRateLimiter(options: { keyGenerator?: (c: Context) => str
       );
     }
 
-    await next();
+    return next();
   };
 }
 

@@ -236,7 +236,7 @@ export function UsersSettings() {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="h-11 w-[240px] justify-between text-left"
+                          className="h-11 w-[240px] justify-between text-left font-normal"
                         >
                           <span className="truncate">
                             {getDefaultProjectsLabel(getDefaultProjects(user))}

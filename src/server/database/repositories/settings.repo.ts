@@ -114,6 +114,7 @@ const KEY_MAP: Record<string, string> = {
   rateLimitPerMinute: 'rate_limit_per_minute',
   sessionMaxAgeDays: 'session_max_age_days',
   invitationExpirationDays: 'invitation_expiration_days',
+  updateCheckEnabled: 'update_check_enabled',
   enforceHttps: 'enforce_https',
   smtpEnabled: 'smtp_enabled',
   smtpConfig: 'smtp_config',
@@ -185,6 +186,7 @@ export const settingsRepo = {
       rateLimitPerMinute: (settings.rateLimitPerMinute as number) ?? 10,
       sessionMaxAgeDays: (settings.sessionMaxAgeDays as number) ?? 7,
       invitationExpirationDays: (settings.invitationExpirationDays as number) ?? 7,
+      updateCheckEnabled: (settings.updateCheckEnabled as boolean) ?? true,
       // Security settings
       enforceHttps: (settings.enforceHttps as boolean) ?? false,
       // SMTP settings

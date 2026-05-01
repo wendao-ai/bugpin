@@ -84,7 +84,7 @@ export function ScreenshotSettingsForm({
               }
               disabled={disabled}
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Maximum allowed size for captured screenshots (1-50 MB)
             </p>
           </div>
@@ -103,7 +103,7 @@ export function ScreenshotSettingsForm({
               }
               disabled={disabled}
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Maximum allowed size for uploaded images (1-50 MB)
             </p>
           </div>
@@ -122,7 +122,7 @@ export function ScreenshotSettingsForm({
               }
               disabled={disabled}
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Maximum allowed size for uploaded videos (1-500 MB)
             </p>
           </div>
@@ -131,10 +131,10 @@ export function ScreenshotSettingsForm({
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
-                <Label htmlFor="use-screen-capture-api" className="text-base">
+                <Label htmlFor="use-screen-capture-api">
                   Use Screen Capture API
                 </Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Enable browser Screen Capture API for pixel-perfect screenshots
                 </p>
               </div>

@@ -6,6 +6,9 @@
 # =============================================================================
 FROM oven/bun:1-alpine AS builder
 
+# Pull latest Alpine security patches (libssl3, libcrypto3, musl, zlib, etc.)
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 
 # Install dependencies first (better layer caching)
@@ -46,8 +49,9 @@ FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Install tini for proper signal handling and wget for health checks
-RUN apk add --no-cache tini wget
+# Pull latest Alpine security patches (libssl3, libcrypto3, musl, zlib, etc.)
+# and install tini for signal handling and wget for health checks.
+RUN apk update && apk upgrade --no-cache && apk add --no-cache tini wget
 
 # Copy server package.json and install production dependencies only
 # We use the server's package.json directly to avoid workspace issues

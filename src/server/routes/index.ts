@@ -5,6 +5,7 @@ import { projectsRoutes } from './api/projects.js';
 import { usersRoutes } from './api/users.js';
 import { webhooksRoutes } from './api/webhooks.js';
 import { settingsRoutes } from './api/settings.js';
+import { versionRoutes } from './api/version.js';
 import { integrationsRoutes } from './api/integrations.js';
 import { notificationPreferences } from './api/notification-preferences.js';
 import { storageRoutes } from './api/storage.js';
@@ -31,6 +32,7 @@ export function createApiRouter(): Hono {
   api.route('/projects', projectsRoutes);
   api.route('/users', usersRoutes);
   api.route('/settings', settingsRoutes);
+  api.route('/version', versionRoutes);
   api.route('/integrations', integrationsRoutes);
   api.route('/notification-preferences', notificationPreferences);
   api.route('/license', licenseRoutes);

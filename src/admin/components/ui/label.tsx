@@ -11,9 +11,29 @@ const labelVariants = cva(
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & VariantProps<typeof labelVariants>
->(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root ref={ref} className={cn(labelVariants(), className)} {...props} />
-));
+>(({ className, onClick, ...props }, ref) => {
+  const handleClick = (event: React.MouseEvent<HTMLLabelElement>) => {
+    onClick?.(event);
+    if (event.defaultPrevented) return;
+
+    const htmlFor = event.currentTarget.getAttribute('for');
+    if (!htmlFor) return;
+
+    const target = document.getElementById(htmlFor);
+    if (target?.getAttribute('role') === 'switch') {
+      event.preventDefault();
+    }
+  };
+
+  return (
+    <LabelPrimitive.Root
+      ref={ref}
+      className={cn(labelVariants(), className)}
+      onClick={handleClick}
+      {...props}
+    />
+  );
+});
 Label.displayName = LabelPrimitive.Root.displayName;
 
 export { Label };

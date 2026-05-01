@@ -194,18 +194,37 @@ function findScrollContainer(): HTMLElement | null {
 }
 
 /**
- * Get the background color for the screenshot
+ * Get the background color for the screenshot.
+ *
+ * Falls back through three layers:
+ *   1. `body` background — explicit author CSS.
+ *   2. `html` background — explicit author CSS.
+ *   3. UA-painted background inferred from `color-scheme` + the system
+ *      `prefers-color-scheme` media query. Pages that opt into dark mode via
+ *      `color-scheme: dark` (or `light dark` while the system prefers dark)
+ *      get a UA dark background that is never exposed through
+ *      `getComputedStyle`, so the screenshot has to infer it; otherwise white
+ *      text on a white canvas renders as invisible.
  */
 function getBackgroundColor(): string {
   const bodyBg = window.getComputedStyle(document.body).backgroundColor;
   const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor;
 
-  // Check if color is transparent
   const isTransparent = (color: string) =>
     !color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)';
 
   if (!isTransparent(bodyBg)) return bodyBg;
   if (!isTransparent(htmlBg)) return htmlBg;
+
+  const rootColorScheme = window.getComputedStyle(document.documentElement).colorScheme || '';
+  const allowsDark = /\bdark\b/.test(rootColorScheme);
+  const allowsLight = /\blight\b/.test(rootColorScheme);
+  const prefersDark =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  if (allowsDark && !allowsLight) return '#1c1c1e';
+  if (allowsDark && allowsLight && prefersDark) return '#1c1c1e';
   return '#ffffff';
 }
 
@@ -214,42 +233,76 @@ function getBackgroundColor(): string {
 const TRANSPARENT_PIXEL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAA0lEQVQI12P4z8BQDwAEgAF/QualzQAAAABJRU5ErkJggg==';
 
+export interface FontSkipResult {
+  skip: boolean;
+  reason?: string;
+}
+
+const FONT_FAMILY_DECLARATION = /font-family\s*:/i;
+
 /**
- * Detect whether the page has cross-origin stylesheets that html-to-image
- * cannot read. Accessing `cssRules` on a cross-origin sheet throws a
- * SecurityError - this is what triggers the .trim() crash in html-to-image's
- * font embedding code.
+ * Detect whether the page would crash html-to-image's font-embedding pipeline.
+ * Returns a skip signal so the caller can pass `skipFonts: true` to `toCanvas`
+ * and bypass the crash entirely.
+ *
+ * Two known triggers:
+ *   1. Cross-origin stylesheet — `cssRules` access throws a SecurityError.
+ *   2. `@font-face` rule whose `style.fontFamily` is falsy even though
+ *      `cssText` contains the declaration.
+ *
+ * Short-circuits on first match and never throws.
  */
-function hasCrossOriginStyleSheets(): boolean {
+export function shouldSkipFontEmbedding(): FontSkipResult {
   try {
     for (const sheet of document.styleSheets) {
-      if (sheet.href) {
-        try {
-          void sheet.cssRules;
-        } catch {
-          return true;
+      let rules: CSSRuleList | null = null;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        if (sheet.href) {
+          return { skip: true, reason: 'cross-origin stylesheet' };
         }
+        return { skip: true, reason: 'unreadable stylesheet' };
+      }
+
+      if (!rules) continue;
+      try {
+        for (let i = 0; i < rules.length; i += 1) {
+          const rule = rules[i];
+          if (rule.type !== CSSRule.FONT_FACE_RULE) continue;
+          const fontFaceRule = rule as CSSFontFaceRule;
+          const fontFamily = fontFaceRule.style?.fontFamily;
+          if (!fontFamily && FONT_FAMILY_DECLARATION.test(fontFaceRule.cssText)) {
+            return {
+              skip: true,
+              reason: 'browser exposes empty fontFamily on @font-face rule',
+            };
+          }
+        }
+      } catch {
+        return { skip: true, reason: 'unreadable stylesheet' };
       }
     }
   } catch {
-    return true;
+    return { skip: true, reason: 'unreadable stylesheet' };
   }
-  return false;
+
+  return { skip: false };
 }
 
 /**
- * Build capture options adapted to the current page. Same-origin pages get
- * full font embedding for pixel-perfect screenshots. Pages with cross-origin
- * stylesheets (WordPress, sites with CDN assets) skip font embedding to avoid
- * crashes and slow CORS timeouts.
+ * Build capture options adapted to the current page. Pages without
+ * font-embedding hazards get full font embedding for pixel-perfect screenshots.
+ * Pages that match a known crash signature skip font embedding so capture
+ * still works with system fallback fonts.
  */
 function getCaptureDefaults(): ToCanvasOptions {
-  const crossOrigin = hasCrossOriginStyleSheets();
-  if (crossOrigin) {
-    console.log('[BugPin] Cross-origin stylesheets detected, skipping font embedding');
+  const result = shouldSkipFontEmbedding();
+  if (result.skip) {
+    console.log(`[BugPin] Skipping font embedding: ${result.reason ?? 'unknown reason'}`);
   }
   return {
-    skipFonts: crossOrigin,
+    skipFonts: result.skip,
     imagePlaceholder: TRANSPARENT_PIXEL,
     // Prevent html-to-image from rejecting when a cloned <img> fails to render.
     // This handles the case where fetch() succeeds (200) but returns non-image

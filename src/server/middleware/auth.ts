@@ -1,4 +1,4 @@
-import type { Context, Next } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { authService } from '../services/auth.service.js';
 import type { User, Session } from '@shared/types';
@@ -19,7 +19,7 @@ declare module 'hono' {
  * Authentication middleware
  * Validates session cookie and sets user in context
  */
-export async function authMiddleware(c: Context, next: Next): Promise<Response | void> {
+export const authMiddleware: MiddlewareHandler = async (c, next) => {
   const sessionId = getCookie(c, 'session');
 
   if (!sessionId) {
@@ -42,8 +42,8 @@ export async function authMiddleware(c: Context, next: Next): Promise<Response |
   c.set('user', result.value.user);
   c.set('session', result.value.session);
 
-  await next();
-}
+  return next();
+};
 
 /**
  * Role-based authorization middleware
@@ -51,8 +51,10 @@ export async function authMiddleware(c: Context, next: Next): Promise<Response |
  *
  * @param allowedRoles - Array of roles that are allowed to access the route
  */
-export function authorize(allowedRoles: Array<'admin' | 'editor' | 'viewer'>) {
-  return async (c: Context, next: Next): Promise<Response | void> => {
+export function authorize(
+  allowedRoles: Array<'admin' | 'editor' | 'viewer'>,
+): MiddlewareHandler {
+  return async (c, next) => {
     const user = c.get('user');
 
     if (!user) {
@@ -69,7 +71,7 @@ export function authorize(allowedRoles: Array<'admin' | 'editor' | 'viewer'>) {
       );
     }
 
-    await next();
+    return next();
   };
 }
 
@@ -77,7 +79,7 @@ export function authorize(allowedRoles: Array<'admin' | 'editor' | 'viewer'>) {
  * Optional authentication middleware
  * Sets user in context if session exists, but doesn't require authentication
  */
-export async function optionalAuth(c: Context, next: Next): Promise<Response | void> {
+export const optionalAuth: MiddlewareHandler = async (c, next) => {
   const sessionId = getCookie(c, 'session');
 
   if (sessionId) {
@@ -89,14 +91,14 @@ export async function optionalAuth(c: Context, next: Next): Promise<Response | v
     }
   }
 
-  await next();
-}
+  return next();
+};
 
 /**
  * Admin-only shortcut middleware
  * Combines authMiddleware + authorize(['admin'])
  */
-export async function adminOnly(c: Context, next: Next): Promise<Response | void> {
+export const adminOnly: MiddlewareHandler = async (c, next) => {
   const sessionId = getCookie(c, 'session');
 
   if (!sessionId) {
@@ -122,5 +124,5 @@ export async function adminOnly(c: Context, next: Next): Promise<Response | void
   c.set('user', result.value.user);
   c.set('session', result.value.session);
 
-  await next();
-}
+  return next();
+};

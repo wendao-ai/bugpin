@@ -530,6 +530,7 @@ export const handlers = [
         rateLimitPerMinute: 10,
         sessionMaxAgeDays: 7,
         invitationExpirationDays: 7,
+        updateCheckEnabled: true,
         smtpEnabled: false,
         smtpConfig: {
           host: '',
@@ -618,6 +619,20 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       settings: body,
+    });
+  }),
+
+  // Version / update-check endpoint
+  http.get('/api/version', () => {
+    return HttpResponse.json({
+      success: true,
+      current: '1.0.6',
+      latest: null,
+      updateAvailable: false,
+      releaseUrl: null,
+      publishedAt: null,
+      lastCheckedAt: null,
+      checkEnabled: true,
     });
   }),
 
