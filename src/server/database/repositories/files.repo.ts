@@ -62,7 +62,7 @@ export const filesRepo = {
         data.width ?? null,
         data.height ?? null,
         now,
-      ],
+      ]
     );
 
     const file = await this.findById(id);

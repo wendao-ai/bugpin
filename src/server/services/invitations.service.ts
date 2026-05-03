@@ -87,7 +87,9 @@ export const invitationsService = {
     // Send invitation email
     const appUrl = settings.appUrl || '';
     if (!appUrl) {
-      logger.warn('Application URL is not configured. Invitation links will not work. Please set the Application URL in the settings..');
+      logger.warn(
+        'Application URL is not configured. Invitation links will not work. Please set the Application URL in the settings..'
+      );
     }
     const inviteUrl = `${appUrl}/admin/accept-invitation?token=${token}`;
 
@@ -97,7 +99,7 @@ export const invitationsService = {
         inviteUrl,
         inviterName,
         expiresInDays: expirationDays,
-      },
+      }
     );
 
     if (!emailResult.success) {
@@ -157,7 +159,7 @@ export const invitationsService = {
         inviteUrl,
         inviterName,
         expiresInDays: expirationDays,
-      },
+      }
     );
 
     if (!emailResult.success) {
@@ -208,7 +210,7 @@ export const invitationsService = {
   async acceptInvitation(
     input: AcceptInvitationInput,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<Result<AcceptInvitationResult>> {
     // Find user by token
     const userWithToken = await usersRepo.findByInvitationToken(input.token);
@@ -247,7 +249,7 @@ export const invitationsService = {
     const user = await usersRepo.acceptInvitation(
       userWithToken.id,
       passwordHash,
-      input.name.trim(),
+      input.name.trim()
     );
 
     if (!user) {

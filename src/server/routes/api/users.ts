@@ -79,7 +79,7 @@ users.post('/', authorize(['admin']), validate({ body: schemas.createUser }), as
       success: true,
       user: result.value,
     },
-    201,
+    201
   );
 });
 
@@ -109,7 +109,7 @@ users.post('/invite', authorize(['admin']), validate({ body: schemas.inviteUser 
       message: 'Invitation sent successfully',
       warning,
     },
-    201,
+    201
   );
 });
 
@@ -141,7 +141,7 @@ users.post(
       message: 'Invitation resent successfully',
       warning,
     });
-  },
+  }
 );
 
 // Update User (Admin only)
@@ -165,7 +165,7 @@ users.patch(
       success: true,
       user: result.value,
     });
-  },
+  }
 );
 
 // Delete User (Admin only)
@@ -178,7 +178,7 @@ users.delete('/:id', authorize(['admin']), validate({ params: schemas.id }), asy
   if (id === currentUser.id) {
     return c.json(
       { success: false, error: 'INVALID_OPERATION', message: 'Cannot delete your own account' },
-      400,
+      400
     );
   }
 
@@ -215,7 +215,7 @@ users.post('/me/avatar', authMiddleware, async (c) => {
         error: 'INVALID_FILE_TYPE',
         message: 'Only JPEG, PNG, WebP, and GIF images are allowed',
       },
-      400,
+      400
     );
   }
 
@@ -224,7 +224,7 @@ users.post('/me/avatar', authMiddleware, async (c) => {
   if (file.size > maxSize) {
     return c.json(
       { success: false, error: 'FILE_TOO_LARGE', message: 'File size must be less than 5MB' },
-      400,
+      400
     );
   }
 
@@ -259,7 +259,7 @@ users.post('/me/avatar', authMiddleware, async (c) => {
   } catch (error) {
     return c.json(
       { success: false, error: 'UPLOAD_FAILED', message: 'Failed to upload avatar' },
-      500,
+      500
     );
   }
 });

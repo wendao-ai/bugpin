@@ -168,19 +168,15 @@ function SystemSettingsSection() {
             <div className="space-y-0.5">
               <Label htmlFor="update-check">Check for updates</Label>
               <p className="text-xs text-muted-foreground">
-                When enabled, BugPin checks GitHub once a day for new releases and shows a banner
-                to administrators when an update is available.
+                When enabled, BugPin checks GitHub once a day for new releases and shows a banner to
+                administrators when an update is available.
               </p>
             </div>
             <Controller
               control={control}
               name="updateCheckEnabled"
               render={({ field }) => (
-                <Switch
-                  id="update-check"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch id="update-check" checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
           </div>

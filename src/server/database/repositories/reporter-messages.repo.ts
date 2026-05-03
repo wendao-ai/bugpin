@@ -40,7 +40,7 @@ export const reporterMessagesRepo: IReporterMessagesRepository = {
     db.run(
       `INSERT INTO reporter_messages (id, report_id, user_id, message, sent_at, created_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, reportId, userId, message, now, now],
+      [id, reportId, userId, message, now, now]
     );
 
     const row = db
@@ -48,7 +48,7 @@ export const reporterMessagesRepo: IReporterMessagesRepository = {
         `SELECT rm.*, u.name as user_name
          FROM reporter_messages rm
          JOIN users u ON u.id = rm.user_id
-         WHERE rm.id = ?`,
+         WHERE rm.id = ?`
       )
       .get(id) as ReporterMessageRow;
 
@@ -63,7 +63,7 @@ export const reporterMessagesRepo: IReporterMessagesRepository = {
          FROM reporter_messages rm
          JOIN users u ON u.id = rm.user_id
          WHERE rm.report_id = ?
-         ORDER BY rm.created_at ASC`,
+         ORDER BY rm.created_at ASC`
       )
       .all(reportId) as ReporterMessageRow[];
 
@@ -79,7 +79,7 @@ export const reporterMessagesRepo: IReporterMessagesRepository = {
          JOIN users u ON u.id = rm.user_id
          WHERE rm.report_id = ?
          ORDER BY rm.created_at DESC
-         LIMIT 1`,
+         LIMIT 1`
       )
       .get(reportId) as ReporterMessageRow | null;
 

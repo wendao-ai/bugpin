@@ -9,7 +9,9 @@ import type {
   ReportPriority,
   ReportMetadata,
   GitHubSyncStatus,
+  LocaleCode,
 } from '@shared/types';
+import { normalizeLocale } from '../../utils/locale.js';
 
 // Database Row Type
 
@@ -25,6 +27,7 @@ interface ReportRow {
   metadata: string;
   reporter_email: string | null;
   reporter_name: string | null;
+  reporter_locale: string;
   assigned_to: string | null;
   custom_fields: string | null;
   created_at: string;
@@ -46,6 +49,10 @@ interface ReportRow {
 }
 
 // Row to Entity Mapping
+
+function mapRowLocale(value: string | null | undefined): LocaleCode {
+  return normalizeLocale(value) ?? 'en';
+}
 
 function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
   const assignee: ReportAssignee | undefined = row.assignee_id
@@ -70,6 +77,7 @@ function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
     metadata: JSON.parse(row.metadata) as ReportMetadata,
     reporterEmail: row.reporter_email ?? undefined,
     reporterName: row.reporter_name ?? undefined,
+    reporterLocale: mapRowLocale(row.reporter_locale),
     assignedTo: row.assigned_to ?? undefined,
     assignee,
     customFields: row.custom_fields ? JSON.parse(row.custom_fields) : undefined,
@@ -105,9 +113,9 @@ export const reportsRepo = {
     db.run(
       `INSERT INTO reports (
         id, project_id, source, title, description, status, priority,
-        annotations, metadata, reporter_email, reporter_name, assigned_to,
+        annotations, metadata, reporter_email, reporter_name, reporter_locale, assigned_to,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.projectId,
@@ -120,10 +128,11 @@ export const reportsRepo = {
         JSON.stringify(data.metadata),
         data.reporterEmail ?? null,
         data.reporterName ?? null,
+        data.reporterLocale ?? 'en',
         data.assignedTo ?? null,
         now,
         now,
-      ],
+      ]
     );
 
     const report = await this.findById(id);
@@ -147,7 +156,7 @@ export const reportsRepo = {
                 users.avatar_url as assignee_avatar_url
          FROM reports
          LEFT JOIN users ON users.id = reports.assigned_to
-         WHERE reports.id = ?`,
+         WHERE reports.id = ?`
       )
       .get(id) as ReportRow | null;
     return row ? mapRowToReport(row) : null;
@@ -377,7 +386,7 @@ export const reportsRepo = {
       .query(
         `
       SELECT status, COUNT(*) as count FROM reports ${whereClause} GROUP BY status
-    `,
+    `
       )
       .all(...params) as { status: ReportStatus; count: number }[];
 
@@ -385,7 +394,7 @@ export const reportsRepo = {
       .query(
         `
       SELECT priority, COUNT(*) as count FROM reports ${whereClause} GROUP BY priority
-    `,
+    `
       )
       .all(...params) as { priority: ReportPriority; count: number }[];
 
@@ -439,7 +448,7 @@ export const reportsRepo = {
       error?: string | null;
       issueNumber?: number | null;
       issueUrl?: string | null;
-    },
+    }
   ): Promise<Report | null> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -462,7 +471,7 @@ export const reportsRepo = {
         now,
         now,
         id,
-      ],
+      ]
     );
 
     return this.findById(id);
@@ -507,7 +516,7 @@ export const reportsRepo = {
 
     const rows = db
       .query(
-        'SELECT * FROM reports WHERE project_id = ? AND github_issue_number IS NOT NULL ORDER BY created_at DESC',
+        'SELECT * FROM reports WHERE project_id = ? AND github_issue_number IS NOT NULL ORDER BY created_at DESC'
       )
       .all(projectId) as ReportRow[];
 
@@ -553,7 +562,7 @@ export const reportsRepo = {
         github_synced_at = NULL,
         updated_at = ?
       WHERE id = ?`,
-      [new Date().toISOString(), id],
+      [new Date().toISOString(), id]
     );
   },
 };

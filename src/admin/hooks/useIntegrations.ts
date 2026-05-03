@@ -169,7 +169,7 @@ export function useForwardReport() {
     }) => {
       const response = await api.post(
         `/reports/${reportId}/forward/${integrationId}`,
-        options || {},
+        options || {}
       );
       return response.data.result as ForwardReportResult;
     },

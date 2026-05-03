@@ -232,7 +232,7 @@ export const integrationsService = {
         case 'webhook':
           return Result.fail(
             `Testing ${integration.type} integrations is not yet implemented`,
-            'NOT_IMPLEMENTED',
+            'NOT_IMPLEMENTED'
           );
 
         default:
@@ -259,7 +259,7 @@ export const integrationsService = {
   async forwardReport(
     reportId: string,
     integrationId: string,
-    options: ForwardReportInput = {},
+    options: ForwardReportInput = {}
   ): Promise<Result<ForwardReportResult>> {
     // Load integration
     const integration = await integrationsRepo.findById(integrationId);
@@ -301,13 +301,13 @@ export const integrationsService = {
               assignees: config.assignees,
               fileTransferMode: config.fileTransferMode,
             },
-            options,
+            options
           );
 
           if (!githubResult.success) {
             return Result.fail(
               githubResult.error || 'Failed to create GitHub issue',
-              'FORWARD_FAILED',
+              'FORWARD_FAILED'
             );
           }
 
@@ -325,7 +325,7 @@ export const integrationsService = {
         case 'webhook':
           return Result.fail(
             `Forwarding to ${integration.type} is not yet implemented`,
-            'NOT_IMPLEMENTED',
+            'NOT_IMPLEMENTED'
           );
 
         default:
@@ -343,7 +343,7 @@ export const integrationsService = {
 
       // Check if already forwarded to same integration
       const existingIndex = forwardedTo.findIndex(
-        (f) => f.type === result.type && f.id === result.id,
+        (f) => f.type === result.type && f.id === result.id
       );
       if (existingIndex === -1) {
         forwardedTo.push(newForward);
@@ -376,7 +376,7 @@ export const integrationsService = {
  */
 function validateConfig(
   type: IntegrationType,
-  config: IntegrationConfig,
+  config: IntegrationConfig
 ): { success: boolean; error?: string } {
   switch (type) {
     case 'github': {

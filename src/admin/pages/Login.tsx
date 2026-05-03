@@ -59,11 +59,7 @@ export function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2">
-            <img
-              src="/branding/light/logo-light.svg"
-              alt="BugPin"
-              className="h-10 dark:hidden"
-            />
+            <img src="/branding/light/logo-light.svg" alt="BugPin" className="h-10 dark:hidden" />
             <img
               src="/branding/dark/logo-dark.svg"
               alt="BugPin"

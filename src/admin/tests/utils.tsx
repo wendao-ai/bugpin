@@ -39,7 +39,7 @@ export function renderWithProviders(
     initialEntries = ['/'],
     queryClient = createTestQueryClient(),
     ...options
-  }: CustomRenderOptions = {},
+  }: CustomRenderOptions = {}
 ) {
   function Wrapper({ children }: WrapperProps) {
     return (
@@ -66,7 +66,7 @@ export function renderWithProviders(
  */
 export function renderWithQuery(
   ui: React.ReactElement,
-  { queryClient = createTestQueryClient(), ...options }: CustomRenderOptions = {},
+  { queryClient = createTestQueryClient(), ...options }: CustomRenderOptions = {}
 ) {
   function Wrapper({ children }: WrapperProps) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
@@ -83,7 +83,7 @@ export function renderWithQuery(
  */
 export function renderWithRouter(
   ui: React.ReactElement,
-  { initialEntries = ['/'], ...options }: CustomRenderOptions = {},
+  { initialEntries = ['/'], ...options }: CustomRenderOptions = {}
 ) {
   function Wrapper({ children }: WrapperProps) {
     return (

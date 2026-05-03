@@ -10,7 +10,7 @@ const githubWebhook = new Hono();
 async function verifyWebhookSignature(
   payload: string,
   signature: string,
-  secret: string,
+  secret: string
 ): Promise<boolean> {
   if (!signature.startsWith('sha256=')) {
     return false;

@@ -269,7 +269,7 @@ export function UsersSettings() {
                           ) : (
                             projects.map((project) => {
                               const selectedProjectIds = new Set(
-                                getDefaultProjects(user).map((item) => item.id),
+                                getDefaultProjects(user).map((item) => item.id)
                               );
                               const checked = selectedProjectIds.has(project.id);
                               const disabled = !checked && !isAssignableUser(user);

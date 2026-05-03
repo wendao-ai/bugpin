@@ -50,7 +50,7 @@ function extractEditableContent(html: string): { content: string; wrapper: strin
 
   // Try to extract content from the .content div, excluding the button
   const contentMatch = html.match(
-    /<div class="content"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/body>/i,
+    /<div class="content"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/body>/i
   );
   if (contentMatch) {
     let innerContent = contentMatch[1].trim();
@@ -128,7 +128,7 @@ function convertTextVariablesToNodes(html: string): string {
       }
 
       return `<span data-variable="${varName}" class="variable-node">${fullMatch}</span>`;
-    },
+    }
   );
 }
 
@@ -238,7 +238,7 @@ export function TemplateEditor({
       setSourceValue(newValue);
       onChange(newValue);
     },
-    [onChange],
+    [onChange]
   );
 
   const insertVariable = useCallback(
@@ -248,7 +248,7 @@ export function TemplateEditor({
       } else {
         // In source mode, insert at cursor position
         const textarea = document.querySelector(
-          '[data-source-editor]',
+          '[data-source-editor]'
         ) as HTMLTextAreaElement | null;
         if (textarea) {
           const start = textarea.selectionStart;
@@ -265,7 +265,7 @@ export function TemplateEditor({
         }
       }
     },
-    [mode, editor, sourceValue, onChange],
+    [mode, editor, sourceValue, onChange]
   );
 
   const setLink = useCallback(() => {

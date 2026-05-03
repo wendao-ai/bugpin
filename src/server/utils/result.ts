@@ -88,7 +88,7 @@ export const Result = {
    */
   async flatMapAsync<T, U>(
     result: Result<T>,
-    fn: (value: T) => Promise<Result<U>>,
+    fn: (value: T) => Promise<Result<U>>
   ): Promise<Result<U>> {
     if (result.success) {
       return await fn(result.value);
@@ -129,7 +129,7 @@ export const Result = {
    * Returns the first failure or an array of all values if all succeed
    */
   all<T extends Result<unknown>[]>(
-    results: [...T],
+    results: [...T]
   ): Result<{ [K in keyof T]: T[K] extends Result<infer U> ? U : never }> {
     const values: unknown[] = [];
     for (const result of results) {

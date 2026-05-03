@@ -31,7 +31,7 @@ interface ReportWithFiles extends Report {
 export async function createGitHubIssue(
   report: ReportWithFiles,
   githubConfig: GitHubConfig,
-  options?: { labels?: string[]; assignees?: string[] },
+  options?: { labels?: string[]; assignees?: string[] }
 ): Promise<GitHubIssueResult> {
   const { owner, repo, accessToken } = githubConfig;
 
@@ -163,7 +163,7 @@ async function uploadFileToGitHub(
   fileName: string,
   reportId: string,
   githubConfig: GitHubConfig,
-  appName: string,
+  appName: string
 ): Promise<UploadResult> {
   const { owner, repo, accessToken } = githubConfig;
   const path = `.bugpin/files/${reportId}/${fileName}`;
@@ -178,7 +178,7 @@ async function uploadFileToGitHub(
     // Check if file already exists
     const getResponse = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-      { headers },
+      { headers }
     );
 
     if (getResponse.ok) {
@@ -197,7 +197,7 @@ async function uploadFileToGitHub(
           message: `[${appName}] Add file for report ${reportId}`,
           content,
         }),
-      },
+      }
     );
 
     if (!putResponse.ok) {
@@ -249,7 +249,7 @@ interface UploadFilesResult {
 async function uploadReportFiles(
   files: FileRecord[],
   reportId: string,
-  githubConfig: GitHubConfig,
+  githubConfig: GitHubConfig
 ): Promise<UploadFilesResult> {
   const settings = await settingsRepo.getAll();
   const appName = settings.appName || 'BugPin';
@@ -264,9 +264,7 @@ async function uploadReportFiles(
 
     // Skip files larger than 10 MB
     if (file.sizeBytes > MAX_GITHUB_UPLOAD_BYTES) {
-      logger.warn(
-        `Skipping file ${file.filename} (${file.sizeBytes} bytes) — exceeds 10 MB limit`,
-      );
+      logger.warn(`Skipping file ${file.filename} (${file.sizeBytes} bytes) — exceeds 10 MB limit`);
       continue;
     }
 
@@ -283,9 +281,12 @@ async function uploadReportFiles(
     } else {
       lastError = result.error;
       // If we get a permission error, skip remaining uploads
-      if (result.error?.includes('Resource not accessible') || result.error?.includes('Not Found')) {
+      if (
+        result.error?.includes('Resource not accessible') ||
+        result.error?.includes('Not Found')
+      ) {
         logger.warn(
-          'GitHub file upload permission denied — token likely needs Contents: Read and write permission. Skipping remaining uploads.',
+          'GitHub file upload permission denied — token likely needs Contents: Read and write permission. Skipping remaining uploads.'
         );
         break;
       }
@@ -297,7 +298,7 @@ async function uploadReportFiles(
 
 async function buildIssueBody(
   report: ReportWithFiles,
-  uploadResult?: UploadFilesResult,
+  uploadResult?: UploadFilesResult
 ): Promise<string> {
   const uploadedUrls = uploadResult?.uploadedUrls;
   const metadata = report.metadata as {
@@ -607,7 +608,7 @@ export async function fetchGitHubRepositories(accessToken: string): Promise<{
 export async function fetchGitHubLabels(
   accessToken: string,
   owner: string,
-  repo: string,
+  repo: string
 ): Promise<{
   success: boolean;
   labels?: Array<{ name: string; color: string; description: string | null }>;
@@ -626,7 +627,7 @@ export async function fetchGitHubLabels(
           Authorization: `Bearer ${accessToken}`,
           'X-GitHub-Api-Version': '2022-11-28',
         },
-      },
+      }
     );
 
     if (!response.ok) {
@@ -662,7 +663,7 @@ export async function fetchGitHubLabels(
 export async function fetchGitHubAssignees(
   accessToken: string,
   owner: string,
-  repo: string,
+  repo: string
 ): Promise<{
   success: boolean;
   assignees?: Array<{ login: string; avatarUrl: string }>;
@@ -681,7 +682,7 @@ export async function fetchGitHubAssignees(
           Authorization: `Bearer ${accessToken}`,
           'X-GitHub-Api-Version': '2022-11-28',
         },
-      },
+      }
     );
 
     if (!response.ok) {
@@ -715,7 +716,7 @@ export async function fetchGitHubAssignees(
 export async function updateGitHubIssue(
   issueNumber: number,
   report: ReportWithFiles,
-  githubConfig: GitHubConfig,
+  githubConfig: GitHubConfig
 ): Promise<GitHubIssueResult> {
   const { owner, repo, accessToken } = githubConfig;
 
@@ -755,7 +756,7 @@ export async function updateGitHubIssue(
           body,
           state,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -792,7 +793,7 @@ export async function updateGitHubIssue(
  */
 export async function getGitHubIssue(
   issueNumber: number,
-  githubConfig: GitHubConfig,
+  githubConfig: GitHubConfig
 ): Promise<{
   success: boolean;
   issue?: {
@@ -815,7 +816,7 @@ export async function getGitHubIssue(
           Authorization: `Bearer ${accessToken}`,
           'X-GitHub-Api-Version': '2022-11-28',
         },
-      },
+      }
     );
 
     if (!response.ok) {
@@ -846,7 +847,7 @@ export async function getGitHubIssue(
 export async function createGitHubWebhook(
   githubConfig: GitHubConfig,
   webhookUrl: string,
-  webhookSecret: string,
+  webhookSecret: string
 ): Promise<{
   success: boolean;
   webhookId?: string;
@@ -912,7 +913,7 @@ export async function createGitHubWebhook(
  */
 export async function deleteGitHubWebhook(
   githubConfig: GitHubConfig,
-  webhookId: string,
+  webhookId: string
 ): Promise<{ success: boolean; error?: string }> {
   const { owner, repo, accessToken } = githubConfig;
 
@@ -926,7 +927,7 @@ export async function deleteGitHubWebhook(
           Authorization: `Bearer ${accessToken}`,
           'X-GitHub-Api-Version': '2022-11-28',
         },
-      },
+      }
     );
 
     if (!response.ok && response.status !== 404) {

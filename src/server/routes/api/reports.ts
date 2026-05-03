@@ -62,12 +62,14 @@ reports.post('/', authorize(['admin', 'editor']), async (c) => {
             error: 'INVALID_JSON',
             message: 'Invalid JSON in data field',
           },
-          400,
+          400
         );
       }
     } else {
       body = Object.fromEntries(
-        Object.entries(formData).filter(([key, value]) => key !== 'files' && !(value instanceof File)),
+        Object.entries(formData).filter(
+          ([key, value]) => key !== 'files' && !(value instanceof File)
+        )
       );
     }
 
@@ -93,7 +95,7 @@ reports.post('/', authorize(['admin', 'editor']), async (c) => {
           message: issue.message,
         })),
       },
-      400,
+      400
     );
   }
 
@@ -112,7 +114,7 @@ reports.post('/', authorize(['admin', 'editor']), async (c) => {
           error: 'FILE_READ_ERROR',
           message: `Failed to read uploaded file "${file.name}"`,
         },
-        400,
+        400
       );
     }
   }
@@ -131,7 +133,7 @@ reports.post('/', authorize(['admin', 'editor']), async (c) => {
       channel: validation.data.channel,
       files: parsedFiles,
     },
-    user.id,
+    user.id
   );
 
   if (!result.success) {
@@ -145,7 +147,7 @@ reports.post('/', authorize(['admin', 'editor']), async (c) => {
       success: true,
       report: result.value,
     },
-    201,
+    201
   );
 });
 
@@ -207,7 +209,7 @@ reports.patch(
       success: true,
       report: result.value,
     });
-  },
+  }
 );
 
 // Delete Report (Admin only)
@@ -248,7 +250,7 @@ reports.post(
       success: true,
       updated: result.value,
     });
-  },
+  }
 );
 
 // Forward Report to Integration (Admin only)
@@ -281,7 +283,7 @@ reports.post(
       success: true,
       result: result.value,
     });
-  },
+  }
 );
 
 // Get Report Files
@@ -343,7 +345,7 @@ reports.post(
       success: true,
       message: 'Report queued for sync',
     });
-  },
+  }
 );
 
 export { reports as reportsRoutes };

@@ -12,7 +12,7 @@ class FakeEventTarget {
     if (!current) return;
     this.listeners.set(
       type,
-      current.filter((fn) => fn !== handler),
+      current.filter((fn) => fn !== handler)
     );
   }
 

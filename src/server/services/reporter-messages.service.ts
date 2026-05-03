@@ -12,7 +12,7 @@ export const reporterMessagesService = {
     reportId: string,
     userId: string,
     message: string,
-    ccSender?: boolean,
+    ccSender?: boolean
   ): Promise<Result<ReporterMessage>> {
     const report = await reportsRepo.findById(reportId);
 
@@ -21,10 +21,7 @@ export const reporterMessagesService = {
     }
 
     if (!report.reporterEmail) {
-      return Result.fail(
-        'Report does not have a reporter email address',
-        'NO_REPORTER_EMAIL',
-      );
+      return Result.fail('Report does not have a reporter email address', 'NO_REPORTER_EMAIL');
     }
 
     const savedMessage = await reporterMessagesRepo.create(reportId, userId, message);

@@ -2,6 +2,8 @@ import { FunctionComponent } from 'preact';
 import { useState, useCallback, useRef } from 'preact/hooks';
 import { cn } from '../lib/utils';
 import { Button } from './ui';
+import { useLocale } from '../hooks/use-locale.js';
+import { t } from '../i18n/index.js';
 
 export interface CapturedMedia {
   id: string;
@@ -42,6 +44,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
   maxImageSize = DEFAULT_MAX_IMAGE_SIZE,
   maxVideoSize = DEFAULT_MAX_VIDEO_SIZE,
 }) => {
+  useLocale();
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,26 +55,29 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
   const maxImageSizeMb = Math.round(maxImageSize / (1024 * 1024));
   const maxVideoSizeMb = Math.round(maxVideoSize / (1024 * 1024));
 
-  const validateFile = useCallback((file: File): string | null => {
-    if (isImage(file.type)) {
-      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        return `Unsupported image format: ${file.type}`;
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (isImage(file.type)) {
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+          return t('screenshot.error.unsupportedImage', { type: file.type });
+        }
+        if (file.size > maxImageSize) {
+          return t('screenshot.error.imageTooLarge', { size: maxImageSizeMb });
+        }
+      } else if (isVideo(file.type)) {
+        if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
+          return t('screenshot.error.unsupportedVideo', { type: file.type });
+        }
+        if (file.size > maxVideoSize) {
+          return t('screenshot.error.videoTooLarge', { size: maxVideoSizeMb });
+        }
+      } else {
+        return t('screenshot.error.unsupportedFile', { type: file.type });
       }
-      if (file.size > maxImageSize) {
-        return `Image too large. Maximum size is ${maxImageSizeMb}MB.`;
-      }
-    } else if (isVideo(file.type)) {
-      if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
-        return `Unsupported video format: ${file.type}`;
-      }
-      if (file.size > maxVideoSize) {
-        return `Video too large. Maximum size is ${maxVideoSizeMb}MB.`;
-      }
-    } else {
-      return `Unsupported file type: ${file.type}`;
-    }
-    return null;
-  }, [maxImageSize, maxImageSizeMb, maxVideoSize, maxVideoSizeMb]);
+      return null;
+    },
+    [maxImageSize, maxImageSizeMb, maxVideoSize, maxVideoSizeMb]
+  );
 
   const processFile = useCallback(
     async (file: File) => {
@@ -121,7 +127,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
       };
       reader.readAsDataURL(file);
     },
-    [validateFile, onUpload],
+    [validateFile, onUpload]
   );
 
   const handleDragOver = useCallback((e: DragEvent) => {
@@ -149,7 +155,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
         }
       }
     },
-    [processFile],
+    [processFile]
   );
 
   const handleFileInput = useCallback(
@@ -163,7 +169,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
       }
       input.value = '';
     },
-    [processFile],
+    [processFile]
   );
 
   const handleUploadClick = useCallback(() => {
@@ -177,9 +183,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
   return (
     <div class="flex flex-col gap-4">
       {/* Privacy notice */}
-      <p class="text-xs text-muted-foreground">
-        Tip: Use the annotation tool to hide any sensitive data before submitting.
-      </p>
+      <p class="text-xs text-muted-foreground">{t('screenshot.privacyTip')}</p>
 
       {/* Action button */}
       <div class="flex gap-2">
@@ -190,7 +194,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
               fill="currentColor"
             />
           </svg>
-          {isCapturing ? 'Capturing...' : 'Capture Screenshot'}
+          {isCapturing ? t('screenshot.capturing') : t('screenshot.capture')}
         </Button>
         <input
           ref={fileInputRef}
@@ -224,7 +228,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
         class={cn(
           'min-h-40 border-2 border-dashed border-border rounded bg-muted transition-colors',
           isDragging && 'border-primary bg-primary/5',
-          media.length > 0 && 'border-solid bg-background min-h-0',
+          media.length > 0 && 'border-solid bg-background min-h-0'
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -245,8 +249,8 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                 fill="currentColor"
               />
             </svg>
-            <p class="text-sm font-medium mb-1">Drag and drop files here</p>
-            <span class="text-xs text-muted-foreground">or click to browse</span>
+            <p class="text-sm font-medium mb-1">{t('screenshot.dropzone.title')}</p>
+            <span class="text-xs text-muted-foreground">{t('screenshot.dropzone.subtitle')}</span>
           </div>
         ) : (
           <div class="grid grid-cols-2 gap-3 p-3">
@@ -259,18 +263,22 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                   {isVideo(item.mimeType) ? (
                     <video class="w-full h-full object-contain" src={item.dataUrl} muted />
                   ) : (
-                    <img class="w-full h-full object-contain" src={item.dataUrl} alt="Screenshot" />
+                    <img
+                      class="w-full h-full object-contain"
+                      src={item.dataUrl}
+                      alt={t('screenshot.alt')}
+                    />
                   )}
                   {/* Badges */}
                   <div class="absolute top-1.5 left-1.5 flex gap-1">
                     {item.annotated && (
                       <span class="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-blue-100 dark:bg-blue-900/70 text-blue-700 dark:text-blue-300">
-                        Annotated
+                        {t('screenshot.badge.annotated')}
                       </span>
                     )}
                     {isVideo(item.mimeType) && (
                       <span class="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                        Video
+                        {t('screenshot.badge.video')}
                       </span>
                     )}
                   </div>
@@ -290,7 +298,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                       size="icon"
                       class="w-7 h-7 bg-background hover:bg-muted text-foreground"
                       onClick={() => onAnnotate(item.id)}
-                      title="Annotate"
+                      title={t('screenshot.action.annotate')}
                     >
                       <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -305,7 +313,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                     size="icon"
                     class="w-7 h-7 bg-background hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 text-foreground"
                     onClick={() => onRemove(item.id)}
-                    title="Remove"
+                    title={t('screenshot.action.remove')}
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path
@@ -329,7 +337,9 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
               >
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor" />
               </svg>
-              <span class="text-xs text-muted-foreground transition-colors">Add more</span>
+              <span class="text-xs text-muted-foreground transition-colors">
+                {t('screenshot.addMore')}
+              </span>
             </div>
           </div>
         )}
@@ -337,7 +347,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
 
       {/* Helper text */}
       <p class="text-xs text-muted-foreground text-center">
-        Supported: PNG, JPG, GIF, WebP (max {maxImageSizeMb}MB) - MP4, WebM, MOV, AVI (max {maxVideoSizeMb}MB)
+        {t('screenshot.helperText', { imageSize: maxImageSizeMb, videoSize: maxVideoSizeMb })}
       </p>
     </div>
   );

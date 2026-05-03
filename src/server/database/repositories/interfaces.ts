@@ -23,6 +23,7 @@ import type {
   ApiToken,
   ApiTokenScope,
   ReporterMessage,
+  LocaleCode,
 } from '@shared/types';
 
 // Report Repository Interface
@@ -38,6 +39,7 @@ export interface CreateReportData {
   metadata: ReportMetadata;
   reporterEmail?: string;
   reporterName?: string;
+  reporterLocale?: LocaleCode;
 }
 
 export interface IReportsRepository {
@@ -61,7 +63,7 @@ export interface IReportsRepository {
       error?: string | null;
       issueNumber?: number | null;
       issueUrl?: string | null;
-    },
+    }
   ): Promise<Report | null>;
 }
 
@@ -244,7 +246,7 @@ export interface INotificationPreferencesRepository {
   getProjectDefaults(projectId: string): Promise<ProjectNotificationDefaults | null>;
   upsertProjectDefaults(
     projectId: string,
-    defaults: Partial<ProjectNotificationDefaults>,
+    defaults: Partial<ProjectNotificationDefaults>
   ): Promise<ProjectNotificationDefaults>;
 }
 

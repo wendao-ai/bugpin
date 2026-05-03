@@ -72,7 +72,7 @@ export const notificationPreferencesRepo = {
    */
   async findByUserAndProject(
     userId: string,
-    projectId: string,
+    projectId: string
   ): Promise<NotificationPreferences | null> {
     const db = getDb();
     const row = db
@@ -120,7 +120,7 @@ export const notificationPreferencesRepo = {
         FROM users u
         LEFT JOIN notification_preferences np ON np.user_id = u.id AND np.project_id = ?
         WHERE u.is_active = 1
-          AND COALESCE(np.email_enabled, 1) = 1`,
+          AND COALESCE(np.email_enabled, 1) = 1`
       )
       .all(projectId, projectId) as NotificationPreferencesRow[];
 
@@ -135,7 +135,7 @@ export const notificationPreferencesRepo = {
     projectId: string,
     preferences: Partial<
       Omit<NotificationPreferences, 'id' | 'userId' | 'projectId' | 'createdAt' | 'updatedAt'>
-    >,
+    >
   ): Promise<NotificationPreferences> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -206,7 +206,7 @@ export const notificationPreferencesRepo = {
           (preferences.emailEnabled ?? defaults?.defaultEmailEnabled ?? true) ? 1 : 0,
           now,
           now,
-        ],
+        ]
       );
 
       return (await this.findByUserAndProject(userId, projectId))!;
@@ -220,7 +220,7 @@ export const notificationPreferencesRepo = {
     const db = getDb();
     const result = db.run(
       'DELETE FROM notification_preferences WHERE user_id = ? AND project_id = ?',
-      [userId, projectId],
+      [userId, projectId]
     );
     return result.changes > 0;
   },
@@ -260,7 +260,7 @@ export const projectNotificationDefaultsRepo = {
     projectId: string,
     defaults: Partial<
       Omit<ProjectNotificationDefaults, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>
-    >,
+    >
   ): Promise<ProjectNotificationDefaults> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -324,7 +324,7 @@ export const projectNotificationDefaultsRepo = {
           (defaults.defaultEmailEnabled ?? true) ? 1 : 0,
           now,
           now,
-        ],
+        ]
       );
 
       return (await this.findByProject(projectId))!;

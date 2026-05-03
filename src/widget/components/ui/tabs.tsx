@@ -34,7 +34,7 @@ export const Tabs: FunctionComponent<TabsProps> = ({ tabs, activeTab, onTabChang
             class={cn(
               'flex items-center gap-2 px-3 py-1.5 border-none rounded-md bg-transparent text-muted-foreground text-sm font-medium font-sans cursor-pointer transition-colors',
               'hover:text-foreground',
-              isActive && 'bg-background text-foreground shadow-sm',
+              isActive && 'bg-background text-foreground shadow-sm'
             )}
             onClick={() => onTabChange(tab.id)}
           >

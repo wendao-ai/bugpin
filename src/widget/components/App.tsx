@@ -11,6 +11,8 @@ import { captureContext } from '../capture/context.js';
 import { submitReport } from '../api/submit.js';
 import { draftStorage } from '../storage/draft-storage.js';
 import { useEffectiveTheme } from '../hooks/use-effective-theme.js';
+import { useLocale } from '../hooks/use-locale.js';
+import { getLocale, t } from '../i18n/index.js';
 
 type WidgetStep = 'closed' | 'form' | 'annotating';
 
@@ -41,6 +43,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
   const captureScreenshotFn = deps?.captureScreenshot ?? captureScreenshot;
   const captureContextFn = deps?.captureContext ?? captureContext;
   const submitReportFn = deps?.submitReport ?? submitReport;
+  useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const effectiveTheme = useEffectiveTheme(config.theme);
   const [step, setStep] = useState<WidgetStep>('closed');
@@ -174,7 +177,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
       setAnnotatingMediaId(null);
       setDraftLoaded(false);
     },
-    [config.apiKey],
+    [config.apiKey]
   );
 
   // Listen for external open/close events
@@ -219,7 +222,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
       img.onload = () => {
         // Debug: Log captured image info
         console.log(
-          `[BugPin] Captured screenshot: ${img.width}x${img.height}, dataUrl length=${dataUrl.length}`,
+          `[BugPin] Captured screenshot: ${img.width}x${img.height}, dataUrl length=${dataUrl.length}`
         );
 
         const newMedia: CapturedMedia = {
@@ -260,7 +263,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
       setIsCapturing(false);
       setStep('form');
       setToast({
-        message: 'Failed to capture screenshot',
+        message: t('toast.error.capture'),
         type: 'error',
       });
     }
@@ -299,14 +302,14 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
                   annotated: true,
                   annotations: annotationData,
                 }
-              : item,
-          ),
+              : item
+          )
         );
       }
       setAnnotatingMediaId(null);
       setStep('form');
     },
-    [annotatingMediaId],
+    [annotatingMediaId]
   );
 
   const handleAnnotationCancel = useCallback(() => {
@@ -331,6 +334,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
           priority: formData.priority,
           reporterEmail: formData.reporterEmail || undefined,
           reporterName: formData.reporterName || undefined,
+          locale: getLocale(),
           media: mediaItems.map((item) => ({
             dataUrl: item.dataUrl,
             mimeType: item.mimeType,
@@ -340,21 +344,21 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
         });
 
         // Show success toast
-        setToast({ message: 'Bug report submitted successfully!', type: 'success' });
+        setToast({ message: t('toast.success.submit'), type: 'success' });
 
         // Close modal and clear draft
         handleCloseWidget(true);
       } catch (error) {
         console.error('[BugPin] Failed to submit report:', error);
         setToast({
-          message: error instanceof Error ? error.message : 'Failed to submit report',
+          message: error instanceof Error ? error.message : t('toast.error.submit'),
           type: 'error',
         });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [config, handleCloseWidget, captureContextFn, submitReportFn],
+    [config, handleCloseWidget, captureContextFn, submitReportFn]
   );
 
   const handleToastClose = useCallback(() => {
@@ -437,25 +441,23 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
           >
             <div class="p-6">
               <h1 id="bugpin-confirm-title" class="tracking-tight mb-2">
-                Save draft?
+                {t('closeConfirm.title')}
               </h1>
-              <p class="text-sm text-muted-foreground mb-6">
-                You have unsaved changes. Would you like to save them as a draft for later?
-              </p>
+              <p class="text-sm text-muted-foreground mb-6">{t('closeConfirm.body')}</p>
               <div class="flex gap-3">
                 <button
                   type="button"
                   onClick={handleCloseDiscardDraft}
                   class="flex-1 px-4 py-2 text-sm font-medium rounded border border-solid border-border bg-background text-foreground hover:bg-muted transition-colors"
                 >
-                  Discard
+                  {t('closeConfirm.discardButton')}
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseKeepDraft}
                   class="flex-1 px-4 py-2 text-sm font-medium rounded border border-solid border-transparent text-[var(--button-text-color)] bg-[var(--button-color)] hover:bg-[var(--button-hover-color)] hover:text-[var(--button-hover-text-color)] transition-colors"
                 >
-                  Save Draft
+                  {t('closeConfirm.saveDraftButton')}
                 </button>
               </div>
             </div>

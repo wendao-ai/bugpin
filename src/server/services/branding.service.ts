@@ -70,7 +70,7 @@ export const brandingService = {
         if (value && !hexColorRegex.test(value)) {
           return Result.fail(
             `Invalid hex color format for ${key}. Must be #RRGGBB`,
-            'INVALID_COLOR',
+            'INVALID_COLOR'
           );
         }
       }

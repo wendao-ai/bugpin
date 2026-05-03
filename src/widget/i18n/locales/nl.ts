@@ -1,0 +1,101 @@
+import type { WidgetCatalog } from '../catalog.js';
+
+const nl: WidgetCatalog = {
+  'tooltip.launcher': 'Bug gevonden?',
+
+  'aria.launcher': 'Bug melden',
+  'aria.close': 'Sluiten',
+
+  'dialog.title': 'Een bug melden',
+  'dialog.tabs.details': 'Details',
+  'dialog.tabs.media': 'Schermafbeeldingen',
+  'dialog.tabs.mediaWithCount': 'Schermafbeeldingen ({count})',
+
+  'dialog.fields.title.label': 'Titel',
+  'dialog.fields.title.placeholder': 'Korte beschrijving van het probleem',
+  'dialog.fields.description.label': 'Beschrijving',
+  'dialog.fields.description.placeholder': 'Stappen om te reproduceren, verwacht gedrag, enz.',
+  'dialog.fields.priority.label': 'Prioriteit',
+  'dialog.fields.name.label': 'Naam (optioneel)',
+  'dialog.fields.name.placeholder': 'Uw naam',
+  'dialog.fields.email.label': 'E-mail (optioneel)',
+  'dialog.fields.email.placeholder': 'uw@email.com',
+
+  'dialog.priority.highest': 'Hoogste',
+  'dialog.priority.high': 'Hoog',
+  'dialog.priority.medium': 'Gemiddeld',
+  'dialog.priority.low': 'Laag',
+  'dialog.priority.lowest': 'Laagste',
+
+  'dialog.buttons.cancel': 'Annuleren',
+  'dialog.buttons.submit': 'Rapport verzenden',
+
+  'dialog.branding.poweredBy': 'Mogelijk gemaakt door',
+
+  'validation.title.required': 'Titel is verplicht',
+  'validation.title.minLength': 'Titel moet minstens 4 tekens bevatten',
+  'validation.email.invalid': 'Ongeldig e-mailadres',
+
+  'closeConfirm.title': 'Concept opslaan?',
+  'closeConfirm.body':
+    'U heeft niet-opgeslagen wijzigingen. Wilt u deze als concept bewaren voor later?',
+  'closeConfirm.discardButton': 'Verwerpen',
+  'closeConfirm.saveDraftButton': 'Concept opslaan',
+
+  'screenCapture.title': 'Browsertoestemming vereist',
+  'screenCapture.body':
+    'Uw browser zal toestemming vragen om uw scherm te delen. Volg de getoonde stappen.',
+  'screenCapture.browser.firefox': 'Firefox',
+  'screenCapture.browser.chromeEdge': 'Chrome · Edge',
+  'screenCapture.dontShowAgain': 'Dit niet meer tonen',
+  'screenCapture.back': 'Terug',
+  'screenCapture.confirm': 'Schermafbeelding maken',
+
+  'screenshot.privacyTip':
+    'Tip: gebruik het annotatiegereedschap om gevoelige gegevens te verbergen voordat u verzendt.',
+  'screenshot.capturing': 'Bezig met vastleggen...',
+  'screenshot.capture': 'Schermafbeelding maken',
+  'screenshot.dropzone.title': 'Sleep bestanden hierheen',
+  'screenshot.dropzone.subtitle': 'of klik om te bladeren',
+  'screenshot.addMore': 'Meer toevoegen',
+  'screenshot.alt': 'Schermafbeelding',
+  'screenshot.badge.annotated': 'Geannoteerd',
+  'screenshot.badge.video': 'Video',
+  'screenshot.action.annotate': 'Annoteren',
+  'screenshot.action.remove': 'Verwijderen',
+  'screenshot.helperText':
+    'Ondersteund: PNG, JPG, GIF, WebP (max {imageSize}MB) - MP4, WebM, MOV, AVI (max {videoSize}MB)',
+
+  'screenshot.error.unsupportedImage': 'Niet-ondersteund afbeeldingsformaat: {type}',
+  'screenshot.error.imageTooLarge': 'Afbeelding te groot. Maximale grootte is {size}MB.',
+  'screenshot.error.unsupportedVideo': 'Niet-ondersteund videoformaat: {type}',
+  'screenshot.error.videoTooLarge': 'Video te groot. Maximale grootte is {size}MB.',
+  'screenshot.error.unsupportedFile': 'Niet-ondersteund bestandstype: {type}',
+
+  'toast.success.submit': 'Bugrapport succesvol verzonden!',
+  'toast.error.submit': 'Verzenden van rapport mislukt',
+  'toast.error.capture': 'Maken van schermafbeelding mislukt',
+
+  'annotation.toolbar.select': 'Selecteren',
+  'annotation.toolbar.pan': 'Verschuiven (of houd Spatie ingedrukt)',
+  'annotation.toolbar.pen': 'Pen',
+  'annotation.toolbar.line': 'Lijn',
+  'annotation.toolbar.arrow': 'Pijl',
+  'annotation.toolbar.rectangle': 'Rechthoek',
+  'annotation.toolbar.circle': 'Cirkel',
+  'annotation.toolbar.text': 'Tekst',
+  'annotation.toolbar.pixelate': 'Pixeleren',
+  'annotation.toolbar.undo': 'Ongedaan maken (Ctrl+Z)',
+  'annotation.toolbar.redo': 'Opnieuw uitvoeren (Ctrl+Shift+Z)',
+  'annotation.toolbar.delete': 'Selectie verwijderen (Del)',
+  'annotation.toolbar.zoomIn': 'Inzoomen - houd Spatie ingedrukt om te verschuiven bij ingezoomd',
+  'annotation.toolbar.zoomOut': 'Uitzoomen - houd Spatie ingedrukt om te verschuiven bij ingezoomd',
+  'annotation.toolbar.zoomReset':
+    'Zoom resetten ({percent}%) - houd Spatie ingedrukt om te verschuiven',
+  'annotation.toolbar.strokeWidth': '{width}px',
+  'annotation.defaultText': 'Tekst',
+  'annotation.buttons.cancel': 'Annuleren',
+  'annotation.buttons.done': 'Klaar',
+};
+
+export default nl;

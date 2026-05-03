@@ -8,7 +8,7 @@ import { Spinner } from './components/ui/spinner';
 // Wrapper around React.lazy that reloads the page once when a chunk fails to load.
 // This handles stale tabs after deployments where old chunk filenames no longer exist.
 function lazyWithRetry(
-  factory: () => Promise<{ default: ComponentType }>,
+  factory: () => Promise<{ default: ComponentType }>
 ): React.LazyExoticComponent<ComponentType> {
   return lazy(() =>
     factory().catch((error: unknown) => {
@@ -26,32 +26,32 @@ function lazyWithRetry(
 
       sessionStorage.removeItem('chunk_reload');
       throw error;
-    }),
+    })
   );
 }
 
 // Lazy load pages for code splitting
 const Login = lazyWithRetry(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 const Dashboard = lazyWithRetry(() =>
-  import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })),
+  import('./pages/Dashboard').then((m) => ({ default: m.Dashboard }))
 );
 const Reports = lazyWithRetry(() =>
-  import('./pages/Reports').then((m) => ({ default: m.Reports })),
+  import('./pages/Reports').then((m) => ({ default: m.Reports }))
 );
 const ReportDetail = lazyWithRetry(() =>
-  import('./pages/ReportDetail').then((m) => ({ default: m.ReportDetail })),
+  import('./pages/ReportDetail').then((m) => ({ default: m.ReportDetail }))
 );
 const Projects = lazyWithRetry(() =>
-  import('./pages/Projects').then((m) => ({ default: m.Projects })),
+  import('./pages/Projects').then((m) => ({ default: m.Projects }))
 );
 const Settings = lazyWithRetry(() =>
-  import('./pages/globalsettings').then((m) => ({ default: m.Settings })),
+  import('./pages/globalsettings').then((m) => ({ default: m.Settings }))
 );
 const TestWidgetPage = lazyWithRetry(() =>
-  import('./pages/TestWidgetPage').then((m) => ({ default: m.TestWidgetPage })),
+  import('./pages/TestWidgetPage').then((m) => ({ default: m.TestWidgetPage }))
 );
 const AcceptInvitation = lazyWithRetry(() =>
-  import('./pages/AcceptInvitation').then((m) => ({ default: m.AcceptInvitation })),
+  import('./pages/AcceptInvitation').then((m) => ({ default: m.AcceptInvitation }))
 );
 
 // Loading component

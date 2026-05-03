@@ -50,7 +50,10 @@ const MAGIC_BYTES: Record<string, { bytes: number[]; offset: number }[]> = {
   'video/webm': [{ bytes: [0x1a, 0x45, 0xdf, 0xa3], offset: 0 }], // EBML header
 };
 
-function matchesMagicBytes(data: Buffer | Uint8Array, signatures: { bytes: number[]; offset: number }[]): boolean {
+function matchesMagicBytes(
+  data: Buffer | Uint8Array,
+  signatures: { bytes: number[]; offset: number }[]
+): boolean {
   return signatures.some((sig) => {
     if (data.length < sig.offset + sig.bytes.length) return false;
     return sig.bytes.every((byte, i) => data[sig.offset + i] === byte);
@@ -80,7 +83,7 @@ export function validateFile(options: ValidateFileOptions): Result<void> {
   if (!allowedTypes.includes(mimeType)) {
     return Result.fail(
       `MIME type "${mimeType}" is not allowed for ${type} uploads`,
-      'INVALID_MIME_TYPE',
+      'INVALID_MIME_TYPE'
     );
   }
 
@@ -90,7 +93,7 @@ export function validateFile(options: ValidateFileOptions): Result<void> {
   if (sizeMb > limit) {
     return Result.fail(
       `File size ${sizeMb.toFixed(1)}MB exceeds the ${limit}MB limit`,
-      'FILE_TOO_LARGE',
+      'FILE_TOO_LARGE'
     );
   }
 
@@ -99,7 +102,7 @@ export function validateFile(options: ValidateFileOptions): Result<void> {
   if (signatures && !matchesMagicBytes(data, signatures)) {
     return Result.fail(
       `File content does not match declared MIME type "${mimeType}"`,
-      'INVALID_FILE_CONTENT',
+      'INVALID_FILE_CONTENT'
     );
   }
 
@@ -672,7 +675,7 @@ export async function saveBrandingLogo(options: SaveBrandingLogoOptions): Promis
  */
 export async function saveBrandingFavicon(
   mode: 'light' | 'dark',
-  data: Buffer | Uint8Array,
+  data: Buffer | Uint8Array
 ): Promise<FaviconSet> {
   const sharp = (await import('sharp')).default;
 
@@ -707,7 +710,7 @@ export async function saveBrandingFavicon(
  */
 async function generateFaviconSizes(
   sourceBuffer: Buffer,
-  mode: 'light' | 'dark',
+  mode: 'light' | 'dark'
 ): Promise<FaviconSet> {
   const sharp = (await import('sharp')).default;
   const modeDir = path.join(config.brandingDir, mode);
@@ -782,7 +785,7 @@ async function generateIcoFile(sourceBuffer: Buffer, outputPath: string): Promis
  */
 export function deleteBrandingAsset(
   mode: 'light' | 'dark',
-  type: 'logo' | 'icon' | 'favicon',
+  type: 'logo' | 'icon' | 'favicon'
 ): boolean {
   const modeDir = path.join(config.brandingDir, mode);
 

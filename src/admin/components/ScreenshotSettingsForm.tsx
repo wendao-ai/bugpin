@@ -131,9 +131,7 @@ export function ScreenshotSettingsForm({
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
-                <Label htmlFor="use-screen-capture-api">
-                  Use Screen Capture API
-                </Label>
+                <Label htmlFor="use-screen-capture-api">Use Screen Capture API</Label>
                 <p className="text-xs text-muted-foreground">
                   Enable browser Screen Capture API for pixel-perfect screenshots
                 </p>
@@ -149,8 +147,8 @@ export function ScreenshotSettingsForm({
               <AlertDescription className="text-sm space-y-2">
                 <p>
                   <strong>Default (DOM Capture):</strong> Captures the page without requiring user
-                  permission. Fast, seamless, and works for most layouts. Does not capture
-                  videos, canvas, or WebGL content accurately.
+                  permission. Fast, seamless, and works for most layouts. Does not capture videos,
+                  canvas, or WebGL content accurately.
                 </p>
                 <p>
                   <strong>Screen Capture API:</strong> Enable for websites (WordPress, Wix, etc.)

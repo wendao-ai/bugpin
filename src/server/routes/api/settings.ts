@@ -53,7 +53,7 @@ settings.put('/', authorize(['admin']), validate({ body: schemas.updateSettings 
         message: "Feature 'custom-templates' requires Enterprise license",
         upgradeUrl: 'https://bugpin.io/editions/',
       },
-      402,
+      402
     );
   }
 
@@ -66,7 +66,7 @@ settings.put('/', authorize(['admin']), validate({ body: schemas.updateSettings 
         message: "Feature 's3-storage' requires Enterprise license",
         upgradeUrl: 'https://bugpin.io/editions/',
       },
-      402,
+      402
     );
   }
 
@@ -112,7 +112,7 @@ settings.post('/test-email', authorize(['admin']), async (c) => {
             message: issue.message,
           })),
         },
-        400,
+        400
       );
     }
 
@@ -127,7 +127,7 @@ settings.post('/test-email', authorize(['admin']), async (c) => {
           error: 'SMTP_ERROR',
           message: result.error || 'Failed to send test email',
         },
-        400,
+        400
       );
     }
 
@@ -143,7 +143,7 @@ settings.post('/test-email', authorize(['admin']), async (c) => {
         error: 'SERVER_ERROR',
         message,
       },
-      500,
+      500
     );
   }
 });
@@ -176,7 +176,7 @@ settings.post(
               message: issue.message,
             })),
           },
-          400,
+          400
         );
       }
 
@@ -191,7 +191,7 @@ settings.post(
       const sampleData = getSampleDataForTemplate(
         type as EmailTemplateType,
         settings.appName,
-        settings.appUrl,
+        settings.appUrl
       );
 
       const compiledSubject = templateService.compileTemplate(subject, sampleData);
@@ -199,7 +199,7 @@ settings.post(
       const withFooter = appendFooterToHtml(compiledHtml, type as EmailTemplateType);
       const finalHtml = applyBrandColor(
         withFooter,
-        settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+        settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
       );
 
       return c.json({
@@ -217,10 +217,10 @@ settings.post(
           error: 'SERVER_ERROR',
           message,
         },
-        500,
+        500
       );
     }
-  },
+  }
 );
 
 // Send Test Email with Custom Template
@@ -252,7 +252,7 @@ settings.post(
               message: issue.message,
             })),
           },
-          400,
+          400
         );
       }
 
@@ -273,7 +273,7 @@ settings.post(
             error: 'SMTP_DISABLED',
             message: 'SMTP is not enabled. Please configure SMTP settings first.',
           },
-          400,
+          400
         );
       }
 
@@ -281,7 +281,7 @@ settings.post(
       const sampleData = getSampleDataForTemplate(
         type as EmailTemplateType,
         appSettings.appName,
-        appSettings.appUrl,
+        appSettings.appUrl
       );
 
       const compiledSubject = templateService.compileTemplate(subject, sampleData);
@@ -289,7 +289,7 @@ settings.post(
       const withFooter = appendFooterToHtml(compiledHtml, type as EmailTemplateType);
       const finalHtml = applyBrandColor(
         withFooter,
-        appSettings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+        appSettings.branding?.primaryColor || DEFAULT_BRAND_COLOR
       );
 
       // Send the email
@@ -306,7 +306,7 @@ settings.post(
             error: 'SEND_FAILED',
             message: sendResult.error || 'Failed to send test email',
           },
-          400,
+          400
         );
       }
 
@@ -322,10 +322,10 @@ settings.post(
           error: 'SERVER_ERROR',
           message,
         },
-        500,
+        500
       );
     }
-  },
+  }
 );
 
 // Get Default Email Template
@@ -344,15 +344,15 @@ settings.get(
           error: 'NOT_FOUND',
           message: 'Template type not found',
         },
-        404,
+        404
       );
     }
 
     return c.json({
       success: true,
-      template: defaultEmailTemplates[type],
+      template: defaultEmailTemplates[type].en,
     });
-  },
+  }
 );
 
 // Invalidate Settings Cache (Admin only)
@@ -373,7 +373,7 @@ settings.post('/cache/invalidate', authorize(['admin']), async (c) => {
         error: 'CACHE_INVALIDATION_FAILED',
         message: 'Failed to invalidate cache',
       },
-      500,
+      500
     );
   }
 });

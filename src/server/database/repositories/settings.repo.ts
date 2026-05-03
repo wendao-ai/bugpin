@@ -8,7 +8,12 @@ import type {
   BrandingSettings,
   AdminButtonColors,
   ReporterNotificationSettings,
+  LocalizedString,
 } from '@shared/types';
+import {
+  wrapLegacyLocalizedString,
+  wrapLegacyTooltipText,
+} from '../../utils/wrap-legacy-localized-string.js';
 
 // Database Row Type
 
@@ -30,7 +35,7 @@ const DEFAULT_WIDGET_LAUNCHER_BUTTON: GlobalWidgetLauncherButtonSettings = {
   theme: 'auto',
   enableHoverScaleEffect: true,
   tooltipEnabled: true,
-  tooltipText: 'Found a bug?',
+  tooltipText: null,
   lightButtonColor: '#02658D',
   lightTextColor: '#ffffff',
   lightButtonHoverColor: '#024F6F',
@@ -161,7 +166,7 @@ export const settingsRepo = {
       `INSERT INTO settings (key, value, updated_at)
        VALUES (?, ?, ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-      [key, jsonValue, now],
+      [key, jsonValue, now]
     );
   },
 
@@ -196,10 +201,7 @@ export const settingsRepo = {
       s3Enabled: (settings.s3Enabled as boolean) ?? false,
       s3Config: (settings.s3Config as AppSettings['s3Config']) ?? {},
       // Widget settings (nested)
-      widgetLauncherButton: {
-        ...DEFAULT_WIDGET_LAUNCHER_BUTTON,
-        ...(settings.widgetLauncherButton as Partial<GlobalWidgetLauncherButtonSettings>),
-      },
+      widgetLauncherButton: mergeGlobalWidgetLauncherButton(settings.widgetLauncherButton),
       widgetDialog: {
         ...DEFAULT_WIDGET_DIALOG,
         ...(settings.widgetDialog as Partial<ThemeColors>),
@@ -241,7 +243,7 @@ export const settingsRepo = {
     const stmt = db.prepare(
       `INSERT INTO settings (key, value, updated_at)
        VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
     );
 
     for (const [propName, value] of Object.entries(updates)) {
@@ -259,7 +261,7 @@ export const settingsRepo = {
    */
   async updateNested<K extends keyof AppSettings>(
     key: K,
-    updates: Partial<AppSettings[K]>,
+    updates: Partial<AppSettings[K]>
   ): Promise<AppSettings> {
     const current = await this.getAll();
     const currentValue = current[key];
@@ -295,4 +297,24 @@ export const settingsRepo = {
  */
 function camelCase(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+function normalizeGlobalLocalizedField(
+  value: unknown,
+  field: 'buttonText' | 'tooltipText'
+): LocalizedString | null {
+  const wrapped =
+    field === 'tooltipText' ? wrapLegacyTooltipText(value, true) : wrapLegacyLocalizedString(value);
+  return wrapped ?? null;
+}
+
+function mergeGlobalWidgetLauncherButton(raw: unknown): GlobalWidgetLauncherButtonSettings {
+  const incoming = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const merged: GlobalWidgetLauncherButtonSettings = {
+    ...DEFAULT_WIDGET_LAUNCHER_BUTTON,
+    ...(incoming as Partial<GlobalWidgetLauncherButtonSettings>),
+    buttonText: normalizeGlobalLocalizedField(incoming.buttonText, 'buttonText'),
+    tooltipText: normalizeGlobalLocalizedField(incoming.tooltipText, 'tooltipText'),
+  };
+  return merged;
 }

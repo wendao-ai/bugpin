@@ -21,7 +21,7 @@ export const Textarea: FunctionComponent<TextareaProps> = ({
         'placeholder:text-muted-foreground',
         'focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20',
         error && 'border-destructive focus:border-destructive focus:ring-destructive/20',
-        className,
+        className
       )}
       aria-invalid={error ? 'true' : undefined}
       {...props}

@@ -84,7 +84,7 @@ export function rateLimiter(options: RateLimitOptions = {}): MiddlewareHandler {
           message: 'Too many requests. Please try again later.',
           retryAfter: resetSeconds,
         },
-        429,
+        429
       );
     }
 
@@ -142,7 +142,7 @@ export function apiKeyGenerator(c: Context): string {
  * Uses rateLimitPerMinute setting with 60 second window
  */
 export function dynamicRateLimiter(
-  options: { keyGenerator?: (c: Context) => string } = {},
+  options: { keyGenerator?: (c: Context) => string } = {}
 ): MiddlewareHandler {
   const keyGenerator = options.keyGenerator ?? defaultKeyGenerator;
   const windowMs = 60 * 1000; // 1 minute window
@@ -188,7 +188,7 @@ export function dynamicRateLimiter(
           message: 'Too many requests. Please try again later.',
           retryAfter: resetSeconds,
         },
-        429,
+        429
       );
     }
 
@@ -202,7 +202,7 @@ export function dynamicRateLimiter(
  */
 export async function getRateLimitInfo(
   key: string,
-  max?: number,
+  max?: number
 ): Promise<{ count: number; remaining: number; resetAt: number } | null> {
   const entry = rateLimitStore.get(key);
   if (!entry) {

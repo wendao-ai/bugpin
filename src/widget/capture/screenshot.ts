@@ -61,7 +61,7 @@ async function waitForImages(element: HTMLElement): Promise<void> {
           };
           img.addEventListener('load', onLoad, { once: true });
           img.addEventListener('error', onError, { once: true });
-        }),
+        })
       );
     } else if (img.decode) {
       // Image already loaded - just decode
@@ -91,12 +91,12 @@ function getSafePixelRatio(width: number, height: number, mode: CaptureMethod = 
     if (mode === 'fullpage') {
       throw new Error(
         `Full page dimensions (${w}x${h}) exceed maximum canvas size (${MAX_CANVAS_DIMENSION}px). ` +
-          `This page is too large for full page capture. Use visible viewport mode instead.`,
+          `This page is too large for full page capture. Use visible viewport mode instead.`
       );
     }
     throw new Error(
       `Screenshot dimensions (${w}x${h}) exceed maximum canvas size (${MAX_CANVAS_DIMENSION}px). ` +
-        `Try capturing a smaller element or use visible viewport mode.`,
+        `Try capturing a smaller element or use visible viewport mode.`
     );
   }
 
@@ -104,12 +104,12 @@ function getSafePixelRatio(width: number, height: number, mode: CaptureMethod = 
     if (mode === 'fullpage') {
       throw new Error(
         `Full page total pixels (${w * h}) exceed maximum (${MAX_TOTAL_PIXELS}). ` +
-          `This page is too large for full page capture. Use visible viewport mode instead.`,
+          `This page is too large for full page capture. Use visible viewport mode instead.`
       );
     }
     throw new Error(
       `Screenshot total pixels (${w * h}) exceed maximum (${MAX_TOTAL_PIXELS}). ` +
-        `Try capturing a smaller element or use visible viewport mode.`,
+        `Try capturing a smaller element or use visible viewport mode.`
     );
   }
 
@@ -335,7 +335,7 @@ async function captureWithScreenCaptureAPI(): Promise<string> {
   if (!isScreenCaptureAvailable()) {
     throw new Error(
       'Screen Capture API is not available. The host page must be served over HTTPS ' +
-        'and include the header: Permissions-Policy: display-capture=self',
+        'and include the header: Permissions-Policy: display-capture=self'
     );
   }
 
@@ -392,7 +392,7 @@ export async function captureScreenshot(options: CaptureOptions = {}): Promise<s
       console.warn(
         '[BugPin] Screen Capture API unavailable, falling back to DOM capture.',
         'Ensure the page is served over HTTPS and the browser has screen recording permission.',
-        `(${error instanceof Error ? error.message : error})`,
+        `(${error instanceof Error ? error.message : error})`
       );
     }
   }
@@ -533,7 +533,7 @@ export async function captureScreenshot(options: CaptureOptions = {}): Promise<s
         0, // dest x
         0, // dest y
         viewportWidth * dpr, // dest width
-        viewportHeight * dpr, // dest height
+        viewportHeight * dpr // dest height
       );
 
       return croppedCanvas.toDataURL('image/png');
@@ -545,13 +545,13 @@ export async function captureScreenshot(options: CaptureOptions = {}): Promise<s
         document.body.scrollWidth,
         document.documentElement.scrollWidth,
         document.body.offsetWidth,
-        document.documentElement.offsetWidth,
+        document.documentElement.offsetWidth
       );
       const fullHeight = Math.max(
         document.body.scrollHeight,
         document.documentElement.scrollHeight,
         document.body.offsetHeight,
-        document.documentElement.offsetHeight,
+        document.documentElement.offsetHeight
       );
 
       const dpr = getSafePixelRatio(fullWidth, fullHeight, 'fullpage');

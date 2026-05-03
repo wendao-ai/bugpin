@@ -45,7 +45,7 @@ export interface UpdateProjectNotificationDefaultsInput {
 
 function getEffectiveReporterSettings(
   globalSettings: AppSettings,
-  projectSettings?: ProjectSettings,
+  projectSettings?: ProjectSettings
 ): ReporterNotificationSettings {
   const globalReporter = globalSettings.reporterNotifications ?? {
     emailEnabled: true,
@@ -73,11 +73,11 @@ function getEffectiveReporterSettings(
   return {
     emailEnabled: projectReporter?.emailEnabled ?? globalReporter.emailEnabled,
     notifyOnNewReport: projectReporter?.notifyOnNewReport ?? globalReporter.notifyOnNewReport,
-    notifyOnStatusChange: projectReporter?.notifyOnStatusChange ?? globalReporter.notifyOnStatusChange,
+    notifyOnStatusChange:
+      projectReporter?.notifyOnStatusChange ?? globalReporter.notifyOnStatusChange,
     notifyOnPriorityChange:
       projectReporter?.notifyOnPriorityChange ?? globalReporter.notifyOnPriorityChange,
-    notifyOnAssignment:
-      projectReporter?.notifyOnAssignment ?? globalReporter.notifyOnAssignment,
+    notifyOnAssignment: projectReporter?.notifyOnAssignment ?? globalReporter.notifyOnAssignment,
     messagingEnabled: projectReporter?.messagingEnabled ?? globalReporter.messagingEnabled,
   };
 }
@@ -90,7 +90,7 @@ interface ReporterContext {
 
 async function getReporterContext(
   report: Report,
-  flag: keyof ReporterNotificationSettings,
+  flag: keyof ReporterNotificationSettings
 ): Promise<ReporterContext | null> {
   if (!report.reporterEmail || !isValidEmail(report.reporterEmail)) {
     return null;
@@ -119,7 +119,7 @@ export const notificationsService = {
    */
   async getUserPreferences(
     userId: string,
-    projectId: string,
+    projectId: string
   ): Promise<Result<NotificationPreferences>> {
     // Verify project exists
     const project = await projectsRepo.findById(projectId);
@@ -147,7 +147,7 @@ export const notificationsService = {
   async updateUserPreferences(
     userId: string,
     projectId: string,
-    input: UpdateNotificationPreferencesInput,
+    input: UpdateNotificationPreferencesInput
   ): Promise<Result<NotificationPreferences>> {
     // Verify project exists
     const project = await projectsRepo.findById(projectId);
@@ -186,7 +186,7 @@ export const notificationsService = {
    */
   async updateProjectDefaults(
     projectId: string,
-    input: UpdateProjectNotificationDefaultsInput,
+    input: UpdateProjectNotificationDefaultsInput
   ): Promise<Result<ProjectNotificationDefaults>> {
     // Verify project exists
     const project = await projectsRepo.findById(projectId);
@@ -230,7 +230,7 @@ export const notificationsService = {
 
       // Get all users with email notifications enabled for this project
       const preferences = await notificationPreferencesRepo.findByProjectWithEmailEnabled(
-        report.projectId,
+        report.projectId
       );
 
       logger.debug('Found notification preferences for project', {
@@ -317,7 +317,7 @@ export const notificationsService = {
       });
 
       const preferences = await notificationPreferencesRepo.findByProjectWithEmailEnabled(
-        report.projectId,
+        report.projectId
       );
 
       logger.debug('Found notification preferences for status change', {
@@ -408,7 +408,7 @@ export const notificationsService = {
 
       const preferences = await notificationPreferencesRepo.findByUserAndProject(
         assignedToUserId,
-        report.projectId,
+        report.projectId
       );
 
       // If no explicit preferences exist, treat as enabled (matching DB defaults)
@@ -443,7 +443,7 @@ export const notificationsService = {
           projectName: project.name,
           reportUrl,
           assignedToName: user.name,
-        },
+        }
       );
 
       if (result.success) {
@@ -472,7 +472,7 @@ export const notificationsService = {
   async notifyPriorityChange(
     report: Report,
     oldPriority: string,
-    newPriority: string,
+    newPriority: string
   ): Promise<void> {
     try {
       logger.debug('Starting priority change notification', {
@@ -483,7 +483,7 @@ export const notificationsService = {
       });
 
       const preferences = await notificationPreferencesRepo.findByProjectWithEmailEnabled(
-        report.projectId,
+        report.projectId
       );
 
       logger.debug('Found notification preferences for priority change', {
@@ -596,7 +596,7 @@ export const notificationsService = {
   async notifyReporterStatusChange(
     report: Report,
     oldStatus: ReportStatus,
-    newStatus: ReportStatus,
+    newStatus: ReportStatus
   ): Promise<void> {
     try {
       const ctx = await getReporterContext(report, 'notifyOnStatusChange');
@@ -636,7 +636,7 @@ export const notificationsService = {
   async notifyReporterAssignment(
     report: Report,
     oldAssignedToUserId: string | undefined,
-    newAssignedToUserId: string,
+    newAssignedToUserId: string
   ): Promise<void> {
     try {
       const ctx = await getReporterContext(report, 'notifyOnAssignment');
@@ -691,7 +691,7 @@ export const notificationsService = {
     report: Report,
     message: string,
     senderUserId: string,
-    ccSender?: boolean,
+    ccSender?: boolean
   ): Promise<void> {
     try {
       const ctx = await getReporterContext(report, 'messagingEnabled');
@@ -714,10 +714,7 @@ export const notificationsService = {
         message,
       };
 
-      const result = await emailService.sendReporterMessageEmail(
-        report.reporterEmail!,
-        emailData,
-      );
+      const result = await emailService.sendReporterMessageEmail(report.reporterEmail!, emailData);
 
       if (result.success) {
         logger.info('Reporter message notification sent', {
@@ -733,10 +730,7 @@ export const notificationsService = {
 
       // Send CC copy to sender with distinct framing
       if (ccSender && sender.email) {
-        const ccResult = await emailService.sendReporterMessageCcEmail(
-          sender.email,
-          emailData,
-        );
+        const ccResult = await emailService.sendReporterMessageCcEmail(sender.email, emailData);
 
         if (ccResult.success) {
           logger.info('Reporter message CC sent to sender', {
@@ -769,7 +763,7 @@ export const notificationsService = {
       });
 
       const preferences = await notificationPreferencesRepo.findByProjectWithEmailEnabled(
-        report.projectId,
+        report.projectId
       );
 
       const usersToNotify = preferences.filter((p) => p.notifyOnDeletion);
@@ -841,7 +835,7 @@ export const notificationsService = {
   async notifyReporterPriorityChange(
     report: Report,
     oldPriority: ReportPriority,
-    newPriority: ReportPriority,
+    newPriority: ReportPriority
   ): Promise<void> {
     try {
       const ctx = await getReporterContext(report, 'notifyOnPriorityChange');
@@ -880,7 +874,7 @@ export const notificationsService = {
    */
   async updateAllUserPreferences(
     userId: string,
-    input: UpdateNotificationPreferencesInput,
+    input: UpdateNotificationPreferencesInput
   ): Promise<Result<NotificationPreferences[]>> {
     const projects = await projectsRepo.findAll();
     const results: NotificationPreferences[] = [];

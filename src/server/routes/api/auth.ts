@@ -48,7 +48,7 @@ auth.post(
       success: true,
       user: result.value.user,
     });
-  },
+  }
 );
 
 // Logout
@@ -91,7 +91,7 @@ auth.post(
       user.id,
       currentPassword,
       newPassword,
-      session.id,
+      session.id
     );
 
     if (!result.success) {
@@ -102,7 +102,7 @@ auth.post(
       success: true,
       message: 'Password changed successfully.',
     });
-  },
+  }
 );
 
 export { auth as authRoutes };

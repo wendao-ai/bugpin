@@ -66,9 +66,9 @@ export function NotificationDefaultsSettings() {
       <CardHeader>
         <CardTitle>Notification Defaults</CardTitle>
         <CardDescription>
-          Default notification preferences for all team members across all projects. Individual users
-          can override these in their notification settings. Projects can also override these in
-          their project settings.
+          Default notification preferences for all team members across all projects. Individual
+          users can override these in their notification settings. Projects can also override these
+          in their project settings.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

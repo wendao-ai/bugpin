@@ -46,14 +46,15 @@ interface ParsedRelease {
   publishedAt: string;
 }
 
-function isShape<T>(value: unknown, predicate: (v: Record<string, unknown>) => boolean): value is T {
+function isShape<T>(
+  value: unknown,
+  predicate: (v: Record<string, unknown>) => boolean
+): value is T {
   return typeof value === 'object' && value !== null && predicate(value as Record<string, unknown>);
 }
 
 function parseCache(raw: unknown): UpdateCheckCache | null {
-  if (
-    !isShape<UpdateCheckCache>(raw, (v) => typeof v.nextAttemptAt === 'string')
-  ) {
+  if (!isShape<UpdateCheckCache>(raw, (v) => typeof v.nextAttemptAt === 'string')) {
     return null;
   }
   return {
@@ -79,10 +80,7 @@ async function writeCache(entry: UpdateCheckCache): Promise<void> {
   await settingsRepo.set(CACHE_KEY, entry);
 }
 
-function buildStatus(
-  cache: UpdateCheckCache | null,
-  checkEnabled: boolean,
-): UpdateCheckStatus {
+function buildStatus(cache: UpdateCheckCache | null, checkEnabled: boolean): UpdateCheckStatus {
   const latest = cache?.latest ?? null;
   const updateAvailable = checkEnabled && latest !== null && isNewer(latest, config.version);
   return {
@@ -116,13 +114,17 @@ async function fetchLatest(): Promise<ParsedRelease> {
     }
 
     const body = (await response.json()) as unknown;
-    if (!isShape<GitHubRelease>(body, (v) =>
-      typeof v.tag_name === 'string' &&
-      typeof v.html_url === 'string' &&
-      typeof v.published_at === 'string' &&
-      typeof v.prerelease === 'boolean' &&
-      typeof v.draft === 'boolean',
-    )) {
+    if (
+      !isShape<GitHubRelease>(
+        body,
+        (v) =>
+          typeof v.tag_name === 'string' &&
+          typeof v.html_url === 'string' &&
+          typeof v.published_at === 'string' &&
+          typeof v.prerelease === 'boolean' &&
+          typeof v.draft === 'boolean'
+      )
+    ) {
       throw new Error('Unexpected GitHub release payload shape');
     }
 
@@ -147,9 +149,7 @@ async function fetchLatest(): Promise<ParsedRelease> {
 // Module-scoped dedup state: coalesces concurrent refreshes into one outbound fetch.
 let pendingRefresh: Promise<UpdateCheckCache | null> | null = null;
 
-async function refreshCache(
-  previous: UpdateCheckCache | null,
-): Promise<UpdateCheckCache | null> {
+async function refreshCache(previous: UpdateCheckCache | null): Promise<UpdateCheckCache | null> {
   let release: ParsedRelease | null = null;
   let fetchError: string | null = null;
 
@@ -186,9 +186,7 @@ async function refreshCache(
   return next;
 }
 
-async function refreshOrAwait(
-  previous: UpdateCheckCache | null,
-): Promise<UpdateCheckCache | null> {
+async function refreshOrAwait(previous: UpdateCheckCache | null): Promise<UpdateCheckCache | null> {
   if (pendingRefresh) {
     return pendingRefresh;
   }

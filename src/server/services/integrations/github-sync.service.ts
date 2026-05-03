@@ -86,7 +86,7 @@ export const githubSyncService = {
             repo: githubConfig.repo,
             accessToken: githubConfig.accessToken,
             fileTransferMode: githubConfig.fileTransferMode,
-          },
+          }
         );
 
         if (!updateResult.success) {
@@ -116,7 +116,7 @@ export const githubSyncService = {
             labels: githubConfig.labels,
             assignees: githubConfig.assignees,
             fileTransferMode: githubConfig.fileTransferMode,
-          },
+          }
         );
 
         if (!createResult.success) {
@@ -234,7 +234,7 @@ export const githubSyncService = {
       if (attempt < RETRY_CONFIG.maxAttempts) {
         const delay = RETRY_CONFIG.delays[attempt - 1] || 1000;
         logger.info(
-          `Retry ${attempt}/${RETRY_CONFIG.maxAttempts} for report ${reportId} in ${delay}ms`,
+          `Retry ${attempt}/${RETRY_CONFIG.maxAttempts} for report ${reportId} in ${delay}ms`
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
@@ -293,7 +293,7 @@ export const githubSyncService = {
     if (!appUrl || !appUrl.trim()) {
       return Result.fail(
         'Application URL not configured. Set APP_URL in settings.',
-        'CONFIG_ERROR',
+        'CONFIG_ERROR'
       );
     }
 
@@ -312,7 +312,7 @@ export const githubSyncService = {
         accessToken: githubConfig.accessToken,
       },
       webhookUrl,
-      webhookSecret,
+      webhookSecret
     );
 
     if (!webhookResult.success) {
@@ -365,7 +365,7 @@ export const githubSyncService = {
           repo: githubConfig.repo,
           accessToken: githubConfig.accessToken,
         },
-        githubConfig.webhookId,
+        githubConfig.webhookId
       );
     }
 
@@ -391,7 +391,7 @@ export const githubSyncService = {
   async handleWebhook(
     integrationId: string,
     action: string,
-    issue: { number: number; state: 'open' | 'closed' },
+    issue: { number: number; state: 'open' | 'closed' }
   ): Promise<Result<void>> {
     const integration = await integrationsRepo.findById(integrationId);
     if (!integration) {

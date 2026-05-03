@@ -72,7 +72,7 @@ export const apiTokensRepo = {
         JSON.stringify(scopes),
         data.expiresAt ?? null,
         now,
-      ],
+      ]
     );
 
     const token = await this.findById(id);
@@ -105,7 +105,7 @@ export const apiTokensRepo = {
         `SELECT * FROM api_tokens
          WHERE token_hash = ?
          AND revoked_at IS NULL
-         AND (expires_at IS NULL OR expires_at > ?)`,
+         AND (expires_at IS NULL OR expires_at > ?)`
       )
       .get(tokenHash, now) as ApiTokenRow | null;
     return row ? mapRowToApiTokenWithHash(row) : null;
@@ -118,7 +118,7 @@ export const apiTokensRepo = {
     const db = getDb();
     const rows = db
       .query(
-        'SELECT * FROM api_tokens WHERE user_id = ? AND revoked_at IS NULL ORDER BY created_at DESC',
+        'SELECT * FROM api_tokens WHERE user_id = ? AND revoked_at IS NULL ORDER BY created_at DESC'
       )
       .all(userId) as ApiTokenRow[];
     return rows.map(mapRowToApiToken);
@@ -142,7 +142,7 @@ export const apiTokensRepo = {
     const now = new Date().toISOString();
     const result = db.run(
       'UPDATE api_tokens SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL',
-      [now, id],
+      [now, id]
     );
     return result.changes > 0;
   },
@@ -155,7 +155,7 @@ export const apiTokensRepo = {
     const now = new Date().toISOString();
     const result = db.run(
       'UPDATE api_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL',
-      [now, userId],
+      [now, userId]
     );
     return result.changes;
   },

@@ -31,7 +31,7 @@ reporterMessages.post(
       success: true,
       reporterMessage: result.value,
     });
-  },
+  }
 );
 
 // List messages for a report (Authenticated)

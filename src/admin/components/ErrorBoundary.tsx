@@ -218,7 +218,7 @@ export function useErrorHandler(): (error: Error) => void {
 // Higher-order component for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  fallback?: ReactNode,
+  fallback?: ReactNode
 ): React.FC<P> {
   const WithErrorBoundary: React.FC<P> = (props) => (
     <ErrorBoundary fallback={fallback}>

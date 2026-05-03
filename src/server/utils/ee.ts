@@ -237,7 +237,7 @@ export function requireEELicense() {
           code: 'LICENSE_REQUIRED',
           upgradeUrl: 'https://bugpin.io/editions/',
         },
-        402,
+        402
       );
     }
     return next();
@@ -258,7 +258,7 @@ export function requireEEFeature(feature: EEFeature) {
           feature,
           upgradeUrl: 'https://bugpin.io/editions/',
         },
-        402,
+        402
       );
     }
 
@@ -270,7 +270,7 @@ export function requireEEFeature(feature: EEFeature) {
           feature,
           upgradeUrl: 'https://bugpin.io/editions/',
         },
-        402,
+        402
       );
     }
 

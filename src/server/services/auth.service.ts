@@ -38,7 +38,7 @@ export const authService = {
     email: string,
     password: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<Result<LoginResult>> {
     // Find user by email
     const userWithPassword = await usersRepo.findByEmailWithPassword(email);
@@ -133,7 +133,7 @@ export const authService = {
     userId: string,
     currentPassword: string,
     newPassword: string,
-    currentSessionId?: string,
+    currentSessionId?: string
   ): Promise<Result<void>> {
     // Get user with password
     const user = await usersRepo.findById(userId);

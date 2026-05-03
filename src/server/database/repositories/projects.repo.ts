@@ -2,7 +2,16 @@ import { getDb } from '../database.js';
 import { generateId, generateApiKey } from '../../utils/id.js';
 import { hashApiKey } from '../../utils/crypto.js';
 import type { CreateProjectData } from './interfaces.js';
-import type { Project, ProjectSettings } from '@shared/types';
+import type {
+  Project,
+  ProjectLanguageSettings,
+  ProjectSettings,
+  WidgetLauncherButtonSettings,
+} from '@shared/types';
+import {
+  wrapLegacyLocalizedString,
+  wrapLegacyTooltipText,
+} from '../../utils/wrap-legacy-localized-string.js';
 
 // Database Row Type
 
@@ -23,12 +32,43 @@ interface ProjectRow {
 
 // Row to Entity Mapping
 
+const DEFAULT_PROJECT_LANGUAGE_SETTINGS: ProjectLanguageSettings = {
+  mode: 'auto',
+  defaultLanguage: 'en',
+};
+
+function applyLauncherButtonLegacyWrap(
+  launcher: WidgetLauncherButtonSettings | undefined
+): WidgetLauncherButtonSettings | undefined {
+  if (!launcher) return launcher;
+  const result: WidgetLauncherButtonSettings = { ...launcher };
+  if ('buttonText' in launcher) {
+    result.buttonText = wrapLegacyLocalizedString(launcher.buttonText as unknown);
+  }
+  if ('tooltipText' in launcher) {
+    result.tooltipText = wrapLegacyTooltipText(launcher.tooltipText as unknown, false);
+  }
+  return result;
+}
+
+function applySettingsDefaults(settings: ProjectSettings): ProjectSettings {
+  const next: ProjectSettings = { ...settings };
+  if (!next.language) {
+    next.language = { ...DEFAULT_PROJECT_LANGUAGE_SETTINGS };
+  }
+  if (next.widgetLauncherButton) {
+    next.widgetLauncherButton = applyLauncherButtonLegacyWrap(next.widgetLauncherButton);
+  }
+  return next;
+}
+
 function mapRowToProject(row: ProjectRow): Project {
+  const parsed = JSON.parse(row.settings) as ProjectSettings;
   return {
     id: row.id,
     name: row.name,
     apiKey: row.api_key || row.api_key_prefix, // Full key if available, otherwise prefix for legacy projects
-    settings: JSON.parse(row.settings) as ProjectSettings,
+    settings: applySettingsDefaults(parsed),
     reportsCount: row.reports_count,
     isActive: row.is_active === 1,
     position: row.position,
@@ -63,7 +103,16 @@ export const projectsRepo = {
     db.run(
       `INSERT INTO projects (id, name, api_key_hash, api_key_prefix, api_key, settings, position, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
-      [id, data.name, apiKeyHash, apiKeyPrefix, apiKey, JSON.stringify(data.settings ?? {}), now, now],
+      [
+        id,
+        data.name,
+        apiKeyHash,
+        apiKeyPrefix,
+        apiKey,
+        JSON.stringify(data.settings ?? {}),
+        now,
+        now,
+      ]
     );
 
     const project = await this.findById(id);
@@ -114,7 +163,7 @@ export const projectsRepo = {
    */
   async update(
     id: string,
-    updates: Partial<Pick<Project, 'name' | 'settings' | 'isActive'>>,
+    updates: Partial<Pick<Project, 'name' | 'settings' | 'isActive'>>
   ): Promise<Project | null> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -151,7 +200,7 @@ export const projectsRepo = {
     const now = new Date().toISOString();
     const result = db.run(
       'UPDATE projects SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL',
-      [now, id],
+      [now, id]
     );
     return result.changes > 0;
   },
@@ -168,7 +217,7 @@ export const projectsRepo = {
 
     const result = db.run(
       'UPDATE projects SET api_key_hash = ?, api_key_prefix = ?, api_key = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
-      [apiKeyHash, apiKeyPrefix, newApiKey, now, id],
+      [apiKeyHash, apiKeyPrefix, newApiKey, now, id]
     );
 
     if (result.changes > 0) {
@@ -198,7 +247,7 @@ export const projectsRepo = {
 
     // Update positions in a transaction-like manner using a prepared statement
     const stmt = db.prepare(
-      'UPDATE projects SET position = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+      'UPDATE projects SET position = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL'
     );
 
     for (let i = 0; i < projectIds.length; i++) {
@@ -214,7 +263,7 @@ export const projectsRepo = {
     const placeholders = projectIds.map(() => '?').join(', ');
     const result = db
       .query(
-        `SELECT COUNT(*) as count FROM projects WHERE id IN (${placeholders}) AND deleted_at IS NULL`,
+        `SELECT COUNT(*) as count FROM projects WHERE id IN (${placeholders}) AND deleted_at IS NULL`
       )
       .get(...projectIds) as { count: number };
     return result.count === projectIds.length;

@@ -33,7 +33,7 @@ export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<
     0,
     0,
     pixelCrop.width,
-    pixelCrop.height,
+    pixelCrop.height
   );
 
   // Return as blob
@@ -47,7 +47,7 @@ export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<
         }
       },
       'image/jpeg',
-      0.95,
+      0.95
     );
   });
 }

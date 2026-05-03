@@ -121,7 +121,7 @@ export function Reports() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createForm, setCreateForm] = useState<CreateReportFormState>(() =>
-    buildCreateReportForm(searchParams.get('projectId') || undefined),
+    buildCreateReportForm(searchParams.get('projectId') || undefined)
   );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -247,7 +247,7 @@ export function Reports() {
         toast.success(
           updates.assignedTo === null
             ? `Unassigned ${count} ${reportText}`
-            : `Assigned ${count} ${reportText} to ${assigneeName}`,
+            : `Assigned ${count} ${reportText} to ${assigneeName}`
         );
       }
     },
@@ -305,7 +305,7 @@ export function Reports() {
 
   const updateCreateForm = <K extends keyof CreateReportFormState>(
     key: K,
-    value: CreateReportFormState[K],
+    value: CreateReportFormState[K]
   ) => {
     setCreateForm((current) => ({ ...current, [key]: value }));
   };
@@ -820,7 +820,9 @@ export function Reports() {
           </div>
         ) : data?.data?.length === 0 ? (
           <Card>
-            <CardContent className="p-12 text-center text-muted-foreground">No reports found</CardContent>
+            <CardContent className="p-12 text-center text-muted-foreground">
+              No reports found
+            </CardContent>
           </Card>
         ) : (
           data?.data?.map((report: Report) => (
@@ -874,8 +876,22 @@ export function Reports() {
               Page {data.page} of {data.totalPages}
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleFilterChange('page', String(page - 1))} disabled={page <= 1}>Previous</Button>
-              <Button variant="outline" size="sm" onClick={() => handleFilterChange('page', String(page + 1))} disabled={page >= data.totalPages}>Next</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFilterChange('page', String(page - 1))}
+                disabled={page <= 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFilterChange('page', String(page + 1))}
+                disabled={page >= data.totalPages}
+              >
+                Next
+              </Button>
             </div>
           </div>
         )}
@@ -889,8 +905,7 @@ export function Reports() {
               <TableHead className="w-[50px]">
                 <Checkbox
                   checked={
-                    data?.data?.length > 0 &&
-                    data.data.every((r: Report) => selectedIds.has(r.id))
+                    data?.data?.length > 0 && data.data.every((r: Report) => selectedIds.has(r.id))
                   }
                   onCheckedChange={handleSelectAll}
                   aria-label="Select all"
@@ -1118,12 +1133,13 @@ function AssigneeDisplay({
     return <span className="text-sm text-muted-foreground">Unassigned</span>;
   }
 
-  const fallback = user.name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || '?';
+  const fallback =
+    user.name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || '?';
 
   return (
     <div className="flex items-center gap-2 min-w-0">

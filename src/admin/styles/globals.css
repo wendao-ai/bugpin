@@ -144,7 +144,6 @@
   --radius: var(--radius);
 }
 
-
 /* Appearance dialog theme buttons — sm on desktop, larger on mobile */
 @layer utilities {
   .appearance-theme-btn {

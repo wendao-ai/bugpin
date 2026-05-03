@@ -61,7 +61,7 @@ function parseSvgDimensions(svgText: string): { width: number; height: number } 
  */
 async function svgToPng(
   svgUrl: string,
-  targetHeight: number,
+  targetHeight: number
 ): Promise<{ dataUrl: string; width: number; height: number } | null> {
   try {
     // Fetch the SVG content
@@ -169,7 +169,7 @@ async function fetchImageAsBase64(url: string): Promise<ImageData | null> {
  * Get image dimensions from base64 data URL
  */
 async function getImageDimensions(
-  dataUrl: string,
+  dataUrl: string
 ): Promise<{ width: number; height: number } | null> {
   return new Promise((resolve) => {
     const img = new Image();

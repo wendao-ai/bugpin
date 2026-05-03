@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import type { Report, EmailTemplateType, User } from '@shared/types';
+import type { Report, EmailTemplateType, User, CustomEmailTemplates } from '@shared/types';
 import type { Result } from '../utils/result.js';
 
 /**
@@ -123,7 +123,7 @@ export interface EEHooks {
   onReportCreated(report: Report): Promise<void>;
   onReportUpdated(
     report: Report,
-    changes: Record<string, { old: unknown; new: unknown }>,
+    changes: Record<string, { old: unknown; new: unknown }>
   ): Promise<void>;
   onReportDeleted(report: Report): Promise<void>;
 
@@ -132,6 +132,9 @@ export interface EEHooks {
 
   // Email template hook
   getCustomEmailTemplate(templateType: EmailTemplateType): Promise<CustomEmailTemplate | null>;
+
+  // Per-locale email template overrides hook
+  getCustomEmailTemplates(): Promise<CustomEmailTemplates | null>;
 
   // API token hooks
   getApiTokenService(): ApiTokenService | null;
@@ -215,6 +218,7 @@ export function createDefaultHooks(): EEHooks {
 
     // Email template - not available (use default)
     getCustomEmailTemplate: async () => null,
+    getCustomEmailTemplates: async () => null,
 
     // API token service - not available
     getApiTokenService: () => null,

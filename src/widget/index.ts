@@ -1,6 +1,15 @@
 import { h, render } from 'preact';
+import type { LocaleCode } from '@shared/types';
 import { App } from './components/App.js';
 import { WidgetConfig, defaultConfig } from './config.js';
+import {
+  configureManualLock,
+  getLocale,
+  installLanguageObservers,
+  publicSetLanguage,
+  setLocale,
+} from './i18n/index.js';
+import { detectLocale } from './i18n/detect.js';
 
 // Start error capture immediately when widget loads (before any async operations)
 // This patches console and fetch to capture errors/network issues
@@ -18,7 +27,7 @@ let isInitialized = false;
  */
 async function fetchConfig(
   apiKey: string,
-  serverUrl: string,
+  serverUrl: string
 ): Promise<Partial<WidgetConfig> | null> {
   try {
     const response = await fetch(`${serverUrl}/api/widget/config/${apiKey}`);
@@ -76,6 +85,7 @@ async function fetchConfig(
           maxVideoUploadSize: cfg.maxVideoUploadSizeMb
             ? cfg.maxVideoUploadSizeMb * 1024 * 1024
             : undefined,
+          language: cfg.language,
         };
       }
     } else if (response.status === 403) {
@@ -92,10 +102,32 @@ async function fetchConfig(
   return {};
 }
 
+interface InitLanguageInputs {
+  initLanguage?: string;
+  scriptLanguage?: string | null;
+}
+
+function applyLanguage(config: WidgetConfig, inputs: InitLanguageInputs): void {
+  const language = config.language ?? { mode: 'auto', defaultLanguage: 'en' };
+  configureManualLock({ mode: language.mode });
+  const detected = detectLocale({
+    initLanguage: inputs.initLanguage,
+    scriptLanguage: inputs.scriptLanguage ?? null,
+    projectDefault: language.defaultLanguage,
+    mode: language.mode,
+  });
+  setLocale(detected);
+  installLanguageObservers({
+    mode: language.mode,
+    scriptLanguage: inputs.scriptLanguage ?? null,
+    projectDefault: language.defaultLanguage,
+  });
+}
+
 /**
  * Create the widget container with Shadow DOM
  */
-function createWidget(config: WidgetConfig): void {
+function createWidget(config: WidgetConfig, languageInputs: InitLanguageInputs = {}): void {
   // Prevent duplicate widgets
   if (isInitialized) {
     console.warn('[BugPin] Widget already initialized');
@@ -123,6 +155,8 @@ function createWidget(config: WidgetConfig): void {
 
   // Add container to document
   document.body.appendChild(container);
+
+  applyLanguage(config, languageInputs);
 
   // Render Preact app
   render(h(App, { config }), root);
@@ -152,6 +186,8 @@ async function initFromScriptTag(scriptElement: HTMLScriptElement): Promise<void
     return;
   }
 
+  const dataButtonText = scriptElement.getAttribute('data-button-text');
+
   // Merge configurations: defaults < API < data attributes
   const config: WidgetConfig = {
     ...defaultConfig,
@@ -162,15 +198,17 @@ async function initFromScriptTag(scriptElement: HTMLScriptElement): Promise<void
     ...(scriptElement.getAttribute('data-position') && {
       position: scriptElement.getAttribute('data-position') as WidgetConfig['position'],
     }),
-    ...(scriptElement.getAttribute('data-button-text') && {
-      buttonText: scriptElement.getAttribute('data-button-text')!,
+    ...(dataButtonText && {
+      buttonText: { project: { en: dataButtonText }, global: null, builtin: null },
     }),
     ...(scriptElement.getAttribute('data-theme') && {
       theme: scriptElement.getAttribute('data-theme') as 'light' | 'dark',
     }),
   };
 
-  createWidget(config);
+  const scriptLanguage = scriptElement.getAttribute('data-language');
+
+  createWidget(config, { scriptLanguage });
 }
 
 // Public API
@@ -179,10 +217,16 @@ declare global {
   interface Window {
     BugPin?: {
       init: (
-        config: Partial<WidgetConfig> & { apiKey: string; serverUrl?: string },
+        config: Partial<WidgetConfig> & {
+          apiKey: string;
+          serverUrl?: string;
+          language?: string;
+        }
       ) => Promise<void>;
       open: () => void;
       close: () => void;
+      setLanguage: (code: string) => LocaleCode | null;
+      getLanguage: () => LocaleCode;
     };
   }
 }
@@ -193,7 +237,11 @@ const BugPin = {
    * Initialize the widget programmatically (for npm/module usage)
    */
   init: async (
-    config: Partial<WidgetConfig> & { apiKey: string; serverUrl?: string },
+    config: Partial<WidgetConfig> & {
+      apiKey: string;
+      serverUrl?: string;
+      language?: string;
+    }
   ): Promise<void> => {
     const serverUrl = config.serverUrl || defaultConfig.serverUrl;
     const fetchedConfig = await fetchConfig(config.apiKey, serverUrl);
@@ -203,14 +251,16 @@ const BugPin = {
       return;
     }
 
+    const { language: initLanguage, ...rest } = config;
+
     // Merge: defaults < server config < user-provided config
     const fullConfig: WidgetConfig = {
       ...defaultConfig,
       ...fetchedConfig,
-      ...config,
+      ...rest,
       serverUrl,
     };
-    createWidget(fullConfig);
+    createWidget(fullConfig, { initLanguage });
   },
 
   /**
@@ -225,6 +275,21 @@ const BugPin = {
    */
   close: () => {
     document.dispatchEvent(new CustomEvent('bugpin:close'));
+  },
+
+  /**
+   * Set the active widget language. Returns the resolved code, or null if
+   * the input is not a supported locale.
+   */
+  setLanguage: (code: string): LocaleCode | null => {
+    return publicSetLanguage(code);
+  },
+
+  /**
+   * Return the currently active widget language.
+   */
+  getLanguage: (): LocaleCode => {
+    return getLocale();
   },
 };
 

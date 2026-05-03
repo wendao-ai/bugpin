@@ -20,7 +20,7 @@ export const Select: FunctionComponent<SelectProps> = ({
         'h-10 w-full px-3 py-2 border border-solid border-input rounded-sm text-sm font-sans text-foreground bg-[var(--input-background,transparent)] cursor-pointer transition-colors',
         'focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20',
         error && 'border-destructive focus:border-destructive focus:ring-destructive/20',
-        className,
+        className
       )}
       aria-invalid={error ? 'true' : undefined}
       {...props}

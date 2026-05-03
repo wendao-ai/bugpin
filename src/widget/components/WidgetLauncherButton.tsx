@@ -3,10 +3,14 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { Icon } from './Icon.js';
 import { cn } from '../lib/utils';
 import { useEffectiveTheme } from '../hooks/use-effective-theme.js';
+import { useLocale } from '../hooks/use-locale.js';
+import { getLocale, t } from '../i18n/index.js';
+import { resolveLauncherText } from '../i18n/resolve-launcher-text.js';
+import type { LauncherTextBundle } from '../config.js';
 
 interface WidgetLauncherButtonProps {
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  buttonText: string | null;
+  buttonText: LauncherTextBundle;
   buttonShape: 'round' | 'rectangle';
   buttonIcon: string | null;
   buttonIconSize: number;
@@ -22,7 +26,7 @@ interface WidgetLauncherButtonProps {
   darkTextHoverColor: string;
   enableHoverScaleEffect: boolean;
   tooltipEnabled: boolean;
-  tooltipText: string | null;
+  tooltipText: LauncherTextBundle;
   onClick: () => void;
 }
 
@@ -54,6 +58,7 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
   tooltipText,
   onClick,
 }) => {
+  useLocale();
   const [isHovered, setIsHovered] = useState(false);
   const [tooltipOffset, setTooltipOffset] = useState({
     left: '50%',
@@ -64,6 +69,21 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const effectiveTheme = useEffectiveTheme(theme);
   const isDarkMode = effectiveTheme === 'dark';
+  const activeLocale = getLocale();
+  const resolvedButtonText = resolveLauncherText(
+    buttonText.project,
+    buttonText.global,
+    activeLocale,
+    buttonText.builtin?.[activeLocale] ?? null
+  );
+  const tooltipBuiltinForActive = tooltipText.builtin?.[activeLocale] ?? null;
+  const resolvedTooltipText =
+    resolveLauncherText(
+      tooltipText.project,
+      tooltipText.global,
+      activeLocale,
+      tooltipBuiltinForActive
+    ) ?? t('tooltip.launcher');
 
   // Calculate tooltip position to ensure 4px margin from window edges
   useEffect(() => {
@@ -102,7 +122,7 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
         });
       });
     }
-  }, [isHovered, tooltipText]);
+  }, [isHovered, resolvedTooltipText]);
 
   // Select colors based on theme and hover state
   const buttonColor = isDarkMode
@@ -126,7 +146,7 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
   const tooltipTextColor = isDarkMode ? darkTextColor : lightTextColor;
 
   const borderRadius = buttonShape === 'round' ? '50%' : '8px';
-  const ariaLabel = buttonText || 'Report Bug';
+  const ariaLabel = resolvedButtonText || t('aria.launcher');
 
   // For round shape, padding scales with icon size (half the icon size)
   const padding = buttonShape === 'round' ? `${buttonIconSize / 2}px` : '12px 20px';
@@ -137,7 +157,7 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
         ref={buttonRef}
         class={cn(
           'relative flex items-center justify-center gap-2 border-none text-sm font-medium cursor-pointer shadow-lg transition-all duration-200',
-          enableHoverScaleEffect && 'hover:scale-110 hover:shadow-xl active:scale-105',
+          enableHoverScaleEffect && 'hover:scale-110 hover:shadow-xl active:scale-105'
         )}
         style={{
           backgroundColor: buttonColor,
@@ -153,10 +173,10 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
         {buttonIcon && (
           <Icon name={buttonIcon} size={buttonIconSize} strokeWidth={buttonIconStroke} />
         )}
-        {buttonText && <span>{buttonText}</span>}
+        {resolvedButtonText && <span>{resolvedButtonText}</span>}
       </button>
 
-      {tooltipEnabled && tooltipText && isHovered && (
+      {tooltipEnabled && resolvedTooltipText && isHovered && (
         <div
           ref={tooltipRef}
           class="absolute bottom-full mb-2 px-3 py-1.5 text-xs rounded whitespace-nowrap pointer-events-none z-[2147483647] animate-[bugpin-tooltip-fade-in_0.2s_ease-in-out_forwards] shadow-md"
@@ -168,7 +188,7 @@ export const WidgetLauncherButton: FunctionComponent<WidgetLauncherButtonProps> 
             transform: tooltipOffset.transform,
           }}
         >
-          {tooltipText}
+          {resolvedTooltipText}
           <div
             class="absolute top-full border-4 border-solid border-transparent"
             style={{

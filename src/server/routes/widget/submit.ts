@@ -7,7 +7,9 @@ import { dynamicRateLimiter, apiKeyGenerator } from '../../middleware/rate-limit
 import { logger } from '../../utils/logger.js';
 import { ALLOWED_MEDIA_MIME_TYPES } from '../../storage/files.js';
 import { settingsCacheService } from '../../services/settings-cache.service.js';
-import type { ReportMetadata } from '@shared/types';
+import { resolveSubmitLocale } from '../../utils/locale.js';
+import { tooltipLauncherDefaults } from '../../i18n/tooltip-defaults.js';
+import type { LauncherTextBundle, ReportMetadata } from '@shared/types';
 
 const widget = new Hono();
 
@@ -19,6 +21,7 @@ const submitReportSchema = z.object({
   priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).default('medium'),
   reporterName: z.string().optional(),
   reporterEmail: z.string().email().optional().or(z.literal('')),
+  locale: z.string().optional(),
   metadata: z.object({
     url: z.string(),
     title: z.string().optional(),
@@ -50,7 +53,7 @@ const submitReportSchema = z.object({
           source: z.string().optional(),
           line: z.number().optional(),
           timestamp: z.string(),
-        }),
+        })
       )
       .optional(),
     networkErrors: z
@@ -61,7 +64,7 @@ const submitReportSchema = z.object({
           status: z.number(),
           statusText: z.string(),
           timestamp: z.string(),
-        }),
+        })
       )
       .optional(),
     userActivity: z
@@ -72,7 +75,7 @@ const submitReportSchema = z.object({
           url: z.string().optional(),
           inputType: z.string().optional(),
           timestamp: z.string(),
-        }),
+        })
       )
       .optional(),
     storageKeys: z
@@ -97,7 +100,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
         error: 'DEPRECATED',
         message: 'API key query parameter is deprecated. Use x-api-key header instead.',
       },
-      400,
+      400
     );
   }
 
@@ -107,7 +110,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
   if (!apiKey) {
     return c.json(
       { success: false, error: 'UNAUTHORIZED', message: 'x-api-key header is required' },
-      401,
+      401
     );
   }
 
@@ -117,8 +120,15 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
 
   if (!projectResult.success) {
     const statusCode =
-      projectResult.code === 'INVALID_API_KEY' ? 401 : projectResult.code === 'ORIGIN_NOT_ALLOWED' ? 403 : 403;
-    return c.json({ success: false, error: projectResult.code, message: projectResult.error }, statusCode);
+      projectResult.code === 'INVALID_API_KEY'
+        ? 401
+        : projectResult.code === 'ORIGIN_NOT_ALLOWED'
+          ? 403
+          : 403;
+    return c.json(
+      { success: false, error: projectResult.code, message: projectResult.error },
+      statusCode
+    );
   }
 
   // Project validation successful (access validated, project is active, origin allowed)
@@ -139,7 +149,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
       } catch {
         return c.json(
           { success: false, error: 'INVALID_JSON', message: 'Invalid JSON in data field' },
-          400,
+          400
         );
       }
     } else {
@@ -177,7 +187,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
           message: issue.message,
         })),
       },
-      400,
+      400
     );
   }
 
@@ -193,14 +203,21 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
   for (const file of mediaFiles) {
     // Early MIME type check before buffering
     if (!allowedTypes.includes(file.type)) {
-      logger.warn('Media file rejected: invalid MIME type', { filename: file.name, mimeType: file.type });
+      logger.warn('Media file rejected: invalid MIME type', {
+        filename: file.name,
+        mimeType: file.type,
+      });
       continue;
     }
 
     // Early size check before buffering
     const sizeLimit = file.type.startsWith('video/') ? maxVideoSizeBytes : maxFileSizeBytes;
     if (file.size > sizeLimit) {
-      logger.warn('Media file rejected: too large', { filename: file.name, size: file.size, limit: sizeLimit });
+      logger.warn('Media file rejected: too large', {
+        filename: file.name,
+        size: file.size,
+        limit: sizeLimit,
+      });
       continue;
     }
 
@@ -216,6 +233,13 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
     }
   }
 
+  const projectLanguage = projectResult.value.settings?.language;
+  const reporterLocale = resolveSubmitLocale({
+    claimed: data.locale,
+    projectMode: projectLanguage?.mode,
+    projectDefault: projectLanguage?.defaultLanguage,
+  });
+
   // Create report via service
   const result = await reportsService.create({
     apiKey,
@@ -227,6 +251,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
     metadata: data.metadata as ReportMetadata,
     reporterEmail: data.reporterEmail || undefined,
     reporterName: data.reporterName || undefined,
+    reporterLocale,
   });
 
   if (!result.success) {
@@ -239,7 +264,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
       reportId: result.value.id,
       message: 'Bug report submitted successfully',
     },
-    201,
+    201
   );
 });
 
@@ -253,7 +278,10 @@ widget.get('/config/:apiKey', async (c) => {
 
   if (!projectResult.success) {
     const statusCode = projectResult.code === 'INVALID_API_KEY' ? 404 : 403;
-    return c.json({ success: false, error: projectResult.code, message: projectResult.error }, statusCode);
+    return c.json(
+      { success: false, error: projectResult.code, message: projectResult.error },
+      statusCode
+    );
   }
 
   const project = projectResult.value;
@@ -261,7 +289,10 @@ widget.get('/config/:apiKey', async (c) => {
   // Get global app settings
   const settingsResult = await settingsService.getAll();
   if (!settingsResult.success) {
-    return c.json({ success: false, error: 'SETTINGS_ERROR', message: 'Failed to load settings' }, 500);
+    return c.json(
+      { success: false, error: 'SETTINGS_ERROR', message: 'Failed to load settings' },
+      500
+    );
   }
   const appSettings = settingsResult.value;
 
@@ -272,6 +303,10 @@ widget.get('/config/:apiKey', async (c) => {
   const projButton = project.settings?.widgetLauncherButton;
   const projDialog = project.settings?.widgetDialog;
   const projScreenshot = project.settings?.screenshot;
+  const projLanguage = project.settings?.language ?? {
+    mode: 'auto' as const,
+    defaultLanguage: 'en' as const,
+  };
   const globalButton = appSettings.widgetLauncherButton;
   const globalDialog = appSettings.widgetDialog;
   const globalScreenshot = appSettings.screenshot;
@@ -287,8 +322,6 @@ widget.get('/config/:apiKey', async (c) => {
     projScreenshot?.maxVideoUploadSizeMb ?? globalScreenshot.maxVideoUploadSizeMb;
   const theme = projButton?.theme ?? globalButton.theme;
   const position = projButton?.position ?? globalButton.position;
-  const buttonText =
-    projButton?.buttonText !== undefined ? projButton.buttonText : globalButton.buttonText;
   const buttonShape = projButton?.buttonShape ?? globalButton.buttonShape;
   const buttonIcon =
     projButton?.buttonIcon !== undefined ? projButton.buttonIcon : globalButton.buttonIcon;
@@ -297,8 +330,18 @@ widget.get('/config/:apiKey', async (c) => {
   const enableHoverScaleEffect =
     projButton?.enableHoverScaleEffect ?? globalButton.enableHoverScaleEffect;
   const tooltipEnabled = projButton?.tooltipEnabled ?? globalButton.tooltipEnabled;
-  const tooltipText =
-    projButton?.tooltipText !== undefined ? projButton.tooltipText : globalButton.tooltipText;
+
+  const buttonTextBundle: LauncherTextBundle = {
+    project: projButton && 'buttonText' in projButton ? projButton.buttonText : undefined,
+    global: globalButton.buttonText,
+    builtin: null,
+  };
+
+  const tooltipTextBundle: LauncherTextBundle = {
+    project: projButton && 'tooltipText' in projButton ? projButton.tooltipText : undefined,
+    global: globalButton.tooltipText,
+    builtin: tooltipLauncherDefaults,
+  };
 
   // Widget Button light mode colors
   const lightButtonColor = projButton?.lightButtonColor ?? globalButton.lightButtonColor;
@@ -325,8 +368,7 @@ widget.get('/config/:apiKey', async (c) => {
     projDialog?.lightBackgroundColor ?? globalDialog.lightBackgroundColor;
   const dialogLightSecondaryColor =
     projDialog?.lightSecondaryColor ?? globalDialog.lightSecondaryColor;
-  const dialogLightInputColor =
-    projDialog?.lightInputColor ?? globalDialog.lightInputColor;
+  const dialogLightInputColor = projDialog?.lightInputColor ?? globalDialog.lightInputColor;
   const dialogLightForegroundColor =
     projDialog?.lightForegroundColor ?? globalDialog.lightForegroundColor;
   const dialogDarkButtonColor = projDialog?.darkButtonColor ?? globalDialog.darkButtonColor;
@@ -339,8 +381,7 @@ widget.get('/config/:apiKey', async (c) => {
     projDialog?.darkBackgroundColor ?? globalDialog.darkBackgroundColor;
   const dialogDarkSecondaryColor =
     projDialog?.darkSecondaryColor ?? globalDialog.darkSecondaryColor;
-  const dialogDarkInputColor =
-    projDialog?.darkInputColor ?? globalDialog.darkInputColor;
+  const dialogDarkInputColor = projDialog?.darkInputColor ?? globalDialog.darkInputColor;
   const dialogDarkForegroundColor =
     projDialog?.darkForegroundColor ?? globalDialog.darkForegroundColor;
 
@@ -359,7 +400,7 @@ widget.get('/config/:apiKey', async (c) => {
       },
       theme,
       position,
-      buttonText,
+      buttonText: buttonTextBundle,
       buttonShape,
       buttonIcon,
       buttonIconSize,
@@ -394,11 +435,15 @@ widget.get('/config/:apiKey', async (c) => {
       dialogDarkForegroundColor,
       enableHoverScaleEffect,
       tooltipEnabled,
-      tooltipText,
+      tooltipText: tooltipTextBundle,
       captureMethod: 'visible', // Default capture method
       useScreenCaptureAPI,
       maxImageUploadSizeMb,
       maxVideoUploadSizeMb,
+      language: {
+        mode: projLanguage.mode,
+        defaultLanguage: projLanguage.defaultLanguage,
+      },
     },
   });
 });

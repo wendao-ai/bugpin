@@ -50,7 +50,7 @@ notificationPreferences.get(
       success: true,
       preferences: result.value,
     });
-  },
+  }
 );
 
 /**
@@ -73,7 +73,7 @@ notificationPreferences.patch(
       success: true,
       preferences: result.value,
     });
-  },
+  }
 );
 
 /**
@@ -98,7 +98,7 @@ notificationPreferences.patch(
       success: true,
       preferences: result.value,
     });
-  },
+  }
 );
 
 // Project Notification Defaults (Admin Only)
@@ -125,7 +125,7 @@ notificationPreferences.get(
       success: true,
       defaults: result.value,
     });
-  },
+  }
 );
 
 /**
@@ -150,7 +150,7 @@ notificationPreferences.patch(
       success: true,
       defaults: result.value,
     });
-  },
+  }
 );
 
 /**
@@ -174,7 +174,7 @@ notificationPreferences.delete(
       success: true,
       message: 'Project notification defaults reset to global settings',
     });
-  },
+  }
 );
 
 export { notificationPreferences };

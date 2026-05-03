@@ -21,6 +21,7 @@ interface PendingReport {
   priority: string;
   reporterEmail?: string;
   reporterName?: string;
+  locale?: string;
   media?: MediaItem[];
   metadata: object;
   createdAt: string;
@@ -107,7 +108,7 @@ function getRetryDelay(retryCount: number): number {
  * Add a report to the buffer (for offline storage)
  */
 export async function bufferReport(
-  report: Omit<PendingReport, 'id' | 'createdAt' | 'retryCount'>,
+  report: Omit<PendingReport, 'id' | 'createdAt' | 'retryCount'>
 ): Promise<string> {
   const database = await initDB();
 
@@ -200,10 +201,11 @@ async function submitReport(report: PendingReport): Promise<boolean> {
         priority: report.priority,
         reporterEmail: report.reporterEmail,
         reporterName: report.reporterName,
+        locale: report.locale,
         metadata: report.metadata,
         mediaCount: report.media?.length || 0,
         mediaAnnotations: report.media?.map((item) => item.annotations).filter(Boolean),
-      }),
+      })
     );
 
     // Add media files
@@ -230,7 +232,7 @@ async function submitReport(report: PendingReport): Promise<boolean> {
     if (!serverResponse.ok) {
       const errorData = await serverResponse.json().catch(() => ({}));
       throw new Error(
-        (errorData as { message?: string }).message || `HTTP ${serverResponse.status}`,
+        (errorData as { message?: string }).message || `HTTP ${serverResponse.status}`
       );
     }
 
@@ -292,7 +294,7 @@ export async function syncPendingReports(): Promise<{ synced: number; failed: nu
         await updateBufferedReport(report);
         console.log(
           `[BugPin] Report retry scheduled (attempt ${report.retryCount}/${MAX_RETRIES}):`,
-          report.id,
+          report.id
         );
       }
     }

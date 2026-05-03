@@ -141,7 +141,13 @@ export function NavMain() {
                         return (
                           <SidebarMenuSubItem key={subItem.url}>
                             <SidebarMenuSubButton asChild isActive={subIsActive}>
-                              <a href={item.url + subItem.url} onClick={(e) => { handleSubItemClick(e); closeSidebarOnMobile(); }}>
+                              <a
+                                href={item.url + subItem.url}
+                                onClick={(e) => {
+                                  handleSubItemClick(e);
+                                  closeSidebarOnMobile();
+                                }}
+                              >
                                 <span>{subItem.title}</span>
                               </a>
                             </SidebarMenuSubButton>

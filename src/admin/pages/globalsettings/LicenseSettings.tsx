@@ -83,9 +83,10 @@ export function LicenseSettings() {
   const isLicensed = status?.licensed ?? false;
   const expiresDate = status?.expiresAt ? new Date(status.expiresAt) : null;
   const neverExpires = expiresDate ? expiresDate.getFullYear() >= 9999 : false;
-  const daysRemaining = expiresDate && !neverExpires
-    ? Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0;
+  const daysRemaining =
+    expiresDate && !neverExpires
+      ? Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -125,13 +126,25 @@ export function LicenseSettings() {
                 <div>
                   <p className="text-muted-foreground">Issued</p>
                   <p className="font-medium">
-                    {status?.issuedAt ? new Date(status.issuedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                    {status?.issuedAt
+                      ? new Date(status.issuedAt).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Expires</p>
                   <p className="font-medium">
-                    {!expiresDate || neverExpires ? 'Never' : expiresDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {!expiresDate || neverExpires
+                      ? 'Never'
+                      : expiresDate.toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
                     {daysRemaining > 0 && daysRemaining <= 30 && (
                       <span className="text-orange-500 ml-2">({daysRemaining} days left)</span>
                     )}
@@ -215,7 +228,6 @@ export function LicenseSettings() {
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }

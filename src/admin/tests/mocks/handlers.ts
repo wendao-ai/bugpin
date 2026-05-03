@@ -351,7 +351,7 @@ export const handlers = [
           },
         },
       },
-      { status: 201 },
+      { status: 201 }
     );
   }),
 
@@ -655,7 +655,7 @@ export const handlers = [
     if (body.currentPassword === 'wrongpassword') {
       return HttpResponse.json(
         { success: false, message: 'Current password is incorrect' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -669,7 +669,7 @@ export const handlers = [
       features: {
         's3-storage': true,
         'custom-branding': true,
-        'webhooks': true,
+        webhooks: true,
         'api-access': true,
         'custom-templates': true,
         'white-label': true,
@@ -685,7 +685,7 @@ export const handlers = [
     if (!projectId) {
       return HttpResponse.json(
         { success: false, error: 'MISSING_PROJECT_ID', message: 'Project ID is required' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -701,7 +701,7 @@ export const handlers = [
     if (!integration) {
       return HttpResponse.json(
         { success: false, error: 'NOT_FOUND', message: 'Integration not found' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -727,7 +727,7 @@ export const handlers = [
     if (!integration) {
       return HttpResponse.json(
         { success: false, error: 'NOT_FOUND', message: 'Integration not found' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 

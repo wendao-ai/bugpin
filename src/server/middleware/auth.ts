@@ -25,7 +25,7 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
   if (!sessionId) {
     return c.json(
       { success: false, error: 'UNAUTHORIZED', message: 'Authentication required' },
-      401,
+      401
     );
   }
 
@@ -34,7 +34,7 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
   if (!result.success) {
     return c.json(
       { success: false, error: result.code ?? 'UNAUTHORIZED', message: result.error },
-      401,
+      401
     );
   }
 
@@ -51,23 +51,21 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
  *
  * @param allowedRoles - Array of roles that are allowed to access the route
  */
-export function authorize(
-  allowedRoles: Array<'admin' | 'editor' | 'viewer'>,
-): MiddlewareHandler {
+export function authorize(allowedRoles: Array<'admin' | 'editor' | 'viewer'>): MiddlewareHandler {
   return async (c, next) => {
     const user = c.get('user');
 
     if (!user) {
       return c.json(
         { success: false, error: 'UNAUTHORIZED', message: 'Authentication required' },
-        401,
+        401
       );
     }
 
     if (!allowedRoles.includes(user.role)) {
       return c.json(
         { success: false, error: 'FORBIDDEN', message: 'Insufficient permissions' },
-        403,
+        403
       );
     }
 
@@ -104,7 +102,7 @@ export const adminOnly: MiddlewareHandler = async (c, next) => {
   if (!sessionId) {
     return c.json(
       { success: false, error: 'UNAUTHORIZED', message: 'Authentication required' },
-      401,
+      401
     );
   }
 
@@ -113,7 +111,7 @@ export const adminOnly: MiddlewareHandler = async (c, next) => {
   if (!result.success) {
     return c.json(
       { success: false, error: result.code ?? 'UNAUTHORIZED', message: result.error },
-      401,
+      401
     );
   }
 

@@ -15,12 +15,18 @@ import { UpgradePrompt } from '../../components/UpgradePrompt';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { TemplateEditor } from '../../components/email/TemplateEditor';
 import { TemplatePreview } from '../../components/email/TemplatePreview';
 import { VariablesReference } from '../../components/email/VariablesReference';
 import { Eye, RotateCcw, Save, Send } from 'lucide-react';
 import { Spinner } from '../../components/ui/spinner';
-import type { AppSettings, EmailTemplateType, EmailTemplate } from '@shared/types';
+import {
+  SUPPORTED_LOCALES,
+  type EmailTemplate,
+  type EmailTemplateType,
+  type LocaleCode,
+} from '@shared/types';
 
 const TEMPLATE_TYPES: { value: EmailTemplateType; label: string; description: string }[] = [
   {
@@ -78,7 +84,23 @@ const TEMPLATE_TYPES: { value: EmailTemplateType; label: string; description: st
     label: 'Reporter Message',
     description: 'Sent to the reporter when an admin sends a direct message',
   },
+  {
+    value: 'reporterAssignment',
+    label: 'Reporter Assignment',
+    description: 'Sent to the reporter when their report is assigned or reassigned',
+  },
 ];
+
+const LOCALE_LABELS: Record<LocaleCode, string> = {
+  en: 'English',
+  de: 'Deutsch',
+  fr: 'Français',
+  nl: 'Nederlands',
+  es: 'Español',
+  it: 'Italiano',
+  ja: '日本語',
+  zh: '中文 (简体)',
+};
 
 const TEMPLATE_VARIABLES: Record<EmailTemplateType, string[]> = {
   newReport: [
@@ -188,19 +210,45 @@ const TEMPLATE_VARIABLES: Record<EmailTemplateType, string[]> = {
     'sender.name',
     'message',
   ],
+  reporterAssignment: [
+    'app.name',
+    'app.url',
+    'project.name',
+    'report.title',
+    'report.status',
+    'report.statusFormatted',
+    'report.url',
+    'assignee.name',
+    'previousAssigneeName',
+    'previousAssigneeDisplay',
+    'noPreviousAssigneeDisplay',
+  ],
 };
+
+type LocaleDraft = Record<LocaleCode, EmailTemplate>;
+
+function emptyDraft(): LocaleDraft {
+  return SUPPORTED_LOCALES.reduce((acc, code) => {
+    acc[code] = { subject: '', html: '' };
+    return acc;
+  }, {} as LocaleDraft);
+}
+
+interface CustomTemplatesResponse {
+  success: boolean;
+  templates: Partial<Record<EmailTemplateType, Partial<Record<LocaleCode, EmailTemplate>>>>;
+}
 
 export function EmailTemplatesSettings() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<EmailTemplateType>('newReport');
-  const [subject, setSubject] = useState('');
-  const [html, setHtml] = useState('');
+  const [activeLocale, setActiveLocale] = useState<LocaleCode>('en');
+  const [draft, setDraft] = useState<LocaleDraft>(() => emptyDraft());
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<{ subject: string; html: string } | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Check if custom-templates feature is licensed
   const { data: featureStatus, isLoading: isLoadingLicense } = useQuery({
     queryKey: ['license-features'],
     queryFn: licenseApi.getFeatures,
@@ -208,56 +256,79 @@ export function EmailTemplatesSettings() {
 
   const isLicensed = featureStatus?.features?.['custom-templates'] ?? false;
 
-  // Fetch current settings
-  const { data: settings, isLoading: isLoadingSettings } = useQuery({
-    queryKey: ['settings'],
+  const { data: customTemplates, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['custom-email-templates'],
+    queryFn: async () => {
+      const response = await api.get<CustomTemplatesResponse>('/templates');
+      return response.data.templates;
+    },
+    enabled: isLicensed,
+  });
+
+  const { data: smtpEnabled } = useQuery({
+    queryKey: ['settings', 'smtp-enabled'],
     queryFn: async () => {
       const response = await api.get('/settings');
-      return response.data.settings as AppSettings;
+      return Boolean(response.data.settings?.smtpEnabled);
     },
   });
 
-  // Fetch default template for reset
   const fetchDefaultTemplate = async (type: EmailTemplateType): Promise<EmailTemplate> => {
-    const response = await api.get(`/settings/email-templates/defaults/${type}`);
+    const response = await api.get(`/templates/${type}/default`);
     return response.data.template;
   };
 
-  // Load template when type changes or settings load
   useEffect(() => {
-    if (settings) {
-      const customTemplate = settings.emailTemplates?.[selectedType];
-      if (customTemplate) {
-        setSubject(customTemplate.subject);
-        setHtml(customTemplate.html);
-      } else {
-        // Load default template
-        fetchDefaultTemplate(selectedType).then((template) => {
-          setSubject(template.subject);
-          setHtml(template.html);
-        });
+    if (!isLicensed) return;
+    const next = emptyDraft();
+    const overrides = customTemplates?.[selectedType] ?? {};
+    let hasOverride = false;
+    for (const code of SUPPORTED_LOCALES) {
+      const entry = overrides[code];
+      if (entry) {
+        next[code] = { subject: entry.subject, html: entry.html };
+        hasOverride = true;
       }
-      setHasChanges(false);
-      setShowPreview(false);
-      setPreviewData(null);
     }
-  }, [settings, selectedType]);
+    setDraft(next);
+    setHasChanges(false);
+    setShowPreview(false);
+    setPreviewData(null);
+    setActiveLocale('en');
 
-  // Save mutation
+    if (!hasOverride) {
+      fetchDefaultTemplate(selectedType)
+        .then((tpl) => {
+          setDraft((current) => ({
+            ...current,
+            en: { subject: tpl.subject, html: tpl.html },
+          }));
+        })
+        .catch(() => undefined);
+    }
+  }, [customTemplates, selectedType, isLicensed]);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const currentTemplates = settings?.emailTemplates || {};
-      const updatedTemplates = {
-        ...currentTemplates,
-        [selectedType]: { subject, html },
-      };
-      const response = await api.put('/settings', {
-        emailTemplates: updatedTemplates,
-      });
-      return response.data;
+      const stored = customTemplates?.[selectedType] ?? {};
+      for (const code of SUPPORTED_LOCALES) {
+        const entry = draft[code];
+        const subject = entry.subject.trim();
+        const html = entry.html.trim();
+        const wasStored = Boolean(stored[code]);
+        const nextHasContent = subject.length > 0 && html.length > 0;
+        if (nextHasContent) {
+          await api.put(`/templates/${selectedType}/${code}`, {
+            subject: entry.subject,
+            html: entry.html,
+          });
+        } else if (wasStored) {
+          await api.delete(`/templates/${selectedType}/${code}`);
+        }
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-email-templates'] });
       toast.success('Template saved successfully');
       setHasChanges(false);
     },
@@ -266,13 +337,13 @@ export function EmailTemplatesSettings() {
     },
   });
 
-  // Preview mutation
   const previewMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.post('/settings/email-templates/preview', {
+      const entry = draft[activeLocale];
+      const response = await api.post('/templates/preview', {
         type: selectedType,
-        subject,
-        html,
+        subject: entry.subject,
+        html: entry.html,
       });
       return response.data.preview as { subject: string; html: string };
     },
@@ -285,16 +356,16 @@ export function EmailTemplatesSettings() {
     },
   });
 
-  // Send test email mutation
   const sendTestMutation = useMutation({
     mutationFn: async () => {
       if (!user?.email) {
         throw new Error('User email not found');
       }
-      const response = await api.post('/settings/email-templates/send-test', {
+      const entry = draft[activeLocale];
+      const response = await api.post('/templates/send-test', {
         type: selectedType,
-        subject,
-        html,
+        subject: entry.subject,
+        html: entry.html,
         recipientEmail: user.email,
       });
       return response.data;
@@ -307,12 +378,13 @@ export function EmailTemplatesSettings() {
     },
   });
 
-  // Reset to default
-  const handleReset = async () => {
+  const handleResetLocale = async () => {
     try {
       const defaultTemplate = await fetchDefaultTemplate(selectedType);
-      setSubject(defaultTemplate.subject);
-      setHtml(defaultTemplate.html);
+      setDraft((current) => ({
+        ...current,
+        [activeLocale]: { subject: defaultTemplate.subject, html: defaultTemplate.html },
+      }));
       setHasChanges(true);
       setShowPreview(false);
       setPreviewData(null);
@@ -323,16 +395,22 @@ export function EmailTemplatesSettings() {
   };
 
   const handleSubjectChange = (value: string) => {
-    setSubject(value);
+    setDraft((current) => ({
+      ...current,
+      [activeLocale]: { ...current[activeLocale], subject: value },
+    }));
     setHasChanges(true);
   };
 
   const handleHtmlChange = (value: string) => {
-    setHtml(value);
+    setDraft((current) => ({
+      ...current,
+      [activeLocale]: { ...current[activeLocale], html: value },
+    }));
     setHasChanges(true);
   };
 
-  const isLoading = isLoadingLicense || isLoadingSettings;
+  const isLoading = isLoadingLicense || (isLicensed && isLoadingTemplates);
 
   if (isLoading) {
     return (
@@ -356,6 +434,10 @@ export function EmailTemplatesSettings() {
 
   const selectedTemplateInfo = TEMPLATE_TYPES.find((t) => t.value === selectedType);
   const availableVariables = TEMPLATE_VARIABLES[selectedType];
+  const activeEntry = draft[activeLocale];
+  const subject = activeEntry.subject;
+  const html = activeEntry.html;
+  const isLocaleEmpty = subject.trim() === '' && html.trim() === '';
 
   return (
     <Card>
@@ -366,7 +448,6 @@ export function EmailTemplatesSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Template Selector */}
         <div className="flex flex-wrap gap-2">
           {TEMPLATE_TYPES.map((template) => (
             <Button
@@ -384,35 +465,79 @@ export function EmailTemplatesSettings() {
           <p className="text-sm text-muted-foreground">{selectedTemplateInfo.description}</p>
         )}
 
-        {/* Subject Input */}
-        <div className="space-y-2">
-          <Label htmlFor="subject">Subject Line</Label>
-          <Input
-            id="subject"
-            value={subject}
-            onChange={(e) => handleSubjectChange(e.target.value)}
-            placeholder="Email subject..."
-          />
-          <p className="text-xs text-muted-foreground">
-            You can use variables like {`{{app.name}}`} in the subject line
-          </p>
-        </div>
+        <Tabs
+          value={activeLocale}
+          onValueChange={(v) => {
+            setActiveLocale(v as LocaleCode);
+            setShowPreview(false);
+            setPreviewData(null);
+          }}
+          className="w-full"
+        >
+          <TabsList
+            role="tablist"
+            aria-label="Locale"
+            className="flex flex-wrap h-auto justify-start gap-1"
+          >
+            {SUPPORTED_LOCALES.map((code) => {
+              const hasDraftContent =
+                draft[code].subject.trim() !== '' || draft[code].html.trim() !== '';
+              return (
+                <TabsTrigger key={code} value={code} className="text-xs">
+                  {LOCALE_LABELS[code]}
+                  {hasDraftContent ? <span className="ml-1 text-primary">•</span> : null}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-        {/* Variables Reference */}
-        <VariablesReference variables={availableVariables} />
+          {SUPPORTED_LOCALES.map((code) => (
+            <TabsContent key={code} value={code} className="mt-4 space-y-4">
+              {code === activeLocale ? (
+                <>
+                  {activeLocale !== 'en' && isLocaleEmpty ? (
+                    <p className="text-sm text-muted-foreground">
+                      No override for {LOCALE_LABELS[activeLocale]}. Using the English override (or
+                      the built-in default if English is also empty). Start typing to add a{' '}
+                      {LOCALE_LABELS[activeLocale]} variant.
+                    </p>
+                  ) : null}
+                  {activeLocale === 'en' ? (
+                    <p className="text-xs text-muted-foreground">
+                      If left blank, English recipients will see the default template.
+                    </p>
+                  ) : null}
 
-        {/* Template Editor */}
-        <div className="space-y-2">
-          <Label>Email Body</Label>
-          <TemplateEditor
-            value={html}
-            onChange={handleHtmlChange}
-            availableVariables={availableVariables}
-            placeholder="Enter your email template HTML..."
-          />
-        </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`subject-${code}`}>Subject Line</Label>
+                    <Input
+                      id={`subject-${code}`}
+                      value={subject}
+                      onChange={(e) => handleSubjectChange(e.target.value)}
+                      placeholder="Email subject..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You can use variables like {`{{app.name}}`} in the subject line
+                    </p>
+                  </div>
 
-        {/* Preview Section */}
+                  <VariablesReference variables={availableVariables} />
+
+                  <div className="space-y-2">
+                    <Label>Email Body</Label>
+                    <TemplateEditor
+                      value={html}
+                      onChange={handleHtmlChange}
+                      availableVariables={availableVariables}
+                      placeholder="Enter your email template HTML..."
+                    />
+                  </div>
+                </>
+              ) : null}
+            </TabsContent>
+          ))}
+        </Tabs>
+
         {showPreview && previewData && (
           <div className="space-y-2">
             <Label>Preview (with sample data)</Label>
@@ -420,7 +545,6 @@ export function EmailTemplatesSettings() {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 pt-4">
           <Button
             variant="outline"
@@ -449,8 +573,8 @@ export function EmailTemplatesSettings() {
           <Button
             variant="outline"
             onClick={() => sendTestMutation.mutate()}
-            disabled={sendTestMutation.isPending || !subject || !html || !settings?.smtpEnabled}
-            title={!settings?.smtpEnabled ? 'SMTP must be configured first' : undefined}
+            disabled={sendTestMutation.isPending || !subject || !html || !smtpEnabled}
+            title={!smtpEnabled ? 'SMTP must be configured first' : undefined}
           >
             {sendTestMutation.isPending ? (
               <>
@@ -465,9 +589,9 @@ export function EmailTemplatesSettings() {
             )}
           </Button>
 
-          <Button variant="outline" onClick={handleReset}>
+          <Button variant="outline" onClick={handleResetLocale}>
             <RotateCcw className="h-4 w-4 mr-2" />
-            Reset to Default
+            Reset {LOCALE_LABELS[activeLocale]} to Default
           </Button>
 
           <Button

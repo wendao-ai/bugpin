@@ -39,7 +39,7 @@ app.get('/features', authMiddleware, async (c) => {
       acc[feature] = hasEEFeature(feature);
       return acc;
     },
-    {} as Record<string, boolean>,
+    {} as Record<string, boolean>
   );
 
   return c.json({
@@ -75,7 +75,7 @@ app.post('/activate', authMiddleware, authorize(['admin']), async (c) => {
         error: 'EE_NOT_AVAILABLE',
         message: 'Enterprise Edition is not installed',
       },
-      400,
+      400
     );
   }
 
@@ -90,7 +90,7 @@ app.post('/activate', authMiddleware, authorize(['admin']), async (c) => {
           error: 'INVALID_INPUT',
           message: 'License key is required',
         },
-        400,
+        400
       );
     }
 
@@ -103,7 +103,7 @@ app.post('/activate', authMiddleware, authorize(['admin']), async (c) => {
           error: 'INVALID_LICENSE',
           message: result.error || 'Invalid license key',
         },
-        400,
+        400
       );
     }
 
@@ -118,7 +118,7 @@ app.post('/activate', authMiddleware, authorize(['admin']), async (c) => {
         error: 'ACTIVATION_FAILED',
         message: error instanceof Error ? error.message : 'Failed to activate license',
       },
-      500,
+      500
     );
   }
 });
@@ -136,7 +136,7 @@ app.delete('/', authMiddleware, authorize(['admin']), async (c) => {
         error: 'EE_NOT_AVAILABLE',
         message: 'Enterprise Edition is not installed',
       },
-      400,
+      400
     );
   }
 
@@ -151,7 +151,7 @@ app.delete('/', authMiddleware, authorize(['admin']), async (c) => {
         error: 'REMOVE_FAILED',
         message: 'Failed to remove license',
       },
-      500,
+      500
     );
   }
 });

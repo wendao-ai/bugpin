@@ -204,7 +204,7 @@ export function IntegrationDialog({
       setRepositories(repos);
       if (repos.length === 0) {
         toast.error(
-          'No repositories found. Make sure your token has access to at least one repository.',
+          'No repositories found. Make sure your token has access to at least one repository.'
         );
       }
     } catch {
@@ -383,7 +383,7 @@ export function IntegrationDialog({
             await setSyncModeMutation.mutateAsync({ id: created.id, syncMode: 'automatic' });
           } catch {
             toast.error(
-              'Integration created, but automatic sync could not be enabled. You can enable it by editing the integration.',
+              'Integration created, but automatic sync could not be enabled. You can enable it by editing the integration.'
             );
           }
         }
@@ -401,7 +401,11 @@ export function IntegrationDialog({
     <>
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-3xl max-h-[85vh]">
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-1 flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="flex min-h-0 flex-1 flex-col gap-4"
+          >
             <DialogHeader>
               <DialogTitle>{isEditing ? 'Edit Integration' : 'Add Integration'}</DialogTitle>
               <DialogDescription>
@@ -574,7 +578,8 @@ export function IntegrationDialog({
                   <div className="pt-2 border-t">
                     {labelsError ? (
                       <p className="text-sm text-amber-700 dark:text-amber-300">
-                        Unable to load labels. Token needs <strong>Metadata: Read</strong> permission.{' '}
+                        Unable to load labels. Token needs <strong>Metadata: Read</strong>{' '}
+                        permission.{' '}
                         <a
                           href="https://docs.bugpin.io/integrations/github"
                           target="_blank"
@@ -602,7 +607,7 @@ export function IntegrationDialog({
                                     setSelectedLabels([...selectedLabels, label.name]);
                                   } else {
                                     setSelectedLabels(
-                                      selectedLabels.filter((l) => l !== label.name),
+                                      selectedLabels.filter((l) => l !== label.name)
                                     );
                                   }
                                 }}
@@ -651,7 +656,8 @@ export function IntegrationDialog({
                   <div className="pt-2 border-t">
                     {assigneesError ? (
                       <p className="text-sm text-amber-700 dark:text-amber-300">
-                        Unable to load assignees. Token needs <strong>Metadata: Read</strong> permission.{' '}
+                        Unable to load assignees. Token needs <strong>Metadata: Read</strong>{' '}
+                        permission.{' '}
                         <a
                           href="https://docs.bugpin.io/integrations/github"
                           target="_blank"
@@ -679,7 +685,7 @@ export function IntegrationDialog({
                                     setSelectedAssignees([...selectedAssignees, assignee.login]);
                                   } else {
                                     setSelectedAssignees(
-                                      selectedAssignees.filter((a) => a !== assignee.login),
+                                      selectedAssignees.filter((a) => a !== assignee.login)
                                     );
                                   }
                                 }}
@@ -720,9 +726,7 @@ export function IntegrationDialog({
                   <Switch
                     id="enable-upload"
                     checked={fileTransferMode === 'upload'}
-                    onCheckedChange={(checked) =>
-                      setFileTransferMode(checked ? 'upload' : 'link')
-                    }
+                    onCheckedChange={(checked) => setFileTransferMode(checked ? 'upload' : 'link')}
                   />
                 </div>
                 {fileTransferMode === 'upload' && (
@@ -731,9 +735,8 @@ export function IntegrationDialog({
                     {watchedOwner && watchedRepo
                       ? `${watchedOwner}/${watchedRepo}`
                       : 'your repository'}
-                    . Requires{' '}
-                    <strong>Contents: Read and write</strong> permission (fine-grained) or{' '}
-                    <code className="px-1 py-0.5 bg-muted rounded">repo</code> scope (classic).
+                    . Requires <strong>Contents: Read and write</strong> permission (fine-grained)
+                    or <code className="px-1 py-0.5 bg-muted rounded">repo</code> scope (classic).
                   </p>
                 )}
               </div>

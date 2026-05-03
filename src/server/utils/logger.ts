@@ -44,7 +44,7 @@ function createLogEntry(
   level: LogLevel,
   message: string,
   context?: Record<string, unknown>,
-  requestId?: string,
+  requestId?: string
 ): LogEntry {
   return {
     level,
@@ -104,7 +104,10 @@ export const logger = {
         error instanceof Error
           ? { ...context, error: error.message, stack: error.stack }
           : error !== undefined
-            ? { ...context, error: typeof error === 'object' ? JSON.stringify(error) : String(error) }
+            ? {
+                ...context,
+                error: typeof error === 'object' ? JSON.stringify(error) : String(error),
+              }
             : context;
       console.error(formatLog(createLogEntry('error', message, errorContext, currentRequestId)));
     }

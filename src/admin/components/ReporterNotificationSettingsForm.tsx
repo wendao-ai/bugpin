@@ -27,9 +27,7 @@ export function ReporterNotificationSettingsForm({
           <Label htmlFor="reporter-email-enabled" className="text-sm font-normal">
             Email Notifications
           </Label>
-          <p className="text-xs text-muted-foreground">
-            Enable email notifications for reporters
-          </p>
+          <p className="text-xs text-muted-foreground">Enable email notifications for reporters</p>
         </div>
         <Switch
           id="reporter-email-enabled"
@@ -92,9 +90,7 @@ export function ReporterNotificationSettingsForm({
                 globalSettings?.reporterNotifications?.notifyOnPriorityChange ??
                 true
               }
-              onCheckedChange={(checked) =>
-                onChange({ ...value, notifyOnPriorityChange: checked })
-              }
+              onCheckedChange={(checked) => onChange({ ...value, notifyOnPriorityChange: checked })}
               disabled={disabled}
             />
           </div>
@@ -123,9 +119,7 @@ export function ReporterNotificationSettingsForm({
               <Label htmlFor="reporter-messaging" className="text-sm font-normal">
                 Messaging System
               </Label>
-              <p className="text-xs text-muted-foreground">
-                Allow sending messages to reporters
-              </p>
+              <p className="text-xs text-muted-foreground">Allow sending messages to reporters</p>
             </div>
             <Switch
               id="reporter-messaging"

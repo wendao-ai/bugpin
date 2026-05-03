@@ -57,7 +57,7 @@ projects.post('/', authorize(['admin']), validate({ body: schemas.createProject 
       success: true,
       project: result.value,
     },
-    201,
+    201
   );
 });
 
@@ -82,7 +82,7 @@ projects.patch(
       success: true,
       project: result.value,
     });
-  },
+  }
 );
 
 // Delete Project (Admin only)
@@ -123,7 +123,7 @@ projects.post(
       success: true,
       project: result.value,
     });
-  },
+  }
 );
 
 // Reorder Projects (Admin only)
@@ -145,7 +145,7 @@ projects.put(
       success: true,
       message: 'Projects reordered successfully',
     });
-  },
+  }
 );
 
 export { projects as projectsRoutes };

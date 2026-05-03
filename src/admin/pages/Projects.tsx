@@ -127,7 +127,7 @@ export function Projects() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
 
   const { data, isLoading } = useQuery({
@@ -241,7 +241,9 @@ export function Projects() {
           <h1 className="text-2xl font-bold">Projects</h1>
           <p className="text-muted-foreground">Manage your projects and API keys</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="sm:shrink-0">Create Project</Button>
+        <Button onClick={() => setShowCreateModal(true)} className="sm:shrink-0">
+          Create Project
+        </Button>
       </div>
 
       {/* Projects list */}

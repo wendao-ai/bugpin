@@ -86,7 +86,7 @@ export const usersRepo = {
         1,
         now,
         now,
-      ],
+      ]
     );
 
     const user = await this.findById(id);
@@ -146,7 +146,7 @@ export const usersRepo = {
         `SELECT * FROM users
          WHERE is_active = 1
            AND (invitation_sent_at IS NULL OR invitation_accepted_at IS NOT NULL)
-         ORDER BY name ASC`,
+         ORDER BY name ASC`
       )
       .all() as UserRow[];
     return rows.map(mapRowToUser);
@@ -168,7 +168,7 @@ export const usersRepo = {
    */
   async update(
     id: string,
-    updates: Partial<Pick<User, 'name' | 'email' | 'avatarUrl' | 'role' | 'isActive'>>,
+    updates: Partial<Pick<User, 'name' | 'email' | 'avatarUrl' | 'role' | 'isActive'>>
   ): Promise<User | null> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -292,7 +292,7 @@ export const usersRepo = {
         now,
         now,
         now,
-      ],
+      ]
     );
 
     const user = await this.findById(id);
@@ -351,7 +351,7 @@ export const usersRepo = {
 
     db.run(
       `UPDATE users SET invitation_token = ?, invitation_token_expires_at = ?, invitation_sent_at = ?, updated_at = ? WHERE id = ?`,
-      [token, expiresAt, now, now, id],
+      [token, expiresAt, now, now, id]
     );
 
     return this.findById(id);

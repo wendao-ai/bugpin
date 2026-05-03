@@ -19,7 +19,7 @@ export class SettingsCacheService implements ISettingsCacheService {
 
   constructor(
     private readonly settingsRepo: ISettingsRepository,
-    ttlSeconds: number = 300, // 5 minutes default
+    ttlSeconds: number = 300 // 5 minutes default
   ) {
     this.ttlMs = ttlSeconds * 1000;
   }

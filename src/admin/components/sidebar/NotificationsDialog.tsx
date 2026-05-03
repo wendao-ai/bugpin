@@ -13,16 +13,15 @@ import {
 } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Spinner } from '../ui/spinner';
 import { NotificationSettingsForm } from '../NotificationSettingsForm';
-import type { AppSettings, NotificationDefaultSettings, NotificationPreferences, Project } from '@shared/types';
+import type {
+  AppSettings,
+  NotificationDefaultSettings,
+  NotificationPreferences,
+  Project,
+} from '@shared/types';
 
 interface NotificationsDialogProps {
   open: boolean;
@@ -144,10 +143,7 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
       projectId: string;
       data: Partial<NotificationDefaultSettings>;
     }) => {
-      const response = await api.patch(
-        `/notification-preferences/me/projects/${projectId}`,
-        data,
-      );
+      const response = await api.patch(`/notification-preferences/me/projects/${projectId}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -237,10 +233,7 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
             )}
 
             <DialogFooter>
-              <Button
-                type="submit"
-                disabled={isSaving || (perProject && !selectedProjectId)}
-              >
+              <Button type="submit" disabled={isSaving || (perProject && !selectedProjectId)}>
                 {isSaving ? (
                   <>
                     <Spinner size="sm" className="mr-2" />

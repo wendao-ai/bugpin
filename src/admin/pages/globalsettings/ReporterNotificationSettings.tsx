@@ -93,9 +93,7 @@ export function ReporterNotificationSettings() {
             <Switch
               id="reporter-email-enabled"
               checked={formData.emailEnabled}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, emailEnabled: checked })
-              }
+              onCheckedChange={(checked) => setFormData({ ...formData, emailEnabled: checked })}
             />
           </div>
 

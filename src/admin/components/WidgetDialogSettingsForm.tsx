@@ -119,7 +119,12 @@ export function WidgetDialogSettingsForm({
   const isDisabled = disabled || (showCustomToggle && !useCustomSettings);
 
   const colorPicker = (
-    <ThemeColorPicker value={currentColors} onChange={handleColorChange} disabled={isDisabled} showSurfaceColors />
+    <ThemeColorPicker
+      value={currentColors}
+      onChange={handleColorChange}
+      disabled={isDisabled}
+      showSurfaceColors
+    />
   );
 
   return (

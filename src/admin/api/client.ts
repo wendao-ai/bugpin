@@ -74,7 +74,7 @@ api.interceptors.response.use(
       const delay = getRetryDelay(config._retryCount);
       console.warn(
         `[API] Request failed with ${error.response?.status ?? 'network error'}, ` +
-          `retrying (${config._retryCount}/${RETRY_COUNT}) in ${delay}ms...`,
+          `retrying (${config._retryCount}/${RETRY_COUNT}) in ${delay}ms...`
       );
 
       await sleep(delay);
@@ -82,12 +82,12 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 // Helper to check if an error is an Axios error
 export function isApiError(
-  error: unknown,
+  error: unknown
 ): error is AxiosError<{ message?: string; error?: string }> {
   return axios.isAxiosError(error);
 }
@@ -95,7 +95,7 @@ export function isApiError(
 // Helper to extract error message from API response
 export function getApiErrorMessage(
   error: unknown,
-  fallback = 'An unexpected error occurred',
+  fallback = 'An unexpected error occurred'
 ): string {
   if (isApiError(error)) {
     return (

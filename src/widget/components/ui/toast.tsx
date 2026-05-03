@@ -32,7 +32,7 @@ export const Toast: FunctionComponent<ToastProps> = ({
     <div
       class={cn(
         'fixed bottom-20 right-5 z-[2147483647] flex items-center gap-3 px-5 py-4 border border-solid rounded text-sm shadow-lg animate-[slideIn_0.3s_ease-out]',
-        toastVariants[type],
+        toastVariants[type]
       )}
       role="alert"
       aria-live="polite"

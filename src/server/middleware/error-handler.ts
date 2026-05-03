@@ -24,7 +24,7 @@ export function errorHandler(error: Error, c: Context): Response {
         error: getErrorCode(status),
         message,
       },
-      status,
+      status
     );
   }
 
@@ -44,7 +44,7 @@ export function errorHandler(error: Error, c: Context): Response {
         message: 'Request validation failed',
         details,
       },
-      400,
+      400
     );
   }
 
@@ -58,7 +58,7 @@ export function errorHandler(error: Error, c: Context): Response {
         error: 'INVALID_JSON',
         message: 'Invalid JSON in request body',
       },
-      400,
+      400
     );
   }
 
@@ -74,7 +74,7 @@ export function errorHandler(error: Error, c: Context): Response {
         message: error.message,
         stack: error.stack,
       },
-      500,
+      500
     );
   }
 
@@ -85,7 +85,7 @@ export function errorHandler(error: Error, c: Context): Response {
       error: 'INTERNAL_ERROR',
       message: 'An unexpected error occurred',
     },
-    500,
+    500
   );
 }
 
@@ -100,7 +100,7 @@ export function notFoundHandler(c: Context): Response {
       error: 'NOT_FOUND',
       message: `Route ${c.req.method} ${c.req.path} not found`,
     },
-    404,
+    404
   );
 }
 

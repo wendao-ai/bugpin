@@ -1,8 +1,18 @@
+import type { LauncherTextBundle, LocaleCode } from '@shared/types';
+
+export type { LauncherTextBundle };
+
+export interface WidgetLanguageConfig {
+  mode: 'auto' | 'manual';
+  defaultLanguage: LocaleCode;
+}
+
 export interface WidgetConfig {
   apiKey: string;
   serverUrl: string;
+  language?: WidgetLanguageConfig;
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  buttonText: string | null;
+  buttonText: LauncherTextBundle;
   buttonShape: 'round' | 'rectangle';
   buttonIcon: string | null;
   buttonIconSize: number;
@@ -38,7 +48,7 @@ export interface WidgetConfig {
   dialogDarkForegroundColor: string;
   enableHoverScaleEffect: boolean;
   tooltipEnabled: boolean;
-  tooltipText: string | null;
+  tooltipText: LauncherTextBundle;
   enableScreenshot: boolean;
   enableAnnotation: boolean;
   enableConsoleCapture: boolean;
@@ -53,7 +63,7 @@ export const defaultConfig: WidgetConfig = {
   apiKey: '',
   serverUrl: window.location.origin,
   position: 'bottom-right',
-  buttonText: null,
+  buttonText: { project: undefined, global: null, builtin: null },
   buttonShape: 'round',
   buttonIcon: 'bug',
   buttonIconSize: 18,
@@ -89,7 +99,7 @@ export const defaultConfig: WidgetConfig = {
   dialogDarkForegroundColor: '#fafafa',
   enableHoverScaleEffect: true,
   tooltipEnabled: false,
-  tooltipText: null,
+  tooltipText: { project: undefined, global: null, builtin: null },
   enableScreenshot: true,
   enableAnnotation: true,
   enableConsoleCapture: true,

@@ -83,7 +83,7 @@ export function createApp(): Hono {
       allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
       exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
       maxAge: 86400, // 24 hours
-    }),
+    })
   );
 
   // Routes
@@ -156,7 +156,7 @@ export function createApp(): Hono {
           message:
             'Admin not built. Run "bun run build:admin" or "bun run dev:admin" for development.',
         },
-        404,
+        404
       );
     }
 

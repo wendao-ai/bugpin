@@ -80,7 +80,7 @@ export function AcceptInvitation() {
         };
         if (error.response?.status === 410) {
           setValidationError(
-            'This invitation has expired. Please ask the administrator to send a new one.',
+            'This invitation has expired. Please ask the administrator to send a new one.'
           );
         } else if (error.response?.status === 404) {
           setValidationError('This invitation is invalid or has already been used.');
@@ -120,7 +120,7 @@ export function AcceptInvitation() {
       const error = err as Error & { response?: { data?: { message?: string }; status?: number } };
       if (error.response?.status === 410) {
         setSubmitError(
-          'This invitation has expired. Please ask the administrator to send a new one.',
+          'This invitation has expired. Please ask the administrator to send a new one.'
         );
       } else {
         setSubmitError(error.response?.data?.message || 'Failed to accept invitation');

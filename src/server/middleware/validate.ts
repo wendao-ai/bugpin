@@ -1,6 +1,61 @@
 import type { MiddlewareHandler } from 'hono';
 import { z, ZodSchema } from 'zod';
 import { isValidUrl, normalizeUrl } from '../utils/validators.js';
+import { SUPPORTED_LOCALES } from '@shared/types';
+
+const localeEnumValues = SUPPORTED_LOCALES as readonly [string, ...string[]];
+
+const projectLanguageSchema = z.object({
+  mode: z.enum(['auto', 'manual'], {
+    errorMap: () => ({ message: 'language.mode must be "auto" or "manual"' }),
+  }),
+  defaultLanguage: z.enum(localeEnumValues, {
+    errorMap: () => ({
+      message: `language.defaultLanguage must be one of: ${SUPPORTED_LOCALES.join(', ')}`,
+    }),
+  }),
+});
+
+const localizedStringShape: Record<string, z.ZodOptional<z.ZodString>> = {};
+for (const code of SUPPORTED_LOCALES) {
+  if (code !== 'en') {
+    localizedStringShape[code] = z.string().optional();
+  }
+}
+
+const localizedStringSchema = z
+  .object({
+    en: z
+      .string({ required_error: 'en is required when providing a localized string' })
+      .min(1, 'en must not be empty when providing a localized string'),
+    ...localizedStringShape,
+  })
+  .strict();
+
+const projectLocalizedTextField = z.union([z.null(), localizedStringSchema]).optional();
+
+const widgetLauncherButtonProjectSchema = z
+  .object({
+    buttonText: projectLocalizedTextField,
+    tooltipText: projectLocalizedTextField,
+  })
+  .passthrough();
+
+const projectSettingsSchema = z
+  .object({
+    language: projectLanguageSchema.optional(),
+    widgetLauncherButton: widgetLauncherButtonProjectSchema.optional(),
+  })
+  .passthrough();
+
+const globalLocalizedTextField = z.union([z.null(), localizedStringSchema]);
+
+const widgetLauncherButtonGlobalSchema = z
+  .object({
+    buttonText: globalLocalizedTextField.optional(),
+    tooltipText: globalLocalizedTextField.optional(),
+  })
+  .passthrough();
 
 // Types
 
@@ -100,7 +155,7 @@ export function validate(options: ValidationOptions): MiddlewareHandler {
           message: 'Request validation failed',
           details: errors,
         },
-        400,
+        400
       );
     }
 
@@ -184,7 +239,7 @@ export const schemas = {
   // Update project request
   updateProject: z.object({
     name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
-    settings: z.record(z.unknown()).optional(),
+    settings: projectSettingsSchema.optional(),
     isActive: z.boolean().optional(),
   }),
 
@@ -246,6 +301,7 @@ export const schemas = {
   updateSettings: z.object({
     appName: z.string().min(1).max(100).optional(),
     appUrl: z.string().optional(),
+    widgetLauncherButton: widgetLauncherButtonGlobalSchema.optional(),
     smtpEnabled: z.boolean().optional(),
     smtpConfig: z
       .object({

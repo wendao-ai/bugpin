@@ -9,7 +9,16 @@ import {
   DEFAULT_BRAND_COLOR,
 } from '../constants/email-templates.js';
 import { getEEHooks } from '../utils/ee-hooks.js';
-import type { Report, EmailTemplateType } from '@shared/types';
+import { getStatusLabel, getPriorityLabel, formatReportDate } from '../i18n/labels.js';
+import type {
+  Report,
+  EmailTemplate,
+  EmailTemplateType,
+  LocaleCode,
+  ReportStatus,
+  ReportPriority,
+  CustomEmailTemplates,
+} from '@shared/types';
 
 // Types
 
@@ -37,6 +46,26 @@ export interface SMTPConfig {
   user?: string;
   password?: string;
   from: string;
+}
+
+export function resolveTemplate(
+  type: EmailTemplateType,
+  locale: LocaleCode,
+  overrides?: CustomEmailTemplates
+): EmailTemplate {
+  const overriddenForType = overrides?.[type];
+  const overriddenForLocale = overriddenForType?.[locale];
+  if (overriddenForLocale) return overriddenForLocale;
+  const overriddenEn = overriddenForType?.en;
+  if (overriddenEn) return overriddenEn;
+
+  const def = defaultEmailTemplates[type];
+  return def[locale] ?? def.en;
+}
+
+async function loadOverridesFromEE(): Promise<CustomEmailTemplates | undefined> {
+  const overrides = await getEEHooks().getCustomEmailTemplates();
+  return overrides ?? undefined;
 }
 
 // Service
@@ -107,8 +136,8 @@ export const emailService = {
               subject: options.subject,
               html: options.html,
               text: options.text,
-            }),
-          ),
+            })
+          )
         );
 
         for (let j = 0; j < results.length; j++) {
@@ -140,17 +169,14 @@ export const emailService = {
   },
 
   /**
-   * Get template for a specific type, using custom (via EE hooks) or default
+   * Resolve a template for the requested locale, applying EE custom overrides if present.
    */
-  async getTemplate(templateType: EmailTemplateType): Promise<{ subject: string; html: string }> {
-    // Try to get custom template from EE (if licensed)
-    const customTemplate = await getEEHooks().getCustomEmailTemplate(templateType);
-
-    if (customTemplate) {
-      return customTemplate;
-    }
-
-    return defaultEmailTemplates[templateType];
+  async getTemplate(
+    templateType: EmailTemplateType,
+    locale: LocaleCode = 'en'
+  ): Promise<EmailTemplate> {
+    const overrides = await loadOverridesFromEE();
+    return resolveTemplate(templateType, locale, overrides);
   },
 
   /**
@@ -158,12 +184,13 @@ export const emailService = {
    */
   async sendNewReportNotification(
     recipients: EmailRecipient[],
-    data: ReportEmailData,
+    data: ReportEmailData
   ): Promise<{ success: boolean; error?: string }> {
+    const teamLocale: LocaleCode = 'en';
     const settings = await settingsCacheService.getAll();
     const { report, projectName, reportUrl } = data;
 
-    const template = await this.getTemplate('newReport');
+    const template = await this.getTemplate('newReport', teamLocale);
     const templateData = {
       app: {
         name: settings.appName || 'BugPin',
@@ -176,12 +203,12 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         status: report.status,
-        statusFormatted: formatStatus(report.status),
+        statusFormatted: getStatusLabel(report.status as ReportStatus, teamLocale),
         priority: report.priority,
-        priorityFormatted: formatPriority(report.priority),
+        priorityFormatted: getPriorityLabel(report.priority as ReportPriority, teamLocale),
         url: reportUrl,
         pageUrl: report.metadata?.url || '',
-        createdAt: new Date(report.createdAt).toLocaleString(),
+        createdAt: formatReportDate(report.createdAt, teamLocale),
       },
     };
 
@@ -190,7 +217,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'newReport');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -205,12 +232,13 @@ export const emailService = {
    */
   async sendStatusChangeNotification(
     recipients: EmailRecipient[],
-    data: ReportEmailData & { oldStatus: string; newStatus: string },
+    data: ReportEmailData & { oldStatus: string; newStatus: string }
   ): Promise<{ success: boolean; error?: string }> {
+    const teamLocale: LocaleCode = 'en';
     const settings = await settingsCacheService.getAll();
     const { report, projectName, reportUrl, oldStatus, newStatus } = data;
 
-    const template = await this.getTemplate('statusChange');
+    const template = await this.getTemplate('statusChange', teamLocale);
     const templateData = {
       app: {
         name: settings.appName || 'BugPin',
@@ -225,9 +253,9 @@ export const emailService = {
         url: reportUrl,
       },
       oldStatus,
-      oldStatusFormatted: formatStatus(oldStatus),
+      oldStatusFormatted: getStatusLabel(oldStatus as ReportStatus, teamLocale),
       newStatus,
-      newStatusFormatted: formatStatus(newStatus),
+      newStatusFormatted: getStatusLabel(newStatus as ReportStatus, teamLocale),
     };
 
     const subject = templateService.compileTemplate(template.subject, templateData);
@@ -235,7 +263,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'statusChange');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -250,12 +278,13 @@ export const emailService = {
    */
   async sendPriorityChangeNotification(
     recipients: EmailRecipient[],
-    data: ReportEmailData & { oldPriority: string; newPriority: string },
+    data: ReportEmailData & { oldPriority: string; newPriority: string }
   ): Promise<{ success: boolean; error?: string }> {
+    const teamLocale: LocaleCode = 'en';
     const settings = await settingsCacheService.getAll();
     const { report, projectName, reportUrl, oldPriority, newPriority } = data;
 
-    const template = await this.getTemplate('priorityChange');
+    const template = await this.getTemplate('priorityChange', teamLocale);
     const templateData = {
       app: {
         name: settings.appName || 'BugPin',
@@ -270,9 +299,9 @@ export const emailService = {
         url: reportUrl,
       },
       oldPriority,
-      oldPriorityFormatted: formatPriority(oldPriority),
+      oldPriorityFormatted: getPriorityLabel(oldPriority as ReportPriority, teamLocale),
       newPriority,
-      newPriorityFormatted: formatPriority(newPriority),
+      newPriorityFormatted: getPriorityLabel(newPriority as ReportPriority, teamLocale),
     };
 
     const subject = templateService.compileTemplate(template.subject, templateData);
@@ -280,7 +309,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'priorityChange');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -295,12 +324,13 @@ export const emailService = {
    */
   async sendReportDeletedNotification(
     recipients: EmailRecipient[],
-    data: ReportEmailData,
+    data: ReportEmailData
   ): Promise<{ success: boolean; error?: string }> {
+    const teamLocale: LocaleCode = 'en';
     const settings = await settingsCacheService.getAll();
     const { report, projectName } = data;
 
-    const template = await this.getTemplate('reportDeleted');
+    const template = await this.getTemplate('reportDeleted', teamLocale);
     const templateData = {
       app: {
         name: settings.appName || 'BugPin',
@@ -313,9 +343,9 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         status: report.status,
-        statusFormatted: formatStatus(report.status),
+        statusFormatted: getStatusLabel(report.status as ReportStatus, teamLocale),
         priority: report.priority,
-        priorityFormatted: formatPriority(report.priority),
+        priorityFormatted: getPriorityLabel(report.priority as ReportPriority, teamLocale),
       },
     };
 
@@ -324,7 +354,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'reportDeleted');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -339,12 +369,13 @@ export const emailService = {
    */
   async sendAssignmentNotification(
     recipients: EmailRecipient[],
-    data: ReportEmailData & { assignedToName: string; assignedToEmail?: string },
+    data: ReportEmailData & { assignedToName: string; assignedToEmail?: string }
   ): Promise<{ success: boolean; error?: string }> {
+    const teamLocale: LocaleCode = 'en';
     const settings = await settingsCacheService.getAll();
     const { report, projectName, reportUrl, assignedToName, assignedToEmail } = data;
 
-    const template = await this.getTemplate('assignment');
+    const template = await this.getTemplate('assignment', teamLocale);
     const templateData = {
       app: {
         name: settings.appName || 'BugPin',
@@ -369,7 +400,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'assignment');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -389,12 +420,13 @@ export const emailService = {
       projectName: string;
       appName: string;
       appUrl: string;
-    },
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const { report, projectName, appName, appUrl } = data;
+    const locale = report.reporterLocale ?? 'en';
 
-    const template = await this.getTemplate('reporterConfirmation');
+    const template = await this.getTemplate('reporterConfirmation', locale);
     const templateData = {
       app: {
         name: appName,
@@ -407,10 +439,10 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         status: report.status,
-        statusFormatted: formatStatus(report.status),
+        statusFormatted: getStatusLabel(report.status as ReportStatus, locale),
         priority: report.priority,
-        priorityFormatted: formatPriority(report.priority),
-        createdAt: new Date(report.createdAt).toLocaleString(),
+        priorityFormatted: getPriorityLabel(report.priority as ReportPriority, locale),
+        createdAt: formatReportDate(report.createdAt, locale),
       },
     };
 
@@ -419,7 +451,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'reporterConfirmation');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -442,12 +474,13 @@ export const emailService = {
       oldStatus: string;
       newStatus: string;
       reporterMessage?: string;
-    },
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const { report, projectName, appName, appUrl, oldStatus, newStatus, reporterMessage } = data;
+    const locale = report.reporterLocale ?? 'en';
 
-    const template = await this.getTemplate('reporterStatusChange');
+    const template = await this.getTemplate('reporterStatusChange', locale);
     const templateData = {
       app: {
         name: appName,
@@ -460,12 +493,12 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         status: report.status,
-        statusFormatted: formatStatus(report.status),
+        statusFormatted: getStatusLabel(report.status as ReportStatus, locale),
       },
       oldStatus,
-      oldStatusFormatted: formatStatus(oldStatus),
+      oldStatusFormatted: getStatusLabel(oldStatus as ReportStatus, locale),
       newStatus,
-      newStatusFormatted: formatStatus(newStatus),
+      newStatusFormatted: getStatusLabel(newStatus as ReportStatus, locale),
       reporterMessage: reporterMessage || '',
       reporterMessageDisplay: reporterMessage ? 'block' : 'none',
     };
@@ -475,7 +508,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'reporterStatusChange');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -497,12 +530,13 @@ export const emailService = {
       appUrl: string;
       oldPriority: string;
       newPriority: string;
-    },
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const { report, projectName, appName, appUrl, oldPriority, newPriority } = data;
+    const locale = report.reporterLocale ?? 'en';
 
-    const template = await this.getTemplate('reporterPriorityChange');
+    const template = await this.getTemplate('reporterPriorityChange', locale);
     const templateData = {
       app: {
         name: appName,
@@ -515,12 +549,12 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         priority: report.priority,
-        priorityFormatted: formatPriority(report.priority),
+        priorityFormatted: getPriorityLabel(report.priority as ReportPriority, locale),
       },
       oldPriority,
-      oldPriorityFormatted: formatPriority(oldPriority),
+      oldPriorityFormatted: getPriorityLabel(oldPriority as ReportPriority, locale),
       newPriority,
-      newPriorityFormatted: formatPriority(newPriority),
+      newPriorityFormatted: getPriorityLabel(newPriority as ReportPriority, locale),
     };
 
     const subject = templateService.compileTemplate(template.subject, templateData);
@@ -528,7 +562,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'reporterPriorityChange');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -550,31 +584,43 @@ export const emailService = {
       appUrl: string;
       assigneeName: string;
       previousAssigneeName?: string;
-    },
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const { report, projectName, appName, appUrl, assigneeName, previousAssigneeName } = data;
+    const locale = report.reporterLocale ?? 'en';
 
-    const subject = `[${projectName}] Report Assignment Updated: ${report.title}`;
-    const intro = previousAssigneeName
-      ? `Your report has been reassigned from <strong>${previousAssigneeName}</strong> to <strong>${assigneeName}</strong>.`
-      : `Your report has been assigned to <strong>${assigneeName}</strong>.`;
-    const reportLink = appUrl ? `<p><a href="${appUrl}/admin/reports/${report.id}">View report</a></p>` : '';
+    const template = await this.getTemplate('reporterAssignment', locale);
+    const reportUrl = appUrl ? `${appUrl}/admin/reports/${report.id}` : '';
+    const templateData = {
+      app: {
+        name: appName,
+        url: appUrl,
+      },
+      project: {
+        name: projectName,
+      },
+      report: {
+        title: report.title,
+        description: report.description || '',
+        status: report.status,
+        statusFormatted: getStatusLabel(report.status as ReportStatus, locale),
+        url: reportUrl,
+      },
+      assignee: {
+        name: assigneeName,
+      },
+      previousAssigneeName: previousAssigneeName ?? '',
+      previousAssigneeDisplay: previousAssigneeName ? 'block' : 'none',
+      noPreviousAssigneeDisplay: previousAssigneeName ? 'none' : 'block',
+    };
+
+    const subject = templateService.compileTemplate(template.subject, templateData);
+    const compiledHtml = templateService.compileTemplate(template.html, templateData);
+    const withFooter = appendFooterToHtml(compiledHtml, 'reporterAssignment');
     const html = applyBrandColor(
-      `
-        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #111827;">
-          <h1 style="font-size: 24px; margin-bottom: 16px;">Assignment Updated</h1>
-          <p>${intro}</p>
-          <div style="margin: 24px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px;">
-            <p style="margin: 0 0 8px;"><strong>Project:</strong> ${projectName}</p>
-            <p style="margin: 0 0 8px;"><strong>Report:</strong> ${report.title}</p>
-            <p style="margin: 0;"><strong>Status:</strong> ${formatStatus(report.status)}</p>
-          </div>
-          ${reportLink}
-          <p style="color: #6b7280;">Sent by ${appName}.</p>
-        </div>
-      `,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      withFooter,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -596,12 +642,13 @@ export const emailService = {
       appUrl: string;
       senderName: string;
       message: string;
-    },
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const { report, projectName, appName, appUrl, senderName, message } = data;
+    const locale = report.reporterLocale ?? 'en';
 
-    const template = await this.getTemplate('reporterMessage');
+    const template = await this.getTemplate('reporterMessage', locale);
     const templateData = {
       app: {
         name: appName,
@@ -614,7 +661,7 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         status: report.status,
-        statusFormatted: formatStatus(report.status),
+        statusFormatted: getStatusLabel(report.status as ReportStatus, locale),
       },
       sender: {
         name: senderName,
@@ -627,7 +674,7 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'reporterMessage');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -649,12 +696,13 @@ export const emailService = {
       appUrl: string;
       senderName: string;
       message: string;
-    },
+    }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const { report, projectName, appName, appUrl, senderName, message } = data;
+    const locale = report.reporterLocale ?? 'en';
 
-    const template = await this.getTemplate('reporterMessage');
+    const template = await this.getTemplate('reporterMessage', locale);
     const templateData = {
       app: {
         name: appName,
@@ -667,7 +715,7 @@ export const emailService = {
         title: report.title,
         description: report.description || '',
         status: report.status,
-        statusFormatted: formatStatus(report.status),
+        statusFormatted: getStatusLabel(report.status as ReportStatus, locale),
       },
       sender: {
         name: senderName,
@@ -679,10 +727,10 @@ export const emailService = {
     const withFooter = appendFooterToHtml(compiledHtml, 'reporterMessage');
     const html = applyBrandColor(
       withFooter,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
-    const subject = `[CC] Message sent to reporter — ${report.title}`;
+    const subject = `[CC] Message sent to reporter - ${report.title}`;
 
     return this.sendEmail({
       to: [{ email: recipient }],
@@ -696,12 +744,12 @@ export const emailService = {
    */
   async sendInvitationEmail(
     recipient: EmailRecipient,
-    data: { inviteUrl: string; inviterName: string; expiresInDays: number },
+    data: { inviteUrl: string; inviterName: string; expiresInDays: number }
   ): Promise<{ success: boolean; error?: string }> {
     const settings = await settingsCacheService.getAll();
     const appName = settings.appName || 'BugPin';
 
-    const template = await this.getTemplate('invitation');
+    const template = await this.getTemplate('invitation', 'en');
     const templateData = {
       app: {
         name: appName,
@@ -721,7 +769,7 @@ export const emailService = {
     const withFooterCompiled = templateService.compileTemplate(withFooter, templateData);
     const html = applyBrandColor(
       withFooterCompiled,
-      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+      settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
     );
 
     return this.sendEmail({
@@ -737,7 +785,7 @@ export const emailService = {
   async sendTestEmail(
     config: SMTPConfig,
     recipientEmail: string,
-    appName?: string,
+    appName?: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
       if (!config.host || !config.from) {
@@ -762,7 +810,7 @@ export const emailService = {
       // Get template and compile
       const settings = await settingsCacheService.getAll();
       const resolvedAppName = appName || settings.appName || 'BugPin';
-      const template = await this.getTemplate('testEmail');
+      const template = await this.getTemplate('testEmail', 'en');
       const templateData = {
         app: {
           name: resolvedAppName,
@@ -774,7 +822,7 @@ export const emailService = {
       const withFooter = appendFooterToHtml(compiledHtml, 'testEmail');
       const html = applyBrandColor(
         withFooter,
-        settings.branding?.primaryColor || DEFAULT_BRAND_COLOR,
+        settings.branding?.primaryColor || DEFAULT_BRAND_COLOR
       );
 
       // Send test email
@@ -805,18 +853,4 @@ export const emailService = {
 
 function sanitizeSmtpHost(host: string): string {
   return host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-}
-
-function formatStatus(status: string): string {
-  const labels: Record<string, string> = {
-    open: 'Open',
-    in_progress: 'In Progress',
-    resolved: 'Resolved',
-    closed: 'Closed',
-  };
-  return labels[status] || status;
-}
-
-function formatPriority(priority: string): string {
-  return priority.charAt(0).toUpperCase() + priority.slice(1);
 }

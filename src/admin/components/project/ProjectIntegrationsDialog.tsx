@@ -7,12 +7,16 @@ import {
 } from '../../hooks/useIntegrations';
 import { Integration } from '@shared/types';
 import { IntegrationTypeCard } from '../integrations/IntegrationTypeCard';
-import {
-  CE_INTEGRATION_TYPES,
-  IntegrationTypeDefinition,
-} from '../../lib/integration-types';
+import { CE_INTEGRATION_TYPES, IntegrationTypeDefinition } from '../../lib/integration-types';
 
-import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -93,7 +97,9 @@ export function ProjectIntegrationsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={`max-h-[85vh] ${integrationTypes.length > 1 ? 'max-w-3xl' : 'max-w-lg'}`}>
+        <DialogContent
+          className={`max-h-[85vh] ${integrationTypes.length > 1 ? 'max-w-3xl' : 'max-w-lg'}`}
+        >
           <DialogHeader>
             <DialogTitle>Integrations</DialogTitle>
             <DialogDescription>Manage integrations for "{project.name}"</DialogDescription>

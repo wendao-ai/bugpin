@@ -474,7 +474,7 @@ export function TestWidgetPage() {
                         <TableCell>
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(
-                              txn.status,
+                              txn.status
                             )}`}
                           >
                             {txn.status}

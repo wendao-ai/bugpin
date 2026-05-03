@@ -37,7 +37,7 @@ const DEFAULT_BUTTON_SETTINGS: GlobalWidgetLauncherButtonSettings = {
   darkTextHoverColor: '#ffffff',
   enableHoverScaleEffect: true,
   tooltipEnabled: true,
-  tooltipText: 'Found a bug?',
+  tooltipText: null,
 };
 
 export function WidgetLauncherButtonSettings() {

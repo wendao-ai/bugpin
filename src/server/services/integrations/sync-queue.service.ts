@@ -115,13 +115,13 @@ export const syncQueueService = {
           }
 
           return result;
-        }),
+        })
       );
 
       // Log summary
       const succeeded = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
       const failed = results.filter(
-        (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success),
+        (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
       ).length;
 
       if (succeeded > 0 || failed > 0) {

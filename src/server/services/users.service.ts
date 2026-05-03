@@ -183,7 +183,7 @@ export const usersService = {
     if (user.invitationSentAt && !user.invitationAcceptedAt) {
       return Result.fail(
         'Assigned user must accept their invitation before they can receive reports',
-        'INVITATION_PENDING',
+        'INVITATION_PENDING'
       );
     }
 
@@ -249,7 +249,7 @@ export const usersService = {
       if (selectedProjectIds.size > 0 && !willBeAssignable) {
         return Result.fail(
           'Only active users with accepted invitations can be assigned as project defaults',
-          'INVALID_DEFAULT_ASSIGNEE',
+          'INVALID_DEFAULT_ASSIGNEE'
         );
       }
     }

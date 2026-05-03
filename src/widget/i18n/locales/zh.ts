@@ -1,0 +1,97 @@
+import type { WidgetCatalog } from '../catalog.js';
+
+const zh: WidgetCatalog = {
+  'tooltip.launcher': '发现 bug 了？',
+
+  'aria.launcher': '报告 bug',
+  'aria.close': '关闭',
+
+  'dialog.title': '报告 bug',
+  'dialog.tabs.details': '详情',
+  'dialog.tabs.media': '截图',
+  'dialog.tabs.mediaWithCount': '截图（{count}）',
+
+  'dialog.fields.title.label': '标题',
+  'dialog.fields.title.placeholder': '简要描述问题',
+  'dialog.fields.description.label': '描述',
+  'dialog.fields.description.placeholder': '复现步骤、预期行为等',
+  'dialog.fields.priority.label': '优先级',
+  'dialog.fields.name.label': '姓名（可选）',
+  'dialog.fields.name.placeholder': '您的姓名',
+  'dialog.fields.email.label': '邮箱（可选）',
+  'dialog.fields.email.placeholder': 'your@email.com',
+
+  'dialog.priority.highest': '最高',
+  'dialog.priority.high': '高',
+  'dialog.priority.medium': '中',
+  'dialog.priority.low': '低',
+  'dialog.priority.lowest': '最低',
+
+  'dialog.buttons.cancel': '取消',
+  'dialog.buttons.submit': '提交报告',
+
+  'dialog.branding.poweredBy': '由',
+
+  'validation.title.required': '请填写标题',
+  'validation.title.minLength': '标题至少需要 4 个字符',
+  'validation.email.invalid': '邮箱地址无效',
+
+  'closeConfirm.title': '保存草稿？',
+  'closeConfirm.body': '您有未保存的更改。是否将其保存为草稿以便稍后继续？',
+  'closeConfirm.discardButton': '放弃',
+  'closeConfirm.saveDraftButton': '保存草稿',
+
+  'screenCapture.title': '需要浏览器权限',
+  'screenCapture.body': '浏览器将请求屏幕共享权限，请按提示完成操作。',
+  'screenCapture.browser.firefox': 'Firefox',
+  'screenCapture.browser.chromeEdge': 'Chrome · Edge',
+  'screenCapture.dontShowAgain': '不再显示',
+  'screenCapture.back': '返回',
+  'screenCapture.confirm': '开始截图',
+
+  'screenshot.privacyTip': '提示：提交前请使用标注工具遮挡敏感信息。',
+  'screenshot.capturing': '正在截图……',
+  'screenshot.capture': '截取屏幕',
+  'screenshot.dropzone.title': '将文件拖放到此处',
+  'screenshot.dropzone.subtitle': '或点击浏览',
+  'screenshot.addMore': '添加更多',
+  'screenshot.alt': '截图',
+  'screenshot.badge.annotated': '已标注',
+  'screenshot.badge.video': '视频',
+  'screenshot.action.annotate': '标注',
+  'screenshot.action.remove': '移除',
+  'screenshot.helperText':
+    '支持格式：PNG、JPG、GIF、WebP（最大 {imageSize}MB） - MP4、WebM、MOV、AVI（最大 {videoSize}MB）',
+
+  'screenshot.error.unsupportedImage': '不支持的图片格式：{type}',
+  'screenshot.error.imageTooLarge': '图片过大，最大不超过 {size}MB。',
+  'screenshot.error.unsupportedVideo': '不支持的视频格式：{type}',
+  'screenshot.error.videoTooLarge': '视频过大，最大不超过 {size}MB。',
+  'screenshot.error.unsupportedFile': '不支持的文件类型：{type}',
+
+  'toast.success.submit': 'bug 报告已成功提交！',
+  'toast.error.submit': '报告提交失败',
+  'toast.error.capture': '截图失败',
+
+  'annotation.toolbar.select': '选择',
+  'annotation.toolbar.pan': '平移（或长按空格键）',
+  'annotation.toolbar.pen': '画笔',
+  'annotation.toolbar.line': '直线',
+  'annotation.toolbar.arrow': '箭头',
+  'annotation.toolbar.rectangle': '矩形',
+  'annotation.toolbar.circle': '圆形',
+  'annotation.toolbar.text': '文字',
+  'annotation.toolbar.pixelate': '马赛克',
+  'annotation.toolbar.undo': '撤销（Ctrl+Z）',
+  'annotation.toolbar.redo': '重做（Ctrl+Shift+Z）',
+  'annotation.toolbar.delete': '删除选中（Del）',
+  'annotation.toolbar.zoomIn': '放大 - 缩放后长按空格键可平移',
+  'annotation.toolbar.zoomOut': '缩小 - 缩放后长按空格键可平移',
+  'annotation.toolbar.zoomReset': '重置缩放（{percent}%） - 长按空格键可平移',
+  'annotation.toolbar.strokeWidth': '{width}px',
+  'annotation.defaultText': '文字',
+  'annotation.buttons.cancel': '取消',
+  'annotation.buttons.done': '完成',
+};
+
+export default zh;

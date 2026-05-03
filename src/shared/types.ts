@@ -1,3 +1,26 @@
+// Locale Types
+
+export type LocaleCode = 'en' | 'de' | 'fr' | 'nl' | 'es' | 'it' | 'ja' | 'zh';
+
+export const SUPPORTED_LOCALES: readonly LocaleCode[] = [
+  'en',
+  'de',
+  'fr',
+  'nl',
+  'es',
+  'it',
+  'ja',
+  'zh',
+] as const;
+
+export type LocalizedString = Partial<Record<LocaleCode, string>> & { en: string };
+
+export interface LauncherTextBundle {
+  project: LocalizedString | null | undefined;
+  global: LocalizedString | null;
+  builtin: Partial<Record<LocaleCode, string>> | null;
+}
+
 // Status and Priority Enums
 
 export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
@@ -89,6 +112,7 @@ export interface Report {
   metadata: ReportMetadata;
   reporterEmail?: string;
   reporterName?: string;
+  reporterLocale: LocaleCode;
   assignedTo?: string;
   assignee?: ReportAssignee;
   customFields?: Record<string, unknown>;
@@ -143,7 +167,7 @@ export interface ThemeColors {
 // Widget Launcher Button settings
 export interface WidgetLauncherButtonSettings {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  buttonText?: string | null;
+  buttonText?: LocalizedString | null;
   buttonShape?: 'round' | 'rectangle';
   buttonIcon?: string | null;
   buttonIconSize?: number;
@@ -151,7 +175,7 @@ export interface WidgetLauncherButtonSettings {
   theme?: 'auto' | 'light' | 'dark';
   enableHoverScaleEffect?: boolean;
   tooltipEnabled?: boolean;
-  tooltipText?: string | null;
+  tooltipText?: LocalizedString | null;
   // Colors
   lightButtonColor?: string;
   lightTextColor?: string;
@@ -191,12 +215,21 @@ export interface ScreenshotSettings {
   maxVideoUploadSizeMb?: number;
 }
 
+// Project language settings
+export type ProjectLanguageMode = 'auto' | 'manual';
+
+export interface ProjectLanguageSettings {
+  mode: ProjectLanguageMode;
+  defaultLanguage: LocaleCode;
+}
+
 // Project Types
 
 export interface ProjectSettings {
   defaultAssigneeUserId?: string | null;
   widgetLauncherButton?: WidgetLauncherButtonSettings;
   widgetDialog?: WidgetDialogSettings;
+  language?: ProjectLanguageSettings;
   screenshot?: ScreenshotSettings;
   security?: {
     allowedOrigins?: string[];
@@ -416,7 +449,7 @@ export interface BrandingSettings {
 // Required version of WidgetLauncherButtonSettings for global settings
 export interface GlobalWidgetLauncherButtonSettings {
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  buttonText: string | null;
+  buttonText: LocalizedString | null;
   buttonShape: 'round' | 'rectangle';
   buttonIcon: string | null;
   buttonIconSize: number;
@@ -424,7 +457,7 @@ export interface GlobalWidgetLauncherButtonSettings {
   theme: 'auto' | 'light' | 'dark';
   enableHoverScaleEffect: boolean;
   tooltipEnabled: boolean;
-  tooltipText: string | null;
+  tooltipText: LocalizedString | null;
   lightButtonColor: string;
   lightTextColor: string;
   lightButtonHoverColor: string;
@@ -589,23 +622,42 @@ export interface ApiToken {
 
 // Email Template Types
 
-export type EmailTemplateType =
+export type ReporterTemplateType =
+  | 'reporterConfirmation'
+  | 'reporterStatusChange'
+  | 'reporterPriorityChange'
+  | 'reporterMessage'
+  | 'reporterAssignment';
+
+export type TeamTemplateType =
   | 'newReport'
   | 'statusChange'
   | 'priorityChange'
   | 'assignment'
-  | 'invitation'
   | 'reportDeleted'
-  | 'testEmail'
-  | 'reporterConfirmation'
-  | 'reporterStatusChange'
-  | 'reporterPriorityChange'
-  | 'reporterMessage';
+  | 'invitation'
+  | 'testEmail';
+
+export type EmailTemplateType = ReporterTemplateType | TeamTemplateType;
 
 export interface EmailTemplate {
   subject: string;
   html: string;
 }
+
+export type ReporterTemplateDefaults = Record<LocaleCode, EmailTemplate>;
+
+export type TeamTemplateDefaults = { en: EmailTemplate } & Partial<
+  Record<LocaleCode, EmailTemplate>
+>;
+
+export type DefaultEmailTemplates = { [K in ReporterTemplateType]: ReporterTemplateDefaults } & {
+  [K in TeamTemplateType]: TeamTemplateDefaults;
+};
+
+export type CustomEmailTemplates = Partial<{
+  [K in EmailTemplateType]: Partial<Record<LocaleCode, EmailTemplate>>;
+}>;
 
 export interface EmailTemplates {
   newReport: EmailTemplate;
@@ -619,6 +671,7 @@ export interface EmailTemplates {
   reporterStatusChange: EmailTemplate;
   reporterPriorityChange: EmailTemplate;
   reporterMessage: EmailTemplate;
+  reporterAssignment: EmailTemplate;
 }
 
 export interface ReporterMessage {

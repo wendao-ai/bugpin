@@ -56,7 +56,7 @@ export function useUpdateCheck() {
   const checkEnabled = query.data?.checkEnabled ?? false;
 
   const [dismissedVersion, setDismissedVersion] = useState<string | null>(() =>
-    readDismissedVersion(),
+    readDismissedVersion()
   );
 
   useEffect(() => {

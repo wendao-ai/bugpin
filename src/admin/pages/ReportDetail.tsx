@@ -146,7 +146,11 @@ export function ReportDetail() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (updates: { status?: string; priority?: string; assignedTo?: string | null }) => {
+    mutationFn: async (updates: {
+      status?: string;
+      priority?: string;
+      assignedTo?: string | null;
+    }) => {
       const response = await api.patch(`/reports/${id}`, updates);
       return response.data;
     },
@@ -209,19 +213,19 @@ export function ReportDetail() {
   const manualChannel = report.metadata.manualContext?.channel;
   const hasPageInfo = Boolean(
     report.metadata?.url ||
-      report.metadata?.title ||
-      report.metadata?.referrer ||
-      report.metadata?.pageLoadTime ||
-      report.metadata?.timezone,
+    report.metadata?.title ||
+    report.metadata?.referrer ||
+    report.metadata?.pageLoadTime ||
+    report.metadata?.timezone
   );
   const hasEnvironment = Boolean(
     report.metadata?.browser?.name ||
-      report.metadata?.browser?.version ||
-      report.metadata?.device?.os ||
-      report.metadata?.device?.osVersion ||
-      report.metadata?.device?.type ||
-      report.metadata?.viewport?.width ||
-      report.metadata?.viewport?.height,
+    report.metadata?.browser?.version ||
+    report.metadata?.device?.os ||
+    report.metadata?.device?.osVersion ||
+    report.metadata?.device?.type ||
+    report.metadata?.viewport?.width ||
+    report.metadata?.viewport?.height
   );
 
   const messagingEnabled = (() => {
@@ -496,7 +500,7 @@ export function ReportDetail() {
                       {consoleErrors.map(
                         (
                           err: { type: string; message: string; source?: string; line?: number },
-                          i: number,
+                          i: number
                         ) => (
                           <div
                             key={i}
@@ -517,7 +521,7 @@ export function ReportDetail() {
                               </span>
                             )}
                           </div>
-                        ),
+                        )
                       )}
                     </div>
                   </CardContent>
@@ -546,7 +550,7 @@ export function ReportDetail() {
                     {networkErrors.map(
                       (
                         err: { url: string; method: string; status: number; statusText: string },
-                        i: number,
+                        i: number
                       ) => (
                         <div
                           key={i}
@@ -565,7 +569,7 @@ export function ReportDetail() {
                           <span className="uppercase text-xs">{err.method}</span>
                           <span className="block text-xs opacity-70 mt-1 break-all">{err.url}</span>
                         </div>
-                      ),
+                      )
                     )}
                   </CardContent>
                 </CollapsibleContent>
@@ -600,7 +604,7 @@ export function ReportDetail() {
                             inputType?: string;
                             timestamp: string;
                           },
-                          i: number,
+                          i: number
                         ) => (
                           <div
                             key={i}
@@ -675,7 +679,7 @@ export function ReportDetail() {
                               {formatDateTime(activity.timestamp)}
                             </span>
                           </div>
-                        ),
+                        )
                       )}
                     </div>
                   </CardContent>
@@ -741,7 +745,7 @@ export function ReportDetail() {
                                   </td>
                                   <td className="py-1.5 font-mono text-xs break-all">{key}</td>
                                 </tr>
-                              ),
+                              )
                             )}
                             {report.metadata.storageKeys.sessionStorage?.map(
                               (key: string, i: number) => (
@@ -753,7 +757,7 @@ export function ReportDetail() {
                                   </td>
                                   <td className="py-1.5 font-mono text-xs break-all">{key}</td>
                                 </tr>
-                              ),
+                              )
                             )}
                           </tbody>
                         </table>
@@ -763,7 +767,6 @@ export function ReportDetail() {
                 </Card>
               </Collapsible>
             )}
-
         </div>
 
         {/* Sidebar */}
@@ -819,9 +822,7 @@ export function ReportDetail() {
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                               <Checkbox
                                 checked={resolveCcSender}
-                                onCheckedChange={(checked) =>
-                                  setResolveCcSender(checked === true)
-                                }
+                                onCheckedChange={(checked) => setResolveCcSender(checked === true)}
                               />
                               Send me a copy
                             </label>
@@ -903,9 +904,7 @@ export function ReportDetail() {
               {(report.reporterEmail || report.reporterName) && (
                 <div className="space-y-1">
                   <Label className="text-muted-foreground">Reporter</Label>
-                  {report.reporterName && (
-                    <p className="text-sm">{report.reporterName}</p>
-                  )}
+                  {report.reporterName && <p className="text-sm">{report.reporterName}</p>}
                   {report.reporterEmail && (
                     <p className="text-sm text-muted-foreground">{report.reporterEmail}</p>
                   )}
@@ -946,14 +945,14 @@ export function ReportDetail() {
                   label="Browser"
                   value={formatEnvironmentValue(
                     report.metadata?.browser?.name,
-                    report.metadata?.browser?.version,
+                    report.metadata?.browser?.version
                   )}
                 />
                 <InfoRow
                   label="OS"
                   value={formatEnvironmentValue(
                     report.metadata?.device?.os,
-                    report.metadata?.device?.osVersion,
+                    report.metadata?.device?.osVersion
                   )}
                 />
                 <InfoRow label="Device" value={report.metadata?.device?.type} />
@@ -976,7 +975,8 @@ export function ReportDetail() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">
-                  This report was created manually in {appName} and does not include widget capture data.
+                  This report was created manually in {appName} and does not include widget capture
+                  data.
                 </p>
                 {manualChannel && <InfoRow label="Channel" value={manualChannel} />}
               </CardContent>
@@ -1013,9 +1013,7 @@ export function ReportDetail() {
                         <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                           <Checkbox
                             checked={composeCcSender}
-                            onCheckedChange={(checked) =>
-                              setComposeCcSender(checked === true)
-                            }
+                            onCheckedChange={(checked) => setComposeCcSender(checked === true)}
                             disabled={isSending}
                           />
                           Send me a copy
@@ -1031,7 +1029,7 @@ export function ReportDetail() {
                                     setComposeMessage('');
                                     setComposeCcSender(false);
                                   },
-                                },
+                                }
                               );
                             }
                           }}
@@ -1068,14 +1066,9 @@ export function ReportDetail() {
                 ) : (
                   <div className="space-y-3">
                     {reporterMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="rounded-lg border bg-muted/30 p-3 space-y-1"
-                      >
+                      <div key={msg.id} className="rounded-lg border bg-muted/30 p-3 space-y-1">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="font-medium">
-                            {msg.userName ?? 'System'}
-                          </span>
+                          <span className="font-medium">{msg.userName ?? 'System'}</span>
                           <span title={formatDateTime(msg.sentAt)}>
                             {formatRelativeTime(new Date(msg.sentAt))}
                           </span>
@@ -1097,28 +1090,28 @@ export function ReportDetail() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {report.forwardedTo.map((ref, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-2 bg-muted rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="capitalize">
-                          {ref.type}
-                        </Badge>
-                        <span className="text-sm">#{ref.id}</span>
-                      </div>
-                      {ref.url && (
-                        <a
-                          href={ref.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1 text-sm"
-                        >
-                          View
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="capitalize">
+                        {ref.type}
+                      </Badge>
+                      <span className="text-sm">#{ref.id}</span>
                     </div>
+                    {ref.url && (
+                      <a
+                        href={ref.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline inline-flex items-center gap-1 text-sm"
+                      >
+                        View
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
                 ))}
               </CardContent>
             </Card>
@@ -1292,12 +1285,13 @@ function AssigneeDisplay({
     return <p className="text-sm text-muted-foreground">Unassigned</p>;
   }
 
-  const fallback = user.name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || '?';
+  const fallback =
+    user.name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || '?';
 
   const avatarSizeClass = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
   const gapClass = size === 'sm' ? 'gap-2' : 'gap-3';

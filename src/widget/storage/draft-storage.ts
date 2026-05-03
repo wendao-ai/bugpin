@@ -160,7 +160,7 @@ async function saveDraft(
   apiKey: string,
   formData: FormData,
   activeTab: string,
-  media: CapturedMedia[],
+  media: CapturedMedia[]
 ): Promise<void> {
   // Save form data to localStorage (fast, synchronous)
   saveFormDraft(apiKey, formData, activeTab);
@@ -178,7 +178,7 @@ async function saveDraft(
  * Load complete draft (form data + media)
  */
 async function loadDraft(
-  apiKey: string,
+  apiKey: string
 ): Promise<{ formData: FormData; activeTab: string; media: CapturedMedia[] } | null> {
   const formDraft = loadFormDraft(apiKey);
   const media = await loadMediaDraft(apiKey);

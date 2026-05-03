@@ -104,25 +104,25 @@ export const settingsService = {
       if (input.screenshot.maxScreenshotSize < 1 || input.screenshot.maxScreenshotSize > 50) {
         return Result.fail(
           'Max screenshot size must be between 1 and 50 MB',
-          'INVALID_SCREENSHOT_SIZE',
+          'INVALID_SCREENSHOT_SIZE'
         );
       }
     }
 
     if (input.screenshot?.maxImageUploadSizeMb !== undefined) {
       if (input.screenshot.maxImageUploadSizeMb < 1 || input.screenshot.maxImageUploadSizeMb > 50) {
-        return Result.fail(
-          'Max upload size must be between 1 and 50 MB',
-          'INVALID_UPLOAD_SIZE',
-        );
+        return Result.fail('Max upload size must be between 1 and 50 MB', 'INVALID_UPLOAD_SIZE');
       }
     }
 
     if (input.screenshot?.maxVideoUploadSizeMb !== undefined) {
-      if (input.screenshot.maxVideoUploadSizeMb < 1 || input.screenshot.maxVideoUploadSizeMb > 500) {
+      if (
+        input.screenshot.maxVideoUploadSizeMb < 1 ||
+        input.screenshot.maxVideoUploadSizeMb > 500
+      ) {
         return Result.fail(
           'Max video upload size must be between 1 and 500 MB',
-          'INVALID_VIDEO_UPLOAD_SIZE',
+          'INVALID_VIDEO_UPLOAD_SIZE'
         );
       }
     }
@@ -132,7 +132,7 @@ export const settingsService = {
       if (input.rateLimitPerMinute < 1 || input.rateLimitPerMinute > 1000) {
         return Result.fail(
           'Rate limit must be between 1 and 1000 requests per minute',
-          'INVALID_RATE_LIMIT',
+          'INVALID_RATE_LIMIT'
         );
       }
     }
@@ -142,7 +142,7 @@ export const settingsService = {
       if (input.sessionMaxAgeDays < 1 || input.sessionMaxAgeDays > 365) {
         return Result.fail(
           'Session max age must be between 1 and 365 days',
-          'INVALID_SESSION_MAX_AGE',
+          'INVALID_SESSION_MAX_AGE'
         );
       }
     }

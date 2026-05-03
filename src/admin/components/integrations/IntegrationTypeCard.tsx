@@ -108,11 +108,7 @@ export function IntegrationTypeCard({
             <Power className="h-4 w-4 mr-1" />
             {integration.isActive ? 'Disable' : 'Enable'}
           </Button>
-          <Button
-            variant="outline-destructive"
-            size="sm"
-            onClick={() => onDelete(integration.id)}
-          >
+          <Button variant="outline-destructive" size="sm" onClick={() => onDelete(integration.id)}>
             <Trash2 className="h-4 w-4 mr-1" />
             Delete
           </Button>

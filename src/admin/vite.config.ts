@@ -6,7 +6,7 @@ import { readFileSync } from 'fs';
 import { defineConfig } from 'vitest/config';
 
 const packageJson = JSON.parse(
-  readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'),
+  readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8')
 );
 
 export default defineConfig({

@@ -23,6 +23,7 @@ import type {
   FileType,
   FileRecord,
   ForwardedReference,
+  LocaleCode,
 } from '@shared/types';
 
 // Types
@@ -43,6 +44,7 @@ export interface CreateReportInput {
   metadata: ReportMetadata;
   reporterEmail?: string;
   reporterName?: string;
+  reporterLocale?: LocaleCode;
 }
 
 export interface CreateManualReportInput {
@@ -123,7 +125,7 @@ function determineFileType(mimeType: string): FileType {
 
 async function validateSubmittedFiles(
   files: MediaFile[] | undefined,
-  strict: boolean,
+  strict: boolean
 ): Promise<Result<void>> {
   if (!files?.length) {
     return Result.ok(undefined);
@@ -162,7 +164,7 @@ async function validateSubmittedFiles(
 async function saveSubmittedFiles(
   reportId: string,
   files: MediaFile[] | undefined,
-  strict: boolean,
+  strict: boolean
 ): Promise<Result<void>> {
   if (!files?.length) {
     return Result.ok(undefined);
@@ -217,7 +219,9 @@ async function saveSubmittedFiles(
 }
 
 async function createForProject(
-  project: Awaited<ReturnType<typeof projectsRepo.findById>> extends infer T ? NonNullable<T> : never,
+  project: Awaited<ReturnType<typeof projectsRepo.findById>> extends infer T
+    ? NonNullable<T>
+    : never,
   input: {
     title: string;
     description?: string;
@@ -226,6 +230,7 @@ async function createForProject(
     metadata: ReportMetadata;
     reporterEmail?: string;
     reporterName?: string;
+    reporterLocale?: LocaleCode;
     files?: MediaFile[];
   },
   options: {
@@ -233,7 +238,7 @@ async function createForProject(
     requestedAssignee?: string | null;
     sendReporterSubmission: boolean;
     strictFileValidation: boolean;
-  },
+  }
 ): Promise<Result<Report>> {
   if (!input.title || input.title.trim().length < 4) {
     return Result.fail('Title must be at least 4 characters', 'INVALID_TITLE');
@@ -271,6 +276,7 @@ async function createForProject(
     metadata: input.metadata,
     reporterEmail: normalizeOptionalText(input.reporterEmail),
     reporterName: normalizeOptionalText(input.reporterName),
+    reporterLocale: input.reporterLocale ?? 'en',
   };
 
   const report = await reportsRepo.create(reportData);
@@ -278,7 +284,7 @@ async function createForProject(
   const saveFilesResult = await saveSubmittedFiles(
     report.id,
     input.files,
-    options.strictFileValidation,
+    options.strictFileValidation
   );
   if (!saveFilesResult.success) {
     if (options.strictFileValidation) {
@@ -323,13 +329,11 @@ async function createForProject(
       logger.error('Failed to send assignment notification', error, { reportId: report.id });
     });
 
-    notificationsService
-      .notifyReporterAssignment(report, undefined, assignedTo)
-      .catch((error) => {
-        logger.error('Failed to send reporter assignment notification', error, {
-          reportId: report.id,
-        });
+    notificationsService.notifyReporterAssignment(report, undefined, assignedTo).catch((error) => {
+      logger.error('Failed to send reporter assignment notification', error, {
+        reportId: report.id,
       });
+    });
   }
 
   githubSyncService
@@ -371,13 +375,14 @@ export const reportsService = {
         metadata: input.metadata,
         reporterEmail: input.reporterEmail,
         reporterName: input.reporterName,
+        reporterLocale: input.reporterLocale,
         files: input.files,
       },
       {
         source: 'widget',
         sendReporterSubmission: true,
         strictFileValidation: false,
-      },
+      }
     );
   },
 
@@ -417,7 +422,7 @@ export const reportsService = {
         requestedAssignee: input.assignedTo,
         sendReporterSubmission: false,
         strictFileValidation: true,
-      },
+      }
     );
   },
 
@@ -438,7 +443,7 @@ export const reportsService = {
    * Get a report by ID with files
    */
   async getByIdWithFiles(
-    id: string,
+    id: string
   ): Promise<
     Result<{ report: Report; files: Awaited<ReturnType<typeof filesRepo.findByReportId>> }>
   > {
@@ -568,7 +573,7 @@ export const reportsService = {
         .notifyReporterStatusChange(
           report,
           changes.status.old as ReportStatus,
-          changes.status.new as ReportStatus,
+          changes.status.new as ReportStatus
         )
         .catch((error) => {
           logger.error('Failed to send reporter status change notification', error, {
@@ -582,7 +587,7 @@ export const reportsService = {
         .notifyPriorityChange(
           report,
           changes.priority.old as string,
-          changes.priority.new as string,
+          changes.priority.new as string
         )
         .catch((error) => {
           logger.error('Failed to send priority change notification', error, { reportId: id });
@@ -593,7 +598,7 @@ export const reportsService = {
         .notifyReporterPriorityChange(
           report,
           changes.priority.old as ReportPriority,
-          changes.priority.new as ReportPriority,
+          changes.priority.new as ReportPriority
         )
         .catch((error) => {
           logger.error('Failed to send reporter priority change notification', error, {
@@ -613,7 +618,7 @@ export const reportsService = {
         .notifyReporterAssignment(
           report,
           (changes.assignedTo.old as string | undefined) ?? undefined,
-          changes.assignedTo.new as string,
+          changes.assignedTo.new as string
         )
         .catch((error) => {
           logger.error('Failed to send reporter assignment notification', error, {
@@ -684,7 +689,7 @@ export const reportsService = {
   async bulkUpdate(
     ids: string[],
     updates: Pick<UpdateReportInput, 'status' | 'priority' | 'assignedTo'>,
-    userId?: string,
+    userId?: string
   ): Promise<Result<number>> {
     if (ids.length === 0) {
       return Result.fail('No report IDs provided', 'INVALID_INPUT');
@@ -737,7 +742,7 @@ export const reportsService = {
    * Get report statistics
    */
   async getStats(
-    projectId?: string,
+    projectId?: string
   ): Promise<Result<Awaited<ReturnType<typeof reportsRepo.getStats>>>> {
     const stats = await reportsRepo.getStats(projectId);
     return Result.ok(stats);
@@ -748,7 +753,7 @@ export const reportsService = {
    */
   async addFile(
     reportId: string,
-    file: { data: Buffer | Uint8Array; filename: string; mimeType: string; type: FileType },
+    file: { data: Buffer | Uint8Array; filename: string; mimeType: string; type: FileType }
   ): Promise<Result<void>> {
     const report = await reportsRepo.findById(reportId);
 
@@ -758,9 +763,10 @@ export const reportsService = {
 
     // Validate file before saving
     const settings = await settingsCacheService.getAll();
-    const maxSizeMb = file.type === 'video'
-      ? (settings.screenshot.maxVideoUploadSizeMb ?? 50)
-      : (settings.screenshot.maxImageUploadSizeMb ?? 10);
+    const maxSizeMb =
+      file.type === 'video'
+        ? (settings.screenshot.maxVideoUploadSizeMb ?? 50)
+        : (settings.screenshot.maxImageUploadSizeMb ?? 10);
     const validation = validateFile({
       data: file.data,
       mimeType: file.mimeType,
@@ -812,7 +818,7 @@ export const reportsService = {
    * Serve a file (returns file metadata and binary data)
    */
   async serveFile(
-    fileId: string,
+    fileId: string
   ): Promise<Result<{ file: FileRecord; data: Buffer | Uint8Array }>> {
     const file = await filesRepo.findById(fileId);
 

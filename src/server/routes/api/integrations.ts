@@ -26,7 +26,7 @@ integrations.get(
     if (!projectId) {
       return c.json(
         { success: false, error: 'MISSING_PROJECT_ID', message: 'Project ID is required' },
-        400,
+        400
       );
     }
 
@@ -40,7 +40,7 @@ integrations.get(
       success: true,
       data: result.value,
     });
-  },
+  }
 );
 
 // Get Integration by ID (Admin only)
@@ -82,9 +82,9 @@ integrations.post(
         success: true,
         integration: result.value,
       },
-      201,
+      201
     );
-  },
+  }
 );
 
 // Update Integration (Admin only)
@@ -108,7 +108,7 @@ integrations.patch(
       success: true,
       integration: result.value,
     });
-  },
+  }
 );
 
 // Delete Integration (Admin only)
@@ -148,7 +148,7 @@ integrations.post(
       success: true,
       result: result.value,
     });
-  },
+  }
 );
 
 // Fetch GitHub Repositories (Admin only)
@@ -160,7 +160,7 @@ integrations.post('/github/repositories', authorize(['admin']), async (c) => {
   if (!body.accessToken || !body.accessToken.trim()) {
     return c.json(
       { success: false, error: 'MISSING_TOKEN', message: 'Access token is required' },
-      400,
+      400
     );
   }
 
@@ -208,7 +208,7 @@ integrations.post('/github/labels', authorize(['admin']), async (c) => {
         error: 'MISSING_PARAMS',
         message: 'Access token, owner, and repo are required',
       },
-      400,
+      400
     );
   }
 
@@ -256,7 +256,7 @@ integrations.post('/github/assignees', authorize(['admin']), async (c) => {
         error: 'MISSING_PARAMS',
         message: 'Access token, owner, and repo are required',
       },
-      400,
+      400
     );
   }
 
@@ -299,7 +299,7 @@ integrations.post(
           error: 'INVALID_TYPE',
           message: 'Only GitHub integrations support sync modes',
         },
-        400,
+        400
       );
     }
 
@@ -337,7 +337,7 @@ integrations.post(
       syncMode: body.syncMode,
       unsyncedCount,
     });
-  },
+  }
 );
 
 // Sync existing reports (Admin only)
@@ -363,7 +363,7 @@ integrations.post(
           error: 'INVALID_TYPE',
           message: 'Only GitHub integrations support syncing',
         },
-        400,
+        400
       );
     }
 
@@ -377,7 +377,7 @@ integrations.post(
     } else {
       return c.json(
         { success: false, error: 'INVALID_PARAMS', message: 'reportIds must be an array or "all"' },
-        400,
+        400
       );
     }
 
@@ -399,7 +399,7 @@ integrations.post(
       message: `Queued ${reportIds.length} reports for sync`,
       queued: reportIds.length,
     });
-  },
+  }
 );
 
 // Get sync status for an integration (Admin only)
@@ -424,7 +424,7 @@ integrations.get(
           error: 'INVALID_TYPE',
           message: 'Only GitHub integrations support sync status',
         },
-        400,
+        400
       );
     }
 
@@ -439,7 +439,7 @@ integrations.get(
       queueLength: queueStatus.queueLength,
       processing: queueStatus.processing,
     });
-  },
+  }
 );
 
 export { integrations as integrationsRoutes };

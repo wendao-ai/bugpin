@@ -60,7 +60,7 @@ export const integrationsRepo = {
         data.isActive !== false ? 1 : 0,
         now,
         now,
-      ],
+      ]
     );
 
     const integration = await this.findById(id);
@@ -99,7 +99,7 @@ export const integrationsRepo = {
     const db = getDb();
     const rows = db
       .query(
-        'SELECT * FROM integrations WHERE project_id = ? AND type = ? ORDER BY created_at DESC',
+        'SELECT * FROM integrations WHERE project_id = ? AND type = ? ORDER BY created_at DESC'
       )
       .all(projectId, type) as IntegrationRow[];
     return rows.map(mapRowToIntegration);
@@ -112,7 +112,7 @@ export const integrationsRepo = {
     const db = getDb();
     const rows = db
       .query(
-        'SELECT * FROM integrations WHERE project_id = ? AND is_active = 1 ORDER BY created_at DESC',
+        'SELECT * FROM integrations WHERE project_id = ? AND is_active = 1 ORDER BY created_at DESC'
       )
       .all(projectId) as IntegrationRow[];
     return rows.map(mapRowToIntegration);
@@ -123,7 +123,7 @@ export const integrationsRepo = {
    */
   async update(
     id: string,
-    updates: Partial<Pick<Integration, 'name' | 'config' | 'isActive'>>,
+    updates: Partial<Pick<Integration, 'name' | 'config' | 'isActive'>>
   ): Promise<Integration | null> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -170,7 +170,7 @@ export const integrationsRepo = {
 
     db.run(
       'UPDATE integrations SET last_used_at = ?, usage_count = usage_count + 1, updated_at = ? WHERE id = ?',
-      [now, now, id],
+      [now, now, id]
     );
   },
 

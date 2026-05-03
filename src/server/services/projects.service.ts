@@ -263,7 +263,7 @@ export const projectsService = {
       }
 
       const isAllowed = allowedOrigins.some(
-        (domain) => originDomain === domain || originDomain.endsWith(`.${domain}`),
+        (domain) => originDomain === domain || originDomain.endsWith(`.${domain}`)
       );
 
       if (!isAllowed) {
@@ -273,7 +273,6 @@ export const projectsService = {
 
     return Result.ok(project);
   },
-
 };
 
 /**

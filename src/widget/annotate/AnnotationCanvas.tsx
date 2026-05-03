@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, useCallback } from 'preact/hooks';
 import * as fabric from 'fabric';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui';
+import { useLocale } from '../hooks/use-locale.js';
+import { t } from '../i18n/index.js';
 
 export type AnnotationTool =
   | 'select'
@@ -67,7 +69,7 @@ let pixelateGenerationCounter = 0;
 function regeneratePixelate(
   canvas: fabric.Canvas,
   obj: fabric.FabricImage,
-  bgImage: fabric.FabricImage,
+  bgImage: fabric.FabricImage
 ): void {
   const objWithData = obj as FabricObjectWithData;
 
@@ -96,7 +98,7 @@ function regeneratePixelate(
     // Restore viewport
     canvas.setZoom(currentZoom);
     canvas.setViewportTransform(
-      currentViewport as [number, number, number, number, number, number],
+      currentViewport as [number, number, number, number, number, number]
     );
     canvas.renderAll();
     return;
@@ -127,7 +129,7 @@ function regeneratePixelate(
       0,
       0,
       width,
-      height,
+      height
     );
 
     // Apply pixelate filter directly to the temp canvas
@@ -143,7 +145,7 @@ function regeneratePixelate(
       // Stale - a newer regeneration is in progress, abort
       canvas.setZoom(currentZoom);
       canvas.setViewportTransform(
-        currentViewport as [number, number, number, number, number, number],
+        currentViewport as [number, number, number, number, number, number]
       );
       canvas.renderAll();
       return;
@@ -175,6 +177,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
   onSave,
   onCancel,
 }) => {
+  useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
@@ -417,7 +420,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
           break;
 
         case 'text':
-          shape = new fabric.IText('Text', {
+          shape = new fabric.IText(t('annotation.defaultText'), {
             left: pointer.x,
             top: pointer.y,
             fontSize: 20,
@@ -456,7 +459,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
         (canvas as unknown as { _drawingShape: fabric.FabricObject })._drawingShape = shape;
       }
     },
-    [activeTool, activeColor, strokeWidth],
+    [activeTool, activeColor, strokeWidth]
   );
 
   const handleCanvasMouseMove = useCallback((e: fabric.TPointerEventInfo) => {
@@ -558,7 +561,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
                 0,
                 0,
                 width,
-                height,
+                height
               );
 
               // Apply pixelate filter - smaller blocks for finer pixelation
@@ -594,7 +597,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
           // Restore zoom and viewport
           canvas.setZoom(currentZoom);
           canvas.setViewportTransform(
-            currentViewport as [number, number, number, number, number, number],
+            currentViewport as [number, number, number, number, number, number]
           );
           canvas.renderAll();
         } else if (
@@ -646,7 +649,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
                 stroke: line.stroke,
                 strokeWidth: 1,
                 selectable: false,
-              },
+              }
             );
 
             // Create a group with line and arrowhead
@@ -788,7 +791,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
               0,
               0,
               exportWidth,
-              exportHeight,
+              exportHeight
             );
 
             // Use stored blockSize scaled to export resolution, or calculate
@@ -831,7 +834,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
     // Restore zoom and viewport
     canvas.setZoom(currentZoom);
     canvas.setViewportTransform(
-      currentViewport as [number, number, number, number, number, number],
+      currentViewport as [number, number, number, number, number, number]
     );
     canvas.renderAll();
 
@@ -1000,7 +1003,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
         'flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors',
         'hover:bg-gray-100 hover:text-gray-800',
         '[&_svg]:w-4.5 [&_svg]:h-4.5',
-        activeTool === tool && 'bg-primary/10 text-primary',
+        activeTool === tool && 'bg-primary/10 text-primary'
       )}
       onClick={() => setActiveTool(tool)}
       title={label}
@@ -1016,47 +1019,47 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
         <div class="flex items-center gap-1">
           <ToolButton
             tool="select"
-            label="Select"
+            label={t('annotation.toolbar.select')}
             icon='<svg viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="currentColor"/></svg>'
           />
           <ToolButton
             tool="pan"
-            label="Pan (or hold Space)"
+            label={t('annotation.toolbar.pan')}
             icon='<svg viewBox="0 0 24 24"><path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z" fill="currentColor"/></svg>'
           />
           <ToolButton
             tool="pen"
-            label="Pen"
+            label={t('annotation.toolbar.pen')}
             icon='<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>'
           />
           <ToolButton
             tool="line"
-            label="Line"
+            label={t('annotation.toolbar.line')}
             icon='<svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
           />
           <ToolButton
             tool="arrow"
-            label="Arrow"
+            label={t('annotation.toolbar.arrow')}
             icon='<svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 5l-6 2 4 4 2-6z" fill="currentColor"/></svg>'
           />
           <ToolButton
             tool="rectangle"
-            label="Rectangle"
+            label={t('annotation.toolbar.rectangle')}
             icon='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
           />
           <ToolButton
             tool="circle"
-            label="Circle"
+            label={t('annotation.toolbar.circle')}
             icon='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
           />
           <ToolButton
             tool="text"
-            label="Text"
+            label={t('annotation.toolbar.text')}
             icon='<svg viewBox="0 0 24 24"><path d="M5 4v3h5.5v12h3V7H19V4H5z" fill="currentColor"/></svg>'
           />
           <ToolButton
             tool="pixelate"
-            label="Pixelate"
+            label={t('annotation.toolbar.pixelate')}
             icon='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="4" height="4" fill="currentColor"/><rect x="10" y="3" width="4" height="4" fill="currentColor"/><rect x="17" y="3" width="4" height="4" fill="currentColor"/><rect x="3" y="10" width="4" height="4" fill="currentColor"/><rect x="10" y="10" width="4" height="4" fill="currentColor"/><rect x="17" y="10" width="4" height="4" fill="currentColor"/><rect x="3" y="17" width="4" height="4" fill="currentColor"/><rect x="10" y="17" width="4" height="4" fill="currentColor"/><rect x="17" y="17" width="4" height="4" fill="currentColor"/></svg>'
           />
         </div>
@@ -1070,7 +1073,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
               key={color}
               class={cn(
                 'w-6 h-6 rounded-full border-2 border-solid cursor-pointer transition-transform hover:scale-110',
-                activeColor === color ? 'border-gray-800 scale-110' : 'border-transparent',
+                activeColor === color ? 'border-gray-800 scale-110' : 'border-transparent'
               )}
               style={{ backgroundColor: color }}
               onClick={() => setActiveColor(color)}
@@ -1089,10 +1092,10 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
               class={cn(
                 'flex items-center justify-center w-8 h-8 border-none rounded bg-transparent cursor-pointer transition-colors',
                 'hover:bg-gray-100',
-                strokeWidth === width && 'bg-primary/10',
+                strokeWidth === width && 'bg-primary/10'
               )}
               onClick={() => setStrokeWidth(width)}
-              title={`${width}px`}
+              title={t('annotation.toolbar.strokeWidth', { width })}
             >
               <span class="w-5 bg-gray-800 rounded-full" style={{ height: `${width}px` }} />
             </button>
@@ -1107,7 +1110,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
             class="flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:w-4.5 [&_svg]:h-4.5"
             onClick={undo}
             disabled={!canUndo}
-            title="Undo (Ctrl+Z)"
+            title={t('annotation.toolbar.undo')}
           >
             <svg viewBox="0 0 24 24">
               <path
@@ -1120,7 +1123,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
             class="flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:w-4.5 [&_svg]:h-4.5"
             onClick={redo}
             disabled={!canRedo}
-            title="Redo (Ctrl+Shift+Z)"
+            title={t('annotation.toolbar.redo')}
           >
             <svg viewBox="0 0 24 24">
               <path
@@ -1132,7 +1135,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
           <button
             class="flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:w-4.5 [&_svg]:h-4.5"
             onClick={deleteSelected}
-            title="Delete selected (Del)"
+            title={t('annotation.toolbar.delete')}
           >
             <svg viewBox="0 0 24 24">
               <path
@@ -1151,7 +1154,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
             class="flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:w-4.5 [&_svg]:h-4.5"
             onClick={handleZoomOut}
             disabled={zoomLevel <= 0.5}
-            title="Zoom Out - Hold Space to pan when zoomed"
+            title={t('annotation.toolbar.zoomOut')}
           >
             <svg viewBox="0 0 24 24">
               <path
@@ -1163,7 +1166,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
           <button
             class="flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:w-4.5 [&_svg]:h-4.5"
             onClick={handleZoomReset}
-            title={`Reset Zoom (${Math.round(zoomLevel * 100)}%) - Hold Space to pan`}
+            title={t('annotation.toolbar.zoomReset', { percent: Math.round(zoomLevel * 100) })}
           >
             <svg viewBox="0 0 24 24">
               <path
@@ -1176,7 +1179,7 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
             class="flex items-center justify-center w-8 h-8 border-none rounded bg-transparent text-gray-600 cursor-pointer transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:w-4.5 [&_svg]:h-4.5"
             onClick={handleZoomIn}
             disabled={zoomLevel >= 3}
-            title="Zoom In - Hold Space to pan when zoomed"
+            title={t('annotation.toolbar.zoomIn')}
           >
             <svg viewBox="0 0 24 24">
               <path
@@ -1199,10 +1202,10 @@ export const AnnotationCanvas: FunctionComponent<AnnotationCanvasProps> = ({
       {/* Actions */}
       <div class="flex gap-3 p-4 border-t border-solid border-border bg-muted">
         <Button variant="outline" class="flex-1" onClick={onCancel}>
-          Cancel
+          {t('annotation.buttons.cancel')}
         </Button>
         <Button class="flex-1" onClick={handleSave}>
-          Done
+          {t('annotation.buttons.done')}
         </Button>
       </div>
     </div>

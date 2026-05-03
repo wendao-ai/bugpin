@@ -220,8 +220,6 @@ export const settingsUpdateSchema = z.object({
   adminButton: themeColorsSchema.optional(),
 });
 
-
-
 // Validation Result Helpers
 
 /**
@@ -244,7 +242,7 @@ export function validateWithSchema<T>(schema: z.ZodSchema<T>, input: unknown): R
  * Validate SMTP configuration when enabling SMTP
  */
 export function validateSmtpConfig(
-  smtpConfig: { host?: string; port?: number; from?: string } | undefined,
+  smtpConfig: { host?: string; port?: number; from?: string } | undefined
 ): Result<void> {
   if (!smtpConfig?.host || smtpConfig.host.trim().length === 0) {
     return Result.fail('SMTP host is required when enabling SMTP', 'INVALID_SMTP_CONFIG');
@@ -264,7 +262,7 @@ export function validateSmtpConfig(
 export function validateS3Config(
   s3Config:
     | { bucket?: string; region?: string; accessKeyId?: string; secretAccessKey?: string }
-    | undefined,
+    | undefined
 ): Result<void> {
   if (!s3Config?.bucket || s3Config.bucket.trim().length === 0) {
     return Result.fail('S3 bucket name is required when enabling S3', 'INVALID_S3_CONFIG');

@@ -83,14 +83,14 @@ export async function initSchema(): Promise<void> {
     )
   `);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_projects_api_key_hash ON projects(api_key_hash) WHERE deleted_at IS NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_api_key_hash ON projects(api_key_hash) WHERE deleted_at IS NULL`
   );
   db.exec(`CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at DESC)`);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_projects_is_active ON projects(is_active) WHERE deleted_at IS NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_is_active ON projects(is_active) WHERE deleted_at IS NULL`
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_projects_position ON projects(position ASC) WHERE deleted_at IS NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_position ON projects(position ASC) WHERE deleted_at IS NULL`
   );
 
   // Add api_key column to existing databases (stores full key for display in admin)
@@ -122,7 +122,7 @@ export async function initSchema(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_users_invitation_token ON users(invitation_token) WHERE invitation_token IS NOT NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_users_invitation_token ON users(invitation_token) WHERE invitation_token IS NOT NULL`
   );
 
   // Sessions table
@@ -166,13 +166,20 @@ export async function initSchema(): Promise<void> {
       github_sync_error TEXT NULL,
       github_issue_number INTEGER NULL,
       github_issue_url TEXT NULL,
-      github_synced_at TEXT NULL
+      github_synced_at TEXT NULL,
+      reporter_locale TEXT NOT NULL DEFAULT 'en'
     )
   `);
 
   // Add source column to existing databases before creating indexes that depend on it.
   try {
     db.exec(`ALTER TABLE reports ADD COLUMN source TEXT NOT NULL DEFAULT 'widget'`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    db.exec(`ALTER TABLE reports ADD COLUMN reporter_locale TEXT NOT NULL DEFAULT 'en'`);
   } catch {
     // Column already exists
   }
@@ -185,10 +192,10 @@ export async function initSchema(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_assigned_to ON reports(assigned_to)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_project_status ON reports(project_id, status)`);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_reports_project_created ON reports(project_id, created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_reports_project_created ON reports(project_id, created_at DESC)`
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_reports_github_sync_status ON reports(github_sync_status) WHERE github_sync_status IS NOT NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_reports_github_sync_status ON reports(github_sync_status) WHERE github_sync_status IS NOT NULL`
   );
 
   // Files table
@@ -228,7 +235,7 @@ export async function initSchema(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_webhooks_project ON webhooks(project_id)`);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks(is_active) WHERE is_active = 1`,
+    `CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks(is_active) WHERE is_active = 1`
   );
 
   // Integrations table
@@ -249,10 +256,10 @@ export async function initSchema(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_integrations_project ON integrations(project_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_integrations_type ON integrations(type)`);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_integrations_project_type ON integrations(project_id, type)`,
+    `CREATE INDEX IF NOT EXISTS idx_integrations_project_type ON integrations(project_id, type)`
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_integrations_active ON integrations(is_active) WHERE is_active = 1`,
+    `CREATE INDEX IF NOT EXISTS idx_integrations_active ON integrations(is_active) WHERE is_active = 1`
   );
 
   // Notification preferences table
@@ -273,18 +280,20 @@ export async function initSchema(): Promise<void> {
     )
   `);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_notification_preferences_user ON notification_preferences(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_notification_preferences_user ON notification_preferences(user_id)`
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_notification_preferences_project ON notification_preferences(project_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_notification_preferences_project ON notification_preferences(project_id)`
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_notification_preferences_enabled ON notification_preferences(email_enabled) WHERE email_enabled = 1`,
+    `CREATE INDEX IF NOT EXISTS idx_notification_preferences_enabled ON notification_preferences(email_enabled) WHERE email_enabled = 1`
   );
 
   // Add notify_on_deletion column to existing databases
   try {
-    db.exec(`ALTER TABLE notification_preferences ADD COLUMN notify_on_deletion INTEGER DEFAULT 1 NOT NULL`);
+    db.exec(
+      `ALTER TABLE notification_preferences ADD COLUMN notify_on_deletion INTEGER DEFAULT 1 NOT NULL`
+    );
   } catch {
     // Column already exists
   }
@@ -307,7 +316,9 @@ export async function initSchema(): Promise<void> {
 
   // Add default_notify_on_deletion column to existing databases
   try {
-    db.exec(`ALTER TABLE project_notification_defaults ADD COLUMN default_notify_on_deletion INTEGER DEFAULT 1 NOT NULL`);
+    db.exec(
+      `ALTER TABLE project_notification_defaults ADD COLUMN default_notify_on_deletion INTEGER DEFAULT 1 NOT NULL`
+    );
   } catch {
     // Column already exists
   }
@@ -329,10 +340,10 @@ export async function initSchema(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_api_tokens_user ON api_tokens(user_id)`);
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash) WHERE revoked_at IS NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash) WHERE revoked_at IS NULL`
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_api_tokens_expires ON api_tokens(expires_at) WHERE revoked_at IS NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_api_tokens_expires ON api_tokens(expires_at) WHERE revoked_at IS NULL`
   );
 
   // Settings table
@@ -446,6 +457,16 @@ export async function runMigrations(): Promise<void> {
         db.run('INSERT INTO migrations (name) VALUES (?)', [file]);
         logger.info('Migration applied successfully', { file });
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const isBootstrapColumnConflict =
+          file === '003_add_reporter_locale.sql' && message.includes('duplicate column name');
+        if (isBootstrapColumnConflict) {
+          db.run('INSERT INTO migrations (name) VALUES (?)', [file]);
+          logger.info('Migration already applied by schema bootstrap, recorded as applied', {
+            file,
+          });
+          continue;
+        }
         logger.error('Migration failed', error, { file });
         throw error;
       }

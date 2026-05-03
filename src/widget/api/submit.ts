@@ -19,6 +19,7 @@ export interface SubmitReportInput {
   priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
   reporterEmail?: string;
   reporterName?: string;
+  locale?: string;
   media?: MediaItem[];
   metadata: PageContext;
 }
@@ -72,6 +73,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
       priority: data.priority,
       reporterEmail: data.reporterEmail,
       reporterName: data.reporterName,
+      locale: data.locale,
       media,
       metadata: data.metadata,
     });
@@ -97,10 +99,11 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
       priority: data.priority,
       reporterEmail: data.reporterEmail,
       reporterName: data.reporterName,
+      locale: data.locale,
       metadata: data.metadata,
       mediaCount: media?.length || 0,
       mediaAnnotations: media?.map((item) => item.annotations).filter(Boolean),
-    }),
+    })
   );
 
   // Add media files
@@ -114,7 +117,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
 
       // Debug: Log sizes
       console.log(
-        `[BugPin] Media ${i}: dataUrl length=${item.dataUrl.length}, blob size=${blob.size}, type=${blob.type}`,
+        `[BugPin] Media ${i}: dataUrl length=${item.dataUrl.length}, blob size=${blob.size}, type=${blob.type}`
       );
 
       formData.append('media', blob, `${prefix}-${i}.${ext}`);
@@ -152,6 +155,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
         priority: data.priority,
         reporterEmail: data.reporterEmail,
         reporterName: data.reporterName,
+        locale: data.locale,
         media,
         metadata: data.metadata,
       });
@@ -172,7 +176,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
  */
 export async function fetchWidgetConfig(
   apiKey: string,
-  serverUrl: string,
+  serverUrl: string
 ): Promise<{
   projectName: string;
   branding: object;

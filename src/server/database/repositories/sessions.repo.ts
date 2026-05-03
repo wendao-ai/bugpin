@@ -45,7 +45,7 @@ export const sessionsRepo = {
     db.run(
       `INSERT INTO sessions (id, user_id, ip_address, user_agent, created_at, expires_at, last_activity_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.userId, data.ipAddress ?? null, data.userAgent ?? null, now, data.expiresAt, now],
+      [id, data.userId, data.ipAddress ?? null, data.userAgent ?? null, now, data.expiresAt, now]
     );
 
     const session = await this.findById(id);

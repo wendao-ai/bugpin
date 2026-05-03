@@ -30,7 +30,7 @@ app.get('/config', async (c) => {
         error: 'GET_FAILED',
         message: 'Failed to get branding config',
       },
-      500,
+      500
     );
   }
 });
@@ -57,7 +57,7 @@ app.put('/widget-primary-colors', authMiddleware, authorize(['admin']), async (c
         error: 'UPDATE_FAILED',
         message: 'Failed to update widget primary colors',
       },
-      500,
+      500
     );
   }
 });

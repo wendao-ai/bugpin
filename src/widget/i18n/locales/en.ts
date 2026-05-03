@@ -1,0 +1,98 @@
+const en = {
+  'tooltip.launcher': 'Found a bug?',
+
+  'aria.launcher': 'Report Bug',
+  'aria.close': 'Close',
+
+  'dialog.title': 'Report a Bug',
+  'dialog.tabs.details': 'Details',
+  'dialog.tabs.media': 'Screenshots',
+  'dialog.tabs.mediaWithCount': 'Screenshots ({count})',
+
+  'dialog.fields.title.label': 'Title',
+  'dialog.fields.title.placeholder': 'Brief description of the issue',
+  'dialog.fields.description.label': 'Description',
+  'dialog.fields.description.placeholder': 'Steps to reproduce, expected behavior, etc.',
+  'dialog.fields.priority.label': 'Priority',
+  'dialog.fields.name.label': 'Name (optional)',
+  'dialog.fields.name.placeholder': 'Your name',
+  'dialog.fields.email.label': 'Email (optional)',
+  'dialog.fields.email.placeholder': 'your@email.com',
+
+  'dialog.priority.highest': 'Highest',
+  'dialog.priority.high': 'High',
+  'dialog.priority.medium': 'Medium',
+  'dialog.priority.low': 'Low',
+  'dialog.priority.lowest': 'Lowest',
+
+  'dialog.buttons.cancel': 'Cancel',
+  'dialog.buttons.submit': 'Submit Report',
+
+  'dialog.branding.poweredBy': 'Powered by',
+
+  'validation.title.required': 'Title is required',
+  'validation.title.minLength': 'Title must be at least 4 characters',
+  'validation.email.invalid': 'Invalid email address',
+
+  'closeConfirm.title': 'Save draft?',
+  'closeConfirm.body':
+    'You have unsaved changes. Would you like to save them as a draft for later?',
+  'closeConfirm.discardButton': 'Discard',
+  'closeConfirm.saveDraftButton': 'Save Draft',
+
+  'screenCapture.title': 'Browser permission required',
+  'screenCapture.body':
+    'Your browser will ask for permission to share your screen. Follow the steps shown.',
+  'screenCapture.browser.firefox': 'Firefox',
+  'screenCapture.browser.chromeEdge': 'Chrome · Edge',
+  'screenCapture.dontShowAgain': "Don't show this again",
+  'screenCapture.back': 'Back',
+  'screenCapture.confirm': 'Take Screenshot',
+
+  'screenshot.privacyTip':
+    'Tip: Use the annotation tool to hide any sensitive data before submitting.',
+  'screenshot.capturing': 'Capturing...',
+  'screenshot.capture': 'Capture Screenshot',
+  'screenshot.dropzone.title': 'Drag and drop files here',
+  'screenshot.dropzone.subtitle': 'or click to browse',
+  'screenshot.addMore': 'Add more',
+  'screenshot.alt': 'Screenshot',
+  'screenshot.badge.annotated': 'Annotated',
+  'screenshot.badge.video': 'Video',
+  'screenshot.action.annotate': 'Annotate',
+  'screenshot.action.remove': 'Remove',
+  'screenshot.helperText':
+    'Supported: PNG, JPG, GIF, WebP (max {imageSize}MB) - MP4, WebM, MOV, AVI (max {videoSize}MB)',
+
+  'screenshot.error.unsupportedImage': 'Unsupported image format: {type}',
+  'screenshot.error.imageTooLarge': 'Image too large. Maximum size is {size}MB.',
+  'screenshot.error.unsupportedVideo': 'Unsupported video format: {type}',
+  'screenshot.error.videoTooLarge': 'Video too large. Maximum size is {size}MB.',
+  'screenshot.error.unsupportedFile': 'Unsupported file type: {type}',
+
+  'toast.success.submit': 'Bug report submitted successfully!',
+  'toast.error.submit': 'Failed to submit report',
+  'toast.error.capture': 'Failed to capture screenshot',
+
+  'annotation.toolbar.select': 'Select',
+  'annotation.toolbar.pan': 'Pan (or hold Space)',
+  'annotation.toolbar.pen': 'Pen',
+  'annotation.toolbar.line': 'Line',
+  'annotation.toolbar.arrow': 'Arrow',
+  'annotation.toolbar.rectangle': 'Rectangle',
+  'annotation.toolbar.circle': 'Circle',
+  'annotation.toolbar.text': 'Text',
+  'annotation.toolbar.pixelate': 'Pixelate',
+  'annotation.toolbar.undo': 'Undo (Ctrl+Z)',
+  'annotation.toolbar.redo': 'Redo (Ctrl+Shift+Z)',
+  'annotation.toolbar.delete': 'Delete selected (Del)',
+  'annotation.toolbar.zoomIn': 'Zoom In - Hold Space to pan when zoomed',
+  'annotation.toolbar.zoomOut': 'Zoom Out - Hold Space to pan when zoomed',
+  'annotation.toolbar.zoomReset': 'Reset Zoom ({percent}%) - Hold Space to pan',
+  'annotation.toolbar.strokeWidth': '{width}px',
+  'annotation.defaultText': 'Text',
+  'annotation.buttons.cancel': 'Cancel',
+  'annotation.buttons.done': 'Done',
+} as const satisfies Record<string, string>;
+
+export default en;

@@ -134,10 +134,11 @@ export function startErrorCapture(): void {
 
   // Capture network errors via fetch
   const originalFetch = window.fetch.bind(window);
-  (window as unknown as { fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> }).fetch = async function (
-    input: RequestInfo | URL,
-    init?: RequestInit,
-  ): Promise<Response> {
+  (
+    window as unknown as {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+    }
+  ).fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const url =
       typeof input === 'string'
         ? input
@@ -273,7 +274,7 @@ export function startErrorCapture(): void {
         addUserActivity(activity);
       }
     },
-    true,
+    true
   );
 }
 

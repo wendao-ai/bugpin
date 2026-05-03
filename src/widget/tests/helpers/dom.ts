@@ -29,7 +29,7 @@ export function installDom(url = 'https://example.com'): () => void {
     getComputedStyle: Object.prototype.hasOwnProperty.call(globalThis, 'getComputedStyle'),
     requestAnimationFrame: Object.prototype.hasOwnProperty.call(
       globalThis,
-      'requestAnimationFrame',
+      'requestAnimationFrame'
     ),
     cancelAnimationFrame: Object.prototype.hasOwnProperty.call(globalThis, 'cancelAnimationFrame'),
   };

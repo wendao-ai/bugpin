@@ -65,7 +65,7 @@ export const webhooksRepo = {
         1,
         now,
         now,
-      ],
+      ]
     );
 
     const webhook = await this.findById(id);
@@ -118,7 +118,7 @@ export const webhooksRepo = {
       WHERE project_id = ?
         AND is_active = 1
         AND json_each.value = ?
-    `,
+    `
       )
       .all(projectId, event) as WebhookRow[];
     return rows.map(mapRowToWebhook);
@@ -140,7 +140,7 @@ export const webhooksRepo = {
    */
   async update(
     id: string,
-    updates: Partial<Pick<Webhook, 'name' | 'url' | 'secret' | 'events' | 'isActive'>>,
+    updates: Partial<Pick<Webhook, 'name' | 'url' | 'secret' | 'events' | 'isActive'>>
   ): Promise<Webhook | null> {
     const db = getDb();
     const now = new Date().toISOString();
@@ -189,12 +189,12 @@ export const webhooksRepo = {
     if (success) {
       db.run(
         'UPDATE webhooks SET last_triggered_at = ?, last_status_code = ?, failure_count = 0 WHERE id = ?',
-        [now, statusCode, id],
+        [now, statusCode, id]
       );
     } else {
       db.run(
         'UPDATE webhooks SET last_triggered_at = ?, last_status_code = ?, failure_count = failure_count + 1 WHERE id = ?',
-        [now, statusCode, id],
+        [now, statusCode, id]
       );
     }
   },
