@@ -45,7 +45,7 @@ describe('DropdownMenu', () => {
             <DropdownMenuShortcut>Ctrl+K</DropdownMenuShortcut>
           </DropdownMenuContent>
         </DropdownMenuPortal>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
 
     await user.click(screen.getByRole('button', { name: 'Open' }));

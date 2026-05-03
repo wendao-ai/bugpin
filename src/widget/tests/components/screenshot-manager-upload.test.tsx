@@ -74,7 +74,7 @@ describe('ScreenshotManager uploads', () => {
         isCapturing={false}
         enableAnnotation={true}
       />,
-      container,
+      container
     );
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement | null;
@@ -108,7 +108,7 @@ describe('ScreenshotManager uploads', () => {
         isCapturing={false}
         enableAnnotation={true}
       />,
-      container,
+      container
     );
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement | null;

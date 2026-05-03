@@ -46,7 +46,7 @@ const sharedWindow = {
     if (!current) return;
     listeners.set(
       event,
-      current.filter((fn) => fn !== handler),
+      current.filter((fn) => fn !== handler)
     );
   },
   dispatchEvent: (event: string | { type?: string }, payload?: { reason?: unknown }) => {
@@ -64,7 +64,7 @@ const sharedWindow = {
         source?: string,
         line?: number,
         column?: number,
-        error?: unknown,
+        error?: unknown
       ) => boolean),
 };
 
@@ -220,7 +220,7 @@ describe('capture context', () => {
       window.onerror('Boom', 'app.js', 9, 0, new Error('fail'));
     }
     window.dispatchEvent(
-      new window.CustomEvent('unhandledrejection', { detail: { reason: 'Promise failed' } }),
+      new window.CustomEvent('unhandledrejection', { detail: { reason: 'Promise failed' } })
     );
     console.warn('Heads up');
 

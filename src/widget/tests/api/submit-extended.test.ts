@@ -126,7 +126,7 @@ describe('submit API (offline + errors)', () => {
         title: 'Bug report',
         priority: 'medium',
         metadata: baseMetadata,
-      }),
+      })
     ).rejects.toThrow('Nope');
     expect(await getPendingCount()).toBe(0);
   });
@@ -179,7 +179,7 @@ describe('submit API (media + config)', () => {
     expect(capturedNames.some((name) => name.startsWith('screenshot-1.'))).toBe(true);
     expect((capturedData as unknown as { mediaCount?: number })?.mediaCount).toBe(2);
     expect(
-      (capturedData as unknown as { mediaAnnotations?: unknown[] })?.mediaAnnotations?.length,
+      (capturedData as unknown as { mediaAnnotations?: unknown[] })?.mediaAnnotations?.length
     ).toBe(1);
   });
 

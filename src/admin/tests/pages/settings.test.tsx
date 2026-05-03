@@ -20,7 +20,7 @@ describe('Settings Page', () => {
       () => {
         expect(screen.getByText('System Settings')).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 3000 }
     );
   });
 
@@ -36,7 +36,7 @@ describe('Settings Page', () => {
       () => {
         expect(screen.getByText('System Settings')).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 3000 }
     );
 
     // Should show sub-tabs for system section
@@ -52,7 +52,7 @@ describe('Settings Page', () => {
       () => {
         expect(screen.getByRole('tab', { name: /^system$/i })).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 3000 }
     );
 
     const systemTab = screen.getByRole('tab', { name: /^system$/i });
@@ -108,14 +108,14 @@ describe('Settings Page', () => {
       () => {
         expect(screen.getByText('System Settings')).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 3000 }
     );
 
     await waitFor(
       () => {
         expect(screen.getByLabelText(/data retention/i)).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 3000 }
     );
   });
 
@@ -126,7 +126,7 @@ describe('Settings Page', () => {
       () => {
         expect(screen.getByText('System Settings')).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 3000 }
     );
 
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
@@ -211,7 +211,7 @@ describe('Settings Page', () => {
             },
           },
         });
-      }),
+      })
     );
 
     renderWithProviders(<Settings />);

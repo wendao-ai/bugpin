@@ -112,7 +112,7 @@ const baseProject: Project = {
     },
     widgetLauncherButton: {
       position: 'bottom-right',
-      buttonText: 'Report',
+      buttonText: { en: 'Report' },
       buttonShape: 'round',
     },
     screenshot: {
@@ -189,7 +189,7 @@ describe('ProjectSettingsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={onOpenChange}
-      />,
+      />
     );
 
     await screen.findByRole('tab', { name: /widget dialog/i });
@@ -217,7 +217,7 @@ describe('ProjectSettingsDialog', () => {
         defaultNotifyOnPriorityChange: false,
         defaultNotifyOnAssignment: true,
         defaultNotifyOnDeletion: true,
-      },
+      }
     );
 
     expect(mockToast.success).toHaveBeenCalled();
@@ -233,7 +233,7 @@ describe('ProjectSettingsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={() => undefined}
-      />,
+      />
     );
 
     await screen.findByRole('tab', { name: /widget dialog/i });
@@ -264,7 +264,7 @@ describe('ProjectSettingsDialog', () => {
     });
 
     expect(mockDelete).toHaveBeenCalledWith(
-      '/notification-preferences/projects/project-1/defaults',
+      '/notification-preferences/projects/project-1/defaults'
     );
   });
 
@@ -277,7 +277,7 @@ describe('ProjectSettingsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={() => undefined}
-      />,
+      />
     );
 
     await screen.findByRole('tab', { name: /assignments/i });

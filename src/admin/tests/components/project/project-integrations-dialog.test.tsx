@@ -33,13 +33,7 @@ vi.mock('../../../lib/integration-types', async () => {
             {(integration.config as { owner: string; repo: string }).repo}
           </span>
         ),
-        ConfigDialog: ({
-          open,
-          integration,
-        }: {
-          open: boolean;
-          integration?: Integration;
-        }) =>
+        ConfigDialog: ({ open, integration }: { open: boolean; integration?: Integration }) =>
           open ? (
             <div>{integration ? 'Edit Integration Dialog' : 'Create Integration Dialog'}</div>
           ) : null,
@@ -79,7 +73,7 @@ describe('ProjectIntegrationsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={() => undefined}
-      />,
+      />
     );
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
@@ -96,7 +90,7 @@ describe('ProjectIntegrationsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={onOpenChange}
-      />,
+      />
     );
 
     expect(screen.getByText('GitHub Main')).toBeInTheDocument();
@@ -126,7 +120,7 @@ describe('ProjectIntegrationsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={() => undefined}
-      />,
+      />
     );
 
     await user.click(screen.getByRole('button', { name: /configure/i }));
@@ -142,7 +136,7 @@ describe('ProjectIntegrationsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={() => undefined}
-      />,
+      />
     );
 
     await user.click(screen.getByRole('button', { name: /edit/i }));
@@ -157,7 +151,7 @@ describe('ProjectIntegrationsDialog', () => {
         project={{ id: 'project-1', name: 'Project' }}
         open={true}
         onOpenChange={() => undefined}
-      />,
+      />
     );
 
     expect(document.querySelector('.animate-spin')).toBeTruthy();

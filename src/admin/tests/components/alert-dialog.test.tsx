@@ -30,7 +30,7 @@ describe('AlertDialog', () => {
             <AlertDialogAction>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>,
+      </AlertDialog>
     );
 
     // Dialog should not be visible initially
@@ -62,7 +62,7 @@ describe('AlertDialog', () => {
             <AlertDialogAction>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>,
+      </AlertDialog>
     );
 
     // Open dialog
@@ -97,7 +97,7 @@ describe('AlertDialog', () => {
             <AlertDialogAction onClick={handleAction}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>,
+      </AlertDialog>
     );
 
     // Open dialog
@@ -128,7 +128,7 @@ describe('AlertDialog', () => {
             <AlertDialogAction>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>,
+      </AlertDialog>
     );
 
     // Dialog should be visible (controlled open=true)
@@ -157,7 +157,7 @@ describe('AlertDialog', () => {
             <AlertDialogAction data-testid="action">Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>,
+      </AlertDialog>
     );
 
     await user.click(screen.getByText('Open'));
@@ -185,7 +185,7 @@ describe('AlertDialog', () => {
             <AlertDialogAction>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>,
+      </AlertDialog>
     );
 
     await user.click(screen.getByText('Open'));

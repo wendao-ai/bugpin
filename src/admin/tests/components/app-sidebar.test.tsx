@@ -15,7 +15,7 @@ describe('AppSidebar', () => {
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
         </SidebarProvider>
-      </BrandingProvider>,
+      </BrandingProvider>
     );
 
     expect(await screen.findByText('Admin User')).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('AppSidebar', () => {
           authenticated: true,
           user: mockUsers.viewer,
         });
-      }),
+      })
     );
 
     renderWithProviders(
@@ -56,7 +56,7 @@ describe('AppSidebar', () => {
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
         </SidebarProvider>
-      </BrandingProvider>,
+      </BrandingProvider>
     );
 
     expect(await screen.findByText('Viewer User')).toBeInTheDocument();

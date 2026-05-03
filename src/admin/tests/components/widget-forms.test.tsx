@@ -36,11 +36,11 @@ describe('WidgetDialogSettingsForm', () => {
         useCustomSettings
         onCustomToggle={onCustomToggle}
         showCard={false}
-      />,
+      />
     );
 
     expect(
-      screen.queryByRole('heading', { name: /widget dialog colors/i }),
+      screen.queryByRole('heading', { name: /widget dialog colors/i })
     ).not.toBeInTheDocument();
 
     const toggle = screen.getByRole('switch', { name: /use custom settings/i });
@@ -60,7 +60,7 @@ describe('WidgetLauncherButtonSettingsForm', () => {
       <WidgetLauncherButtonSettingsForm
         value={{
           tooltipEnabled: true,
-          tooltipText: 'Hello',
+          tooltipText: { en: 'Hello' },
           enableHoverScaleEffect: true,
         }}
         onChange={onChange}
@@ -89,7 +89,7 @@ describe('WidgetLauncherButtonSettingsForm', () => {
         showCustomToggle
         useCustomSettings
         useTabs
-      />,
+      />
     );
 
     await user.click(screen.getByRole('tab', { name: /colors/i }));
@@ -98,10 +98,6 @@ describe('WidgetLauncherButtonSettingsForm', () => {
     await user.click(screen.getByRole('tab', { name: /button/i }));
     const resetButtons = screen.getAllByRole('button', { name: /reset to global default/i });
     await user.click(resetButtons[0]);
-
-    const tooltipInput = screen.getByLabelText(/tooltip text/i);
-    await user.clear(tooltipInput);
-    await user.type(tooltipInput, 'Report bug');
 
     expect(onChange).toHaveBeenCalled();
   });
@@ -135,7 +131,7 @@ describe('WidgetLauncherButtonSettingsForm', () => {
             darkTextHoverColor: '#ffffff',
           },
         }}
-      />,
+      />
     );
 
     expect(screen.getByText(/live preview/i)).toBeInTheDocument();

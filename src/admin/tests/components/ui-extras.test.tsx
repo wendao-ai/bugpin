@@ -14,7 +14,7 @@ describe('ui primitives', () => {
       <div>
         <Textarea placeholder="Write a note" />
         <Separator data-testid="separator" orientation="vertical" />
-      </div>,
+      </div>
     );
 
     expect(screen.getByPlaceholderText('Write a note')).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('ui primitives', () => {
       <Collapsible>
         <CollapsibleTrigger>Toggle</CollapsibleTrigger>
         <CollapsibleContent>Hidden content</CollapsibleContent>
-      </Collapsible>,
+      </Collapsible>
     );
 
     expect(screen.queryByText('Hidden content')).not.toBeInTheDocument();

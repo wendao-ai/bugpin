@@ -59,7 +59,7 @@ describe('StorageSettings', () => {
       features: {
         'custom-branding': true,
         's3-storage': true,
-        'webhooks': true,
+        webhooks: true,
         'api-access': true,
         'custom-templates': true,
         'white-label': true,
@@ -101,7 +101,7 @@ describe('StorageSettings', () => {
       }),
       http.post('/api/storage/migrate/cancel', () => {
         return HttpResponse.json({ success: true });
-      }),
+      })
     );
   });
 

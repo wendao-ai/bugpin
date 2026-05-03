@@ -64,7 +64,7 @@ describe('Projects Page', () => {
       () => {
         expect(screen.getByText('Test Project')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
   });
 
@@ -90,7 +90,7 @@ describe('Projects Page', () => {
           success: true,
           projects: [],
         });
-      }),
+      })
     );
 
     renderWithProviders(<Projects />);
@@ -99,7 +99,7 @@ describe('Projects Page', () => {
       () => {
         expect(screen.getByText(/no projects/i)).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
   });
 
@@ -111,7 +111,7 @@ describe('Projects Page', () => {
       () => {
         expect(screen.getByText('Test Project')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Find and click first delete button
@@ -142,7 +142,7 @@ describe('Projects Page', () => {
     // Find the API key code element - it should contain the API key
     const codeElements = document.querySelectorAll('code');
     const apiKeyCode = Array.from(codeElements).find((el) =>
-      el.textContent?.includes('test-api-key-123'),
+      el.textContent?.includes('test-api-key-123')
     );
     expect(apiKeyCode).toBeTruthy();
     expect(apiKeyCode?.textContent).toContain('test-api-key-123');
@@ -176,7 +176,7 @@ describe('Projects Page', () => {
             reportsCount: 0,
           },
         });
-      }),
+      })
     );
 
     renderWithProviders(<Projects />);

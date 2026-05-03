@@ -49,7 +49,7 @@ describe('WidgetLauncherButton', () => {
     render(
       <WidgetLauncherButton
         position="bottom-right"
-        buttonText="Report"
+        buttonText={{ project: { en: 'Report' }, global: null, builtin: null }}
         buttonShape="round"
         buttonIcon="bug"
         buttonIconSize={18}
@@ -65,10 +65,10 @@ describe('WidgetLauncherButton', () => {
         darkTextHoverColor="#ffffff"
         enableHoverScaleEffect={true}
         tooltipEnabled={true}
-        tooltipText="Need help?"
+        tooltipText={{ project: { en: 'Need help?' }, global: null, builtin: null }}
         onClick={() => undefined}
       />,
-      container,
+      container
     );
 
     const button = container.querySelector('button');

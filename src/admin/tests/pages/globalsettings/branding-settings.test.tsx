@@ -58,7 +58,7 @@ vi.mock('react-easy-crop', async () => {
       React.useEffect(() => {
         onCropComplete?.(
           { x: 0, y: 0, width: 50, height: 50 },
-          { x: 0, y: 0, width: 50, height: 50 },
+          { x: 0, y: 0, width: 50, height: 50 }
         );
       }, [onCropComplete]);
       return <div data-testid="cropper" />;
@@ -173,7 +173,7 @@ describe('BrandingSettings', () => {
     await screen.findByText(/edit light mode icon/i);
 
     const iconInput = document.querySelector(
-      'input[type="file"][accept="image/png,image/jpeg,image/webp"]',
+      'input[type="file"][accept="image/png,image/jpeg,image/webp"]'
     ) as HTMLInputElement;
     const badFile = new File(['bad'], 'bad.txt', { type: 'text/plain' });
     await user.upload(iconInput, badFile);
@@ -192,7 +192,7 @@ describe('BrandingSettings', () => {
     await screen.findByText(/edit light mode icon/i);
 
     const iconInputSecond = document.querySelector(
-      'input[type="file"][accept="image/png,image/jpeg,image/webp"]',
+      'input[type="file"][accept="image/png,image/jpeg,image/webp"]'
     ) as HTMLInputElement;
 
     MockImage.nextWidth = 120;
@@ -221,7 +221,7 @@ describe('BrandingSettings', () => {
     await screen.findByText(/edit dark mode logo/i);
 
     const logoInput = document.querySelector(
-      'input[type="file"][accept="image/svg+xml,image/png,image/jpeg,image/webp"]',
+      'input[type="file"][accept="image/svg+xml,image/png,image/jpeg,image/webp"]'
     ) as HTMLInputElement;
     const badLogo = new File(['bad'], 'logo.txt', { type: 'text/plain' });
     await user.upload(logoInput, badLogo);
@@ -239,7 +239,7 @@ describe('BrandingSettings', () => {
     await screen.findByText(/edit dark mode favicon/i);
 
     const faviconInput = document.querySelector(
-      'input[type="file"][accept="image/png,image/jpeg,.png,.jpg,.jpeg"]',
+      'input[type="file"][accept="image/png,image/jpeg,.png,.jpg,.jpeg"]'
     ) as HTMLInputElement;
     const badFavicon = new File(['bad'], 'favicon.gif', { type: 'image/gif' });
     await user.upload(faviconInput, badFavicon);

@@ -64,7 +64,7 @@ describe('ProjectWhitelistForm', () => {
     const onChange = vi.fn();
 
     const { container } = render(
-      <ProjectWhitelistForm value={['example.com']} onChange={onChange} />,
+      <ProjectWhitelistForm value={['example.com']} onChange={onChange} />
     );
 
     const buttons = Array.from(container.querySelectorAll('button'));
@@ -88,7 +88,7 @@ describe('ProjectWhitelistForm', () => {
         showCustomToggle
         useCustomSettings
         onCustomToggle={onCustomToggle}
-      />,
+      />
     );
 
     const toggle = screen.getByRole('switch', { name: /use custom domain whitelist/i });

@@ -56,7 +56,7 @@ describe('BrandingProvider', () => {
     renderWithQuery(
       <BrandingProvider>
         <BrandingConsumer />
-      </BrandingProvider>,
+      </BrandingProvider>
     );
 
     expect(await screen.findByText(mockBrandingConfig.primaryColor)).toBeInTheDocument();

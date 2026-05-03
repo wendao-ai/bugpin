@@ -117,7 +117,7 @@ describe('Widget settings pages', () => {
             tooltipEnabled: true,
             tooltipText: 'Need help?',
           }),
-        }),
+        })
       );
       expect(toast.success).toHaveBeenCalled();
     });

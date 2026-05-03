@@ -83,7 +83,7 @@ describe('SyncExistingReportsDialog', () => {
           message: 'Queued 5 reports for sync',
           queued: 5,
         });
-      }),
+      })
     );
 
     renderWithProviders(<SyncExistingReportsDialog {...defaultProps} onConfirm={onConfirm} />);
@@ -110,7 +110,7 @@ describe('SyncExistingReportsDialog', () => {
           message: 'Queued 5 reports for sync',
           queued: 5,
         });
-      }),
+      })
     );
 
     renderWithProviders(<SyncExistingReportsDialog {...defaultProps} />);

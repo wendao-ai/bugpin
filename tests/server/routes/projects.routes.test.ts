@@ -163,4 +163,54 @@ describe('projects routes', () => {
     });
     expect(res.status).toBe(200);
   });
+
+  it('accepts a valid language settings block on PATCH', async () => {
+    const app = createApp();
+    const res = await app.request('http://localhost/projects/prj_1', {
+      method: 'PATCH',
+      headers: {
+        cookie: 'session=sess_1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        settings: { language: { mode: 'manual', defaultLanguage: 'de' } },
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(lastUpdateBody).toEqual({
+      settings: { language: { mode: 'manual', defaultLanguage: 'de' } },
+    });
+  });
+
+  it('rejects an invalid language defaultLanguage on PATCH', async () => {
+    const app = createApp();
+    const res = await app.request('http://localhost/projects/prj_1', {
+      method: 'PATCH',
+      headers: {
+        cookie: 'session=sess_1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        settings: { language: { mode: 'manual', defaultLanguage: 'xx' } },
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe('VALIDATION_ERROR');
+  });
+
+  it('rejects an invalid language mode on PATCH', async () => {
+    const app = createApp();
+    const res = await app.request('http://localhost/projects/prj_1', {
+      method: 'PATCH',
+      headers: {
+        cookie: 'session=sess_1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        settings: { language: { mode: 'invalid', defaultLanguage: 'en' } },
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
 });

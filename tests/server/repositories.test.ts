@@ -111,6 +111,24 @@ describe('projectsRepo', () => {
     const all = await projectsRepo.findAll(true);
     expect(all).toHaveLength(1);
   });
+
+  it('applies default language settings on read when missing', async () => {
+    const project = await projectsRepo.create({ name: 'NoLanguage' });
+    expect(project.settings.language).toEqual({ mode: 'auto', defaultLanguage: 'en' });
+
+    const fetched = await projectsRepo.findById(project.id);
+    expect(fetched?.settings.language).toEqual({ mode: 'auto', defaultLanguage: 'en' });
+  });
+
+  it('preserves stored language settings on read when present', async () => {
+    const project = await projectsRepo.create({
+      name: 'WithLanguage',
+      settings: { language: { mode: 'manual', defaultLanguage: 'de' } },
+    });
+
+    const fetched = await projectsRepo.findById(project.id);
+    expect(fetched?.settings.language).toEqual({ mode: 'manual', defaultLanguage: 'de' });
+  });
 });
 
 describe('usersRepo', () => {
@@ -228,6 +246,71 @@ describe('settingsRepo', () => {
 
     const merged = await settingsRepo.updateNested('branding', { primaryColor: '#123456' });
     expect(merged.branding.primaryColor).toBe('#123456');
+  });
+
+  it('replaces legacy "Found a bug?" tooltip with null at the global layer', async () => {
+    await settingsRepo.set('widget_launcher_button', {
+      buttonText: null,
+      tooltipText: 'Found a bug?',
+    });
+    const settings = await settingsRepo.getAll();
+    expect(settings.widgetLauncherButton.tooltipText).toBeNull();
+  });
+
+  it('wraps a legacy customized tooltip string into { en }', async () => {
+    await settingsRepo.set('widget_launcher_button', {
+      tooltipText: 'Custom!',
+    });
+    const settings = await settingsRepo.getAll();
+    expect(settings.widgetLauncherButton.tooltipText).toEqual({ en: 'Custom!' });
+  });
+
+  it('wraps a legacy buttonText string into { en } at the global layer', async () => {
+    await settingsRepo.set('widget_launcher_button', {
+      buttonText: 'Report',
+    });
+    const settings = await settingsRepo.getAll();
+    expect(settings.widgetLauncherButton.buttonText).toEqual({ en: 'Report' });
+  });
+
+  it('preserves null buttonText at the global layer', async () => {
+    await settingsRepo.set('widget_launcher_button', {
+      buttonText: null,
+    });
+    const settings = await settingsRepo.getAll();
+    expect(settings.widgetLauncherButton.buttonText).toBeNull();
+  });
+});
+
+describe('projectsRepo backwards-compat', () => {
+  it('wraps legacy buttonText/tooltipText strings on read', async () => {
+    const project = await projectsRepo.create({
+      name: 'Legacy',
+      settings: {
+        widgetLauncherButton: {
+          buttonText: 'Report',
+          tooltipText: 'Custom tooltip',
+        } as never,
+      },
+    });
+    const fetched = await projectsRepo.findById(project.id);
+    expect(fetched?.settings.widgetLauncherButton?.buttonText).toEqual({ en: 'Report' });
+    expect(fetched?.settings.widgetLauncherButton?.tooltipText).toEqual({ en: 'Custom tooltip' });
+  });
+
+  it('preserves explicit nulls on the project layer', async () => {
+    const project = await projectsRepo.create({
+      name: 'Nulls',
+      settings: {
+        widgetLauncherButton: {
+          buttonText: null,
+          tooltipText: null,
+        },
+      },
+    });
+    const fetched = await projectsRepo.findById(project.id);
+    expect(fetched?.settings.widgetLauncherButton?.buttonText).toBeNull();
+    expect(fetched?.settings.widgetLauncherButton?.tooltipText).toBeNull();
   });
 });
 

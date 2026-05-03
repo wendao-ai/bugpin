@@ -77,7 +77,7 @@ describe('useSetSyncMode hook', () => {
           syncMode: 'automatic',
           unsyncedCount: 10,
         });
-      }),
+      })
     );
 
     const { result } = renderHook(() => useSetSyncMode(), { wrapper: createWrapper() });
@@ -138,7 +138,7 @@ describe('useSyncExistingReports hook', () => {
           message: `Queued ${body.reportIds.length} reports for sync`,
           queued: body.reportIds.length,
         });
-      }),
+      })
     );
 
     const { result } = renderHook(() => useSyncExistingReports(), { wrapper: createWrapper() });

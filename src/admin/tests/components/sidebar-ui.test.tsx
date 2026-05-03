@@ -117,7 +117,7 @@ describe('sidebar ui', () => {
 
   it('throws when useSidebar is used outside provider', () => {
     expect(() => render(<SidebarConsumer />)).toThrow(
-      'useSidebar must be used within a SidebarProvider.',
+      'useSidebar must be used within a SidebarProvider.'
     );
   });
 });

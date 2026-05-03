@@ -49,7 +49,7 @@ describe('Global settings sections', () => {
         expect.objectContaining({
           appName: 'New App Name',
           retentionDays: 120,
-        }),
+        })
       );
     });
   });
@@ -71,7 +71,7 @@ describe('Global settings sections', () => {
     await waitFor(() => {
       expect(putSpy).toHaveBeenCalledWith(
         '/settings',
-        expect.objectContaining({ updateCheckEnabled: false }),
+        expect.objectContaining({ updateCheckEnabled: false })
       );
     });
 
@@ -85,7 +85,7 @@ describe('Global settings sections', () => {
     await waitFor(() => {
       expect(putSpy).toHaveBeenCalledWith(
         '/settings',
-        expect.objectContaining({ updateCheckEnabled: true }),
+        expect.objectContaining({ updateCheckEnabled: true })
       );
     });
   });
@@ -135,7 +135,7 @@ describe('Global settings sections', () => {
         expect.objectContaining({
           rateLimitPerMinute: 120,
           sessionMaxAgeDays: 14,
-        }),
+        })
       );
     });
   });
@@ -164,7 +164,7 @@ describe('Global settings sections', () => {
             host: 'smtp.example.com',
             from: 'bugs@example.com',
           }),
-        }),
+        })
       );
     });
 
@@ -180,7 +180,7 @@ describe('Global settings sections', () => {
             from: 'bugs@example.com',
           }),
           testEmail: expect.stringMatching(/@/),
-        }),
+        })
       );
       expect(toast.success).toHaveBeenCalled();
     });

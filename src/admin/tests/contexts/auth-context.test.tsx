@@ -71,7 +71,7 @@ function renderAuth() {
   return render(
     <AuthProvider>
       <AuthConsumer />
-    </AuthProvider>,
+    </AuthProvider>
   );
 }
 

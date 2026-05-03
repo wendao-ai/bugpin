@@ -45,7 +45,7 @@ function setupWidgetEnv() {
       if (!current) return;
       listeners.set(
         event,
-        current.filter((fn) => fn !== handler),
+        current.filter((fn) => fn !== handler)
       );
     },
     dispatchEvent: (event: string | { type?: string }, payload?: unknown) => {

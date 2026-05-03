@@ -57,7 +57,7 @@ describe('integration hooks extra coverage', () => {
             updatedAt: '2024-01-10T10:00:00Z',
           },
         });
-      }),
+      })
     );
 
     const { result } = renderHook(() => useIntegration('integration-9'), {
@@ -111,7 +111,7 @@ describe('integration hooks extra coverage', () => {
           },
         });
       }),
-      http.delete('/api/integrations/:id', () => HttpResponse.json({ success: true })),
+      http.delete('/api/integrations/:id', () => HttpResponse.json({ success: true }))
     );
 
     const createHook = renderHook(() => useCreateIntegration(), { wrapper: createWrapper() });
@@ -148,7 +148,7 @@ describe('integration hooks extra coverage', () => {
           success: true,
           result: { success: true },
         });
-      }),
+      })
     );
 
     const { result } = renderHook(() => useTestIntegration(), { wrapper: createWrapper() });
@@ -163,7 +163,7 @@ describe('integration hooks extra coverage', () => {
           success: true,
           result: { success: false, error: 'Bad token' },
         });
-      }),
+      })
     );
 
     result.current.mutate('integration-2');
@@ -185,7 +185,7 @@ describe('integration hooks extra coverage', () => {
             labels: body.labels ?? [],
           },
         });
-      }),
+      })
     );
 
     const { result } = renderHook(() => useForwardReport(), { wrapper: createWrapper() });
@@ -222,7 +222,7 @@ describe('integration hooks extra coverage', () => {
           success: true,
           assignees: [{ login: 'octo', avatarUrl: 'https://example.com/1.png' }],
         });
-      }),
+      })
     );
 
     const reposHook = renderHook(() => useFetchGitHubRepos(), { wrapper: createWrapper() });
@@ -255,9 +255,9 @@ describe('integration hooks extra coverage', () => {
       http.post('/api/integrations/:id/sync-mode', () => {
         return HttpResponse.json(
           { success: false, error: 'CONFIG_ERROR', message: 'Missing config' },
-          { status: 400 },
+          { status: 400 }
         );
-      }),
+      })
     );
 
     const { result } = renderHook(() => useSetSyncMode(), { wrapper: createWrapper() });

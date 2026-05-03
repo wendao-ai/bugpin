@@ -29,7 +29,7 @@ describe('widget UI components', () => {
     const html = renderToString(
       <Select>
         <option value="one">One</option>
-      </Select>,
+      </Select>
     );
     expect(html).toContain('One');
   });
@@ -48,7 +48,7 @@ describe('widget UI components', () => {
         ]}
         activeTab="details"
         onTabChange={() => undefined}
-      />,
+      />
     );
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain('Details');

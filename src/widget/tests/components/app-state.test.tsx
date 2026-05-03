@@ -39,7 +39,7 @@ const baseConfig: WidgetConfig = {
   apiKey: 'proj_key',
   serverUrl: 'https://example.com',
   position: 'bottom-right',
-  buttonText: 'Report issue',
+  buttonText: { project: { en: 'Report issue' }, global: null, builtin: null },
   buttonShape: 'round',
   buttonIcon: 'bug',
   buttonIconSize: 18,
@@ -71,7 +71,7 @@ const baseConfig: WidgetConfig = {
   dialogDarkForegroundColor: '#fafafa',
   enableHoverScaleEffect: true,
   tooltipEnabled: false,
-  tooltipText: null,
+  tooltipText: { project: undefined, global: null, builtin: null },
   enableScreenshot: true,
   enableAnnotation: true,
   enableConsoleCapture: true,
@@ -157,7 +157,7 @@ describe('App state transitions', () => {
     render(<App config={baseConfig} deps={appDeps} />, container);
 
     const launcherAgain = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcherAgain?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     await flush();
@@ -211,7 +211,7 @@ describe('App state transitions', () => {
     render(<App config={baseConfig} deps={appDeps} />, container);
 
     const launcher = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcher?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     await flush();
@@ -240,7 +240,7 @@ describe('App state transitions', () => {
     render(<App config={baseConfig} deps={appDeps} />, container);
 
     const launcher = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcher?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     await flush();
@@ -266,7 +266,7 @@ describe('App state transitions', () => {
     render(<App config={baseConfig} deps={appDeps} />, container);
 
     const launcher = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcher?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     await flush();
@@ -312,7 +312,7 @@ describe('App state transitions', () => {
     render(<App config={baseConfig} deps={appDeps} />, container);
 
     const launcherAgain = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcherAgain?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     await flush();
@@ -326,7 +326,7 @@ describe('App state transitions', () => {
         reporterEmail: '',
         reporterName: '',
       },
-      [],
+      []
     );
     await flush();
     await flush();

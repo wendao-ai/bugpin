@@ -39,7 +39,7 @@ describe('UsersSettings', () => {
           name: 'New User',
           email: 'newuser@example.com',
           role: 'viewer',
-        }),
+        })
       );
       expect(toast.success).toHaveBeenCalled();
     });
@@ -47,8 +47,12 @@ describe('UsersSettings', () => {
 
   it('updates and deletes a non-admin user', async () => {
     const user = userEvent.setup();
-    const patchSpy = vi.spyOn(api, 'patch').mockResolvedValue({ data: { success: true } } as unknown);
-    const deleteSpy = vi.spyOn(api, 'delete').mockResolvedValue({ data: { success: true } } as unknown);
+    const patchSpy = vi
+      .spyOn(api, 'patch')
+      .mockResolvedValue({ data: { success: true } } as unknown);
+    const deleteSpy = vi
+      .spyOn(api, 'delete')
+      .mockResolvedValue({ data: { success: true } } as unknown);
 
     renderWithProviders(<UsersSettings />);
 
@@ -64,7 +68,7 @@ describe('UsersSettings', () => {
         '/users/user-3',
         expect.objectContaining({
           isActive: false,
-        }),
+        })
       );
     });
 
@@ -81,7 +85,9 @@ describe('UsersSettings', () => {
 
   it('updates default projects for a user', async () => {
     const user = userEvent.setup();
-    const patchSpy = vi.spyOn(api, 'patch').mockResolvedValue({ data: { success: true } } as unknown);
+    const patchSpy = vi
+      .spyOn(api, 'patch')
+      .mockResolvedValue({ data: { success: true } } as unknown);
 
     renderWithProviders(<UsersSettings />);
 
@@ -125,9 +131,7 @@ describe('UsersSettings', () => {
     await user.click(resendButtons[0]);
 
     await waitFor(() => {
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/\/users\/.*\/resend-invitation/),
-      );
+      expect(postSpy).toHaveBeenCalledWith(expect.stringMatching(/\/users\/.*\/resend-invitation/));
       expect(toast.success).toHaveBeenCalled();
     });
   });

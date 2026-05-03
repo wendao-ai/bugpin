@@ -163,9 +163,7 @@ describe('shouldSkipFontEmbedding', () => {
   });
 
   it('returns unreadable-stylesheet reason when in-rule iteration throws', () => {
-    setStyleSheets([
-      makeSheet({ href: null, throwOnRules: 'iterate' }),
-    ]);
+    setStyleSheets([makeSheet({ href: null, throwOnRules: 'iterate' })]);
 
     expect(shouldSkipFontEmbedding()).toEqual({
       skip: true,

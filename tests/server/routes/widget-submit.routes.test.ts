@@ -323,6 +323,121 @@ describe('widget routes', () => {
 
       expect(res.status).toBe(400);
     });
+
+    describe('reporter locale capture', () => {
+      it('persists the normalized claimed locale for an auto-mode project', async () => {
+        projectResult = {
+          ...baseProject,
+          settings: {
+            ...baseProject.settings,
+            language: { mode: 'auto', defaultLanguage: 'en' },
+          },
+        };
+
+        let capturedLocale: string | undefined;
+        reportsService.create = async (input) => {
+          capturedLocale = input.reporterLocale;
+          return Result.ok(baseReport);
+        };
+
+        const app = createApp();
+        const res = await app.request('http://localhost/widget/submit', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': 'test_api_key_123',
+          },
+          body: JSON.stringify({ ...validSubmitBody, locale: 'fr-FR' }),
+        });
+
+        expect(res.status).toBe(201);
+        expect(capturedLocale).toBe('fr');
+      });
+
+      it('overwrites the claimed locale with the project default in manual mode', async () => {
+        projectResult = {
+          ...baseProject,
+          settings: {
+            ...baseProject.settings,
+            language: { mode: 'manual', defaultLanguage: 'de' },
+          },
+        };
+
+        let capturedLocale: string | undefined;
+        reportsService.create = async (input) => {
+          capturedLocale = input.reporterLocale;
+          return Result.ok(baseReport);
+        };
+
+        const app = createApp();
+        const res = await app.request('http://localhost/widget/submit', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': 'test_api_key_123',
+          },
+          body: JSON.stringify({ ...validSubmitBody, locale: 'fr' }),
+        });
+
+        expect(res.status).toBe(201);
+        expect(capturedLocale).toBe('de');
+      });
+
+      it('falls back to project default when claimed locale is unsupported in auto mode', async () => {
+        projectResult = {
+          ...baseProject,
+          settings: {
+            ...baseProject.settings,
+            language: { mode: 'auto', defaultLanguage: 'es' },
+          },
+        };
+
+        let capturedLocale: string | undefined;
+        reportsService.create = async (input) => {
+          capturedLocale = input.reporterLocale;
+          return Result.ok(baseReport);
+        };
+
+        const app = createApp();
+        const res = await app.request('http://localhost/widget/submit', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': 'test_api_key_123',
+          },
+          body: JSON.stringify({ ...validSubmitBody, locale: 'pt-BR' }),
+        });
+
+        expect(res.status).toBe(201);
+        expect(capturedLocale).toBe('es');
+      });
+
+      it('falls back to en when no language block exists and no claimed locale', async () => {
+        projectResult = {
+          ...baseProject,
+          settings: { ...baseProject.settings },
+        };
+
+        let capturedLocale: string | undefined;
+        reportsService.create = async (input) => {
+          capturedLocale = input.reporterLocale;
+          return Result.ok(baseReport);
+        };
+
+        const app = createApp();
+        const res = await app.request('http://localhost/widget/submit', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': 'test_api_key_123',
+          },
+          body: JSON.stringify(validSubmitBody),
+        });
+
+        expect(res.status).toBe(201);
+        expect(capturedLocale).toBe('en');
+      });
+    });
   });
 
   describe('GET /widget/config/:apiKey', () => {
@@ -358,7 +473,7 @@ describe('widget routes', () => {
           widgetLauncherButton: {
             theme: 'dark',
             position: 'bottom-left',
-            buttonText: 'Custom Text',
+            buttonText: { en: 'Custom Text' },
           },
         },
       };
@@ -370,7 +485,7 @@ describe('widget routes', () => {
       const body = await res.json();
       expect(body.config.theme).toBe('dark');
       expect(body.config.position).toBe('bottom-left');
-      expect(body.config.buttonText).toBe('Custom Text');
+      expect(body.config.buttonText.project).toEqual({ en: 'Custom Text' });
     });
 
     it('preserves explicit null for nullable fields in project settings', async () => {
@@ -392,8 +507,8 @@ describe('widget routes', () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.config.buttonIcon).toBeNull();
-      expect(body.config.buttonText).toBeNull();
-      expect(body.config.tooltipText).toBeNull();
+      expect(body.config.buttonText.project).toBeNull();
+      expect(body.config.tooltipText.project).toBeNull();
     });
 
     it('falls back to global settings when project settings not set', async () => {
@@ -409,6 +524,37 @@ describe('widget routes', () => {
       const body = await res.json();
       expect(body.config.theme).toBe('system');
       expect(body.config.position).toBe('bottom-right');
+    });
+
+    it('exposes default language block when project has none', async () => {
+      projectResult = {
+        ...baseProject,
+        settings: {},
+      };
+
+      const app = createApp();
+      const res = await app.request('http://localhost/widget/config/test_api_key_123');
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.config.language).toEqual({ mode: 'auto', defaultLanguage: 'en' });
+    });
+
+    it('exposes configured language block when project has one', async () => {
+      projectResult = {
+        ...baseProject,
+        settings: {
+          ...baseProject.settings,
+          language: { mode: 'manual', defaultLanguage: 'de' },
+        },
+      };
+
+      const app = createApp();
+      const res = await app.request('http://localhost/widget/config/test_api_key_123');
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.config.language).toEqual({ mode: 'manual', defaultLanguage: 'de' });
     });
   });
 });

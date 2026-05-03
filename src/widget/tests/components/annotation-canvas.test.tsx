@@ -77,7 +77,7 @@ describe('AnnotationCanvas', () => {
         onSave={onSave}
         onCancel={onCancel}
       />,
-      container,
+      container
     );
 
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -108,12 +108,12 @@ describe('AnnotationCanvas', () => {
         onSave={() => undefined}
         onCancel={() => undefined}
       />,
-      container,
+      container
     );
 
     await waitFor(
       () => Boolean((globalThis as Record<string, unknown>).__fabricCanvasReady),
-      'Fabric canvas not ready',
+      'Fabric canvas not ready'
     );
 
     const canvasEl = container.querySelector('canvas') as HTMLCanvasElement & {
@@ -145,7 +145,7 @@ describe('AnnotationCanvas', () => {
         (
           container.querySelector('button[title="Pen"]') as HTMLButtonElement | null
         )?.className.includes('text-primary') ?? false,
-      'Pen tool not active',
+      'Pen tool not active'
     );
 
     const blueButton = container.querySelector('button[title="#3b82f6"]') as HTMLButtonElement;
@@ -157,13 +157,13 @@ describe('AnnotationCanvas', () => {
     await waitFor(() => canvas.freeDrawingBrush?.width === 8, 'Brush width not updated');
 
     const zoomInButton = container.querySelector(
-      'button[title="Zoom In - Hold Space to pan when zoomed"]',
+      'button[title="Zoom In - Hold Space to pan when zoomed"]'
     ) as HTMLButtonElement;
     zoomInButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     expect(canvas.getZoom()).toBeGreaterThan(1);
 
     const zoomResetButton = container.querySelector(
-      'button[title^="Reset Zoom"]',
+      'button[title^="Reset Zoom"]'
     ) as HTMLButtonElement;
     zoomResetButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     expect(canvas.getZoom()).toBe(1);
@@ -184,12 +184,12 @@ describe('AnnotationCanvas', () => {
         onSave={() => undefined}
         onCancel={() => undefined}
       />,
-      container,
+      container
     );
 
     await waitFor(
       () => Boolean((globalThis as Record<string, unknown>).__fabricCanvasReady),
-      'Fabric canvas not ready',
+      'Fabric canvas not ready'
     );
 
     const canvasEl = container.querySelector('canvas') as HTMLCanvasElement & {
@@ -210,10 +210,10 @@ describe('AnnotationCanvas', () => {
     await waitFor(() => Boolean(canvas.events?.has('mouse:down')), 'Canvas handlers not ready');
 
     const undoButton = container.querySelector(
-      'button[title="Undo (Ctrl+Z)"]',
+      'button[title="Undo (Ctrl+Z)"]'
     ) as HTMLButtonElement;
     const redoButton = container.querySelector(
-      'button[title="Redo (Ctrl+Shift+Z)"]',
+      'button[title="Redo (Ctrl+Shift+Z)"]'
     ) as HTMLButtonElement;
 
     expect(undoButton.disabled).toBe(true);
@@ -242,12 +242,12 @@ describe('AnnotationCanvas', () => {
         onSave={() => undefined}
         onCancel={() => undefined}
       />,
-      container,
+      container
     );
 
     await waitFor(
       () => Boolean((globalThis as Record<string, unknown>).__fabricCanvasReady),
-      'Fabric canvas not ready',
+      'Fabric canvas not ready'
     );
 
     const canvasEl = container.querySelector('canvas') as HTMLCanvasElement & {
@@ -273,14 +273,14 @@ describe('AnnotationCanvas', () => {
         (
           container.querySelector('button[title="Pen"]') as HTMLButtonElement | null
         )?.className.includes('text-primary') ?? false,
-      'Pen tool not active',
+      'Pen tool not active'
     );
     await waitFor(() => canvas.isDrawingMode === true, 'Pen drawing mode not enabled');
     expect(canvas.selection).toBe(false);
     expect(canvas.defaultCursor).toBe('crosshair');
 
     const panButton = container.querySelector(
-      'button[title="Pan (or hold Space)"]',
+      'button[title="Pan (or hold Space)"]'
     ) as HTMLButtonElement;
     panButton.click();
 
@@ -289,7 +289,7 @@ describe('AnnotationCanvas', () => {
         (
           container.querySelector('button[title="Pan (or hold Space)"]') as HTMLButtonElement | null
         )?.className.includes('text-primary') ?? false,
-      'Pan tool not active',
+      'Pan tool not active'
     );
     await waitFor(() => canvas.isDrawingMode === false, 'Pan should disable drawing');
     expect(canvas.selection).toBe(false);
@@ -303,7 +303,7 @@ describe('AnnotationCanvas', () => {
         (
           container.querySelector('button[title="Select"]') as HTMLButtonElement | null
         )?.className.includes('text-primary') ?? false,
-      'Select tool not active',
+      'Select tool not active'
     );
     await waitFor(() => canvas.selection === true, 'Select should enable selection');
     expect(canvas.defaultCursor).toBe('default');

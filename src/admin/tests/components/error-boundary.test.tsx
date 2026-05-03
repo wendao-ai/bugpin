@@ -41,7 +41,7 @@ describe('ErrorBoundary', () => {
     const { rerender } = render(
       <ErrorBoundary>
         <ThrowOnce shouldThrow={true} />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('ErrorBoundary', () => {
     rerender(
       <ErrorBoundary>
         <ThrowOnce shouldThrow={false} />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     await user.click(screen.getByRole('button', { name: /try again/i }));
@@ -68,7 +68,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <HookThrower />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument();
 
@@ -76,7 +76,7 @@ describe('ErrorBoundary', () => {
       () => {
         throw new Error('Wrapped error');
       },
-      <div>Fallback</div>,
+      <div>Fallback</div>
     );
     render(<Wrapped />);
     expect(await screen.findByText('Fallback')).toBeInTheDocument();

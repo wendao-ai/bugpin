@@ -29,7 +29,7 @@ describe('ThemeColorPicker', () => {
           darkTextHoverColor: '#000000',
         }}
         onChange={onChange}
-      />,
+      />
     );
 
     // Switch to dark mode tab where the generate button lives

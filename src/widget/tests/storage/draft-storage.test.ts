@@ -119,7 +119,7 @@ describe('draft storage', () => {
         formData: { title: 'To Delete' },
         activeTab: 'details',
         savedAt: new Date().toISOString(),
-      }),
+      })
     );
 
     // Verify it exists

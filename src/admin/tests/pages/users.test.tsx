@@ -41,7 +41,7 @@ describe('Users Page', () => {
       () => {
         expect(screen.getByText('Admin User')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
   });
 
@@ -95,7 +95,7 @@ describe('Users Page', () => {
       () => {
         expect(screen.getByText('Admin User')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     expect(document.querySelector('[class*="rounded-full"]')).toBeTruthy();

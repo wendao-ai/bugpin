@@ -84,7 +84,7 @@ describe('submit API', () => {
             position: 'bottom-right',
           },
         }),
-        { status: 200 },
+        { status: 200 }
       );
     globalThis.fetch = mockFetch as unknown as typeof fetch;
 

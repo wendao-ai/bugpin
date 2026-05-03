@@ -32,8 +32,8 @@ function mockVersion(overrides: VersionResponseBody = {}) {
         lastCheckedAt: '2026-05-01T08:00:00Z',
         checkEnabled: true,
         ...overrides,
-      }),
-    ),
+      })
+    )
   );
 }
 
@@ -41,9 +41,7 @@ function mockUserRole(role: 'admin' | 'editor' | 'viewer') {
   const user =
     role === 'admin' ? mockUsers.admin : role === 'editor' ? mockUsers.editor : mockUsers.viewer;
   server.use(
-    http.get('/api/auth/me', () =>
-      HttpResponse.json({ success: true, authenticated: true, user }),
-    ),
+    http.get('/api/auth/me', () => HttpResponse.json({ success: true, authenticated: true, user }))
   );
 }
 

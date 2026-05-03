@@ -12,10 +12,17 @@ const definition: IntegrationTypeDefinition = {
   icon: Github,
   maxPerProject: 1,
   getConfigSummary: (integration) => {
-    const config = integration.config as { owner: string; repo: string; accessToken: string; labels?: string[] };
+    const config = integration.config as {
+      owner: string;
+      repo: string;
+      accessToken: string;
+      labels?: string[];
+    };
     return (
       <div>
-        <span>{config.owner}/{config.repo}</span>
+        <span>
+          {config.owner}/{config.repo}
+        </span>
         <span>{config.accessToken}</span>
         {config.labels && <span>Labels: {config.labels.join(', ')}</span>}
       </div>
@@ -55,7 +62,7 @@ describe('IntegrationTypeCard', () => {
         onDelete={vi.fn()}
         onTest={vi.fn()}
         onToggleActive={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
@@ -81,7 +88,7 @@ describe('IntegrationTypeCard', () => {
         onDelete={onDelete}
         onTest={onTest}
         onToggleActive={onToggleActive}
-      />,
+      />
     );
 
     expect(screen.getByText('GitHub Main')).toBeInTheDocument();

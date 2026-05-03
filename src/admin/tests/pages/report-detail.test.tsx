@@ -23,7 +23,7 @@ describe('ReportDetail', () => {
       <Routes>
         <Route path="/reports/:id" element={<ReportDetail />} />
       </Routes>,
-      { initialEntries: ['/reports/report-1'] },
+      { initialEntries: ['/reports/report-1'] }
     );
 
     expect(await screen.findByText('Button not working')).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('ReportDetail', () => {
       <Routes>
         <Route path="/reports/:id" element={<ReportDetail />} />
       </Routes>,
-      { initialEntries: ['/reports/report-1'] },
+      { initialEntries: ['/reports/report-1'] }
     );
 
     expect(await screen.findByText('Button not working')).toBeInTheDocument();
@@ -79,7 +79,7 @@ describe('ReportDetail', () => {
             { id: 'file-2', mimeType: 'video/mp4', filename: 'clip.mp4' },
           ],
         });
-      }),
+      })
     );
 
     const user = userEvent.setup();
@@ -87,7 +87,7 @@ describe('ReportDetail', () => {
       <Routes>
         <Route path="/reports/:id" element={<ReportDetail />} />
       </Routes>,
-      { initialEntries: ['/reports/report-1'] },
+      { initialEntries: ['/reports/report-1'] }
     );
 
     expect(await screen.findByText('Screenshots (2)')).toBeInTheDocument();
@@ -101,14 +101,14 @@ describe('ReportDetail', () => {
     server.use(
       http.get('/api/reports/:id', () => {
         return HttpResponse.json({ success: false, message: 'Report not found' }, { status: 404 });
-      }),
+      })
     );
 
     renderWithProviders(
       <Routes>
         <Route path="/reports/:id" element={<ReportDetail />} />
       </Routes>,
-      { initialEntries: ['/reports/missing'] },
+      { initialEntries: ['/reports/missing'] }
     );
 
     expect(await screen.findByText('Report not found')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('ReportDetail', () => {
           report: { ...report, githubSyncStatus: 'error', githubSyncError: 'Rate limit' },
           files: [],
         });
-      }),
+      })
     );
 
     const user = userEvent.setup();
@@ -132,7 +132,7 @@ describe('ReportDetail', () => {
       <Routes>
         <Route path="/reports/:id" element={<ReportDetail />} />
       </Routes>,
-      { initialEntries: ['/reports/report-1'] },
+      { initialEntries: ['/reports/report-1'] }
     );
 
     expect(await screen.findByText('Sync failed')).toBeInTheDocument();
@@ -161,14 +161,14 @@ describe('ReportDetail', () => {
           },
           files: [],
         });
-      }),
+      })
     );
 
     renderWithProviders(
       <Routes>
         <Route path="/reports/:id" element={<ReportDetail />} />
       </Routes>,
-      { initialEntries: ['/reports/report-3'] },
+      { initialEntries: ['/reports/report-3'] }
     );
 
     expect(await screen.findByText('Form validation issue')).toBeInTheDocument();

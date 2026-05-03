@@ -152,7 +152,7 @@ describe('IntegrationDialog', () => {
         onClose={onClose}
         integration={baseIntegration}
         projectId="project-1"
-      />,
+      />
     );
 
     expect(screen.getByText(/token saved/i)).toBeInTheDocument();

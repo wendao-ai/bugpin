@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { emailService } from '../../src/server/services/email.service';
+import { emailService, resolveTemplate } from '../../src/server/services/email.service';
 import { settingsRepo } from '../../src/server/database/repositories/settings.repo';
 import { settingsCacheService } from '../../src/server/services/settings-cache.service';
 import { logger } from '../../src/server/utils/logger';
-import type { Report } from '../../src/shared/types';
+import type { CustomEmailTemplates, Report } from '../../src/shared/types';
 
 const sendMail = mock(async () => undefined);
 const verify = mock(async () => undefined);
@@ -15,9 +15,11 @@ const originalCreateTransporter = emailService.createTransporter;
 const baseReport: Report = {
   id: 'rpt_1',
   projectId: 'prj_1',
+  source: 'widget',
   title: 'Bug report',
   status: 'open',
   priority: 'high',
+  reporterLocale: 'en',
   metadata: {
     url: 'https://example.com',
     browser: { name: 'Chrome', version: '1', userAgent: 'UA' },
@@ -222,6 +224,110 @@ describe('emailService notification helpers', () => {
     });
 
     expect(sendEmailSpy).toHaveBeenCalled();
+    emailService.sendEmail = originalSendEmail;
+  });
+});
+
+describe('resolveTemplate', () => {
+  it('returns the requested locale when present in defaults', () => {
+    const result = resolveTemplate('reporterConfirmation', 'fr');
+    expect(result.subject).toContain('Ton rapport');
+  });
+
+  it('falls back to en when the requested locale is missing for team templates', () => {
+    const result = resolveTemplate('newReport', 'de');
+    expect(result.subject).toContain('New Bug Report');
+  });
+
+  it('prefers the requested locale from custom overrides over defaults', () => {
+    const overrides: CustomEmailTemplates = {
+      reporterConfirmation: {
+        de: { subject: 'Custom DE', html: '<p>de</p>' },
+      },
+    };
+    const result = resolveTemplate('reporterConfirmation', 'de', overrides);
+    expect(result.subject).toBe('Custom DE');
+  });
+
+  it('falls back to en within custom overrides before falling through to defaults', () => {
+    const overrides: CustomEmailTemplates = {
+      reporterConfirmation: {
+        en: { subject: 'Custom EN override', html: '<p>en</p>' },
+      },
+    };
+    const result = resolveTemplate('reporterConfirmation', 'fr', overrides);
+    expect(result.subject).toBe('Custom EN override');
+  });
+
+  it('falls through to defaults when override has neither requested locale nor en', () => {
+    const overrides: CustomEmailTemplates = {
+      reporterConfirmation: {},
+    };
+    const result = resolveTemplate('reporterConfirmation', 'fr', overrides);
+    expect(result.subject).toContain('Ton rapport');
+  });
+
+  it('does not cross-fall to a different locale in overrides', () => {
+    const overrides: CustomEmailTemplates = {
+      reporterConfirmation: {
+        de: { subject: 'German override', html: '<p>de</p>' },
+      },
+    };
+    const result = resolveTemplate('reporterConfirmation', 'fr', overrides);
+    expect(result.subject).not.toBe('German override');
+    expect(result.subject).toContain('Ton rapport');
+  });
+});
+
+describe('reporter-facing emails honor reporter locale', () => {
+  it('renders the French confirmation template for a French report', async () => {
+    let captured: { subject: string; html: string } | null = null;
+    const sendEmailSpy = mock(async (opts: { subject: string; html: string }) => {
+      captured = { subject: opts.subject, html: opts.html };
+      return { success: true };
+    });
+    const originalSendEmail = emailService.sendEmail;
+    emailService.sendEmail = sendEmailSpy as never;
+
+    await emailService.sendReporterConfirmationEmail('reporter@example.com', {
+      report: { ...baseReport, reporterLocale: 'fr' },
+      projectName: 'Projet',
+      appName: 'BugPin',
+      appUrl: 'https://example.com',
+    });
+
+    expect(sendEmailSpy).toHaveBeenCalled();
+    expect(captured).not.toBeNull();
+    expect(captured!.subject).toContain('Ton rapport');
+    expect(captured!.html).toContain('Rapport reçu');
+
+    emailService.sendEmail = originalSendEmail;
+  });
+
+  it('uses the German status label for a German status-change email', async () => {
+    let captured: { subject: string; html: string } | null = null;
+    const sendEmailSpy = mock(async (opts: { subject: string; html: string }) => {
+      captured = { subject: opts.subject, html: opts.html };
+      return { success: true };
+    });
+    const originalSendEmail = emailService.sendEmail;
+    emailService.sendEmail = sendEmailSpy as never;
+
+    await emailService.sendReporterStatusChangeEmail('reporter@example.com', {
+      report: { ...baseReport, reporterLocale: 'de' },
+      projectName: 'Projekt',
+      appName: 'BugPin',
+      appUrl: 'https://example.com',
+      oldStatus: 'open',
+      newStatus: 'in_progress',
+    });
+
+    expect(sendEmailSpy).toHaveBeenCalled();
+    expect(captured).not.toBeNull();
+    expect(captured!.html).toContain('Offen');
+    expect(captured!.html).toContain('In Bearbeitung');
+    expect(captured!.html).toContain('Berichtsstatus aktualisiert');
+
     emailService.sendEmail = originalSendEmail;
   });
 });

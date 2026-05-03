@@ -213,7 +213,7 @@ describe('captureScreenshot', () => {
 
     await expect(captureScreenshot({ method: 'element' })).rejects.toThrow('Selector required');
     await expect(captureScreenshot({ method: 'element', selector: '#missing' })).rejects.toThrow(
-      'Element not found: #missing',
+      'Element not found: #missing'
     );
   });
 });

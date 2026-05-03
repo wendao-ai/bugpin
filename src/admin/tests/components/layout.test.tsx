@@ -14,7 +14,7 @@ describe('Layout', () => {
             <Route index element={<div>Home Content</div>} />
           </Route>
         </Routes>
-      </BrandingProvider>,
+      </BrandingProvider>
     );
 
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('Layout', () => {
           </Route>
         </Routes>
       </BrandingProvider>,
-      { initialEntries: ['/globalsettings'] },
+      { initialEntries: ['/globalsettings'] }
     );
 
     expect(await screen.findByText('Settings')).toBeInTheDocument();

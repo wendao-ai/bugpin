@@ -74,7 +74,7 @@ describe('brandingApi', () => {
     expect(url).toBe('/branding/favicon/dark');
     expect((formData as FormData).get('file')).toBe(file);
     expect((config as { headers?: Record<string, string> })?.headers?.['Content-Type']).toBe(
-      'multipart/form-data',
+      'multipart/form-data'
     );
   });
 

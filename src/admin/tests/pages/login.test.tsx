@@ -25,7 +25,7 @@ function renderLogin() {
           <Login />
         </AuthProvider>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 
@@ -98,9 +98,9 @@ describe('Login Page', () => {
       http.post('/api/auth/login', () => {
         return HttpResponse.json(
           { success: false, message: 'Invalid credentials' },
-          { status: 401 },
+          { status: 401 }
         );
-      }),
+      })
     );
 
     renderLogin();

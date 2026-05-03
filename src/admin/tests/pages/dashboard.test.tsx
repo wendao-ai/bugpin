@@ -38,7 +38,7 @@ describe('Dashboard Page', () => {
         // Check for stat card titles
         expect(screen.getByText('Total Reports')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Verify all stat cards are present - these texts can appear multiple times
@@ -55,7 +55,7 @@ describe('Dashboard Page', () => {
       () => {
         expect(screen.getByText('Recent Reports')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Check for "View all" link
@@ -73,7 +73,7 @@ describe('Dashboard Page', () => {
           page: 1,
           limit: 5,
         });
-      }),
+      })
     );
 
     renderWithProviders(<Dashboard />);
@@ -82,7 +82,7 @@ describe('Dashboard Page', () => {
       () => {
         expect(screen.getByText('No reports yet')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
   });
 
@@ -106,7 +106,7 @@ describe('Dashboard Page', () => {
           page: 1,
           limit: 5,
         });
-      }),
+      })
     );
 
     renderWithProviders(<Dashboard />);
@@ -115,7 +115,7 @@ describe('Dashboard Page', () => {
       () => {
         expect(screen.getByText('Test Bug Report')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Check for status badge - "Open" appears in both stat card and badge
@@ -149,7 +149,7 @@ describe('Dashboard Page', () => {
           page: 1,
           limit: 5,
         });
-      }),
+      })
     );
 
     renderWithProviders(<Dashboard />);
@@ -158,7 +158,7 @@ describe('Dashboard Page', () => {
       () => {
         expect(screen.getByText('Clickable Report')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // The report should be a link
@@ -174,9 +174,9 @@ describe('Dashboard Page', () => {
       http.get('/api/reports/stats/overview', () => {
         return HttpResponse.json(
           { success: false, error: 'SERVER_ERROR', message: 'Internal server error' },
-          { status: 500 },
+          { status: 500 }
         );
-      }),
+      })
     );
 
     renderWithProviders(<Dashboard />);
@@ -190,7 +190,7 @@ describe('Dashboard Page', () => {
         const body = document.body;
         expect(spinner || body).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     consoleSpy.mockRestore();

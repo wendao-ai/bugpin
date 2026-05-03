@@ -22,7 +22,7 @@ const baseConfig: WidgetConfig = {
   apiKey: 'proj_key',
   serverUrl: 'https://example.com',
   position: 'bottom-right',
-  buttonText: 'Report issue',
+  buttonText: { project: { en: 'Report issue' }, global: null, builtin: null },
   buttonShape: 'round',
   buttonIcon: 'bug',
   buttonIconSize: 18,
@@ -54,7 +54,7 @@ const baseConfig: WidgetConfig = {
   dialogDarkForegroundColor: '#fafafa',
   enableHoverScaleEffect: true,
   tooltipEnabled: false,
-  tooltipText: null,
+  tooltipText: { project: undefined, global: null, builtin: null },
   enableScreenshot: true,
   enableAnnotation: true,
   enableConsoleCapture: true,
@@ -175,7 +175,7 @@ describe('App interactions', () => {
     render(<App config={baseConfig} />, container);
 
     const launcher = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcher?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
@@ -195,7 +195,7 @@ describe('App interactions', () => {
     } as Navigator;
 
     const submitButton = Array.from(container.querySelectorAll('button')).find((btn) =>
-      btn.textContent?.includes('Submit Report'),
+      btn.textContent?.includes('Submit Report')
     );
     submitButton?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
@@ -227,14 +227,14 @@ describe('App interactions', () => {
     render(<App config={baseConfig} />, container);
 
     const launcher = container.querySelector(
-      'button[aria-label="Report issue"]',
+      'button[aria-label="Report issue"]'
     ) as HTMLButtonElement | null;
     launcher?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const mediaTab = Array.from(container.querySelectorAll('[role="tab"]')).find((tab) =>
-      tab.textContent?.includes('Screenshots'),
+      tab.textContent?.includes('Screenshots')
     );
     mediaTab?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
@@ -258,27 +258,27 @@ describe('App interactions', () => {
 
     const annotateButton = await waitFor(
       () => container.querySelector('button[title="Annotate"]') as HTMLButtonElement | null,
-      'Annotate button not ready',
+      'Annotate button not ready'
     );
     annotateButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
     await waitFor(
       () => (globalThis as Record<string, unknown>).__fabricCanvasReady,
-      'Fabric canvas not ready',
+      'Fabric canvas not ready'
     );
 
     const doneButton = await waitFor(
       () =>
         Array.from(container.querySelectorAll('button')).find(
-          (btn) => btn.textContent?.trim() === 'Done',
+          (btn) => btn.textContent?.trim() === 'Done'
         ),
-      'Done button not ready',
+      'Done button not ready'
     );
     doneButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
     await waitFor(
       () => (container.textContent ?? '').includes('Annotated'),
-      'Annotated badge not shown',
+      'Annotated badge not shown'
     );
     expect(container.textContent).toContain('Annotated');
 

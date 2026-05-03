@@ -56,7 +56,7 @@ describe('imageUtils', () => {
     }) as typeof document.createElement;
 
     await expect(
-      getCroppedImg('data:image/png;base64,test', { x: 0, y: 0, width: 50, height: 50 }),
+      getCroppedImg('data:image/png;base64,test', { x: 0, y: 0, width: 50, height: 50 })
     ).rejects.toThrow('No 2d context');
   });
 
