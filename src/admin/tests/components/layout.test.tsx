@@ -24,25 +24,43 @@ describe('Layout', () => {
     expect(await screen.findByText('About BugPin')).toBeInTheDocument();
   });
 
-  it('renders settings breadcrumb and updates hash', async () => {
-    const user = userEvent.setup();
-    window.location.hash = '#security';
+  it('renders single-level breadcrumb on /security', async () => {
+    window.location.hash = '';
 
     renderWithProviders(
       <BrandingProvider>
         <Routes>
-          <Route path="/globalsettings" element={<Layout />}>
+          <Route path="/security" element={<Layout />}>
+            <Route index element={<div>Security Content</div>} />
+          </Route>
+        </Routes>
+      </BrandingProvider>,
+      { initialEntries: ['/security'] }
+    );
+
+    expect(await screen.findByText('Security')).toBeInTheDocument();
+    expect(screen.getByText('Security Content')).toBeInTheDocument();
+  });
+
+  it('renders two-level breadcrumb on /settings#storage and clears hash on root click', async () => {
+    const user = userEvent.setup();
+    window.location.hash = '#storage';
+
+    renderWithProviders(
+      <BrandingProvider>
+        <Routes>
+          <Route path="/settings" element={<Layout />}>
             <Route index element={<div>Settings Content</div>} />
           </Route>
         </Routes>
       </BrandingProvider>,
-      { initialEntries: ['/globalsettings'] }
+      { initialEntries: ['/settings'] }
     );
 
-    expect(await screen.findByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText('Rate Limits')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByText('Storage')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Settings' }));
-    expect(window.location.hash).toBe('#system');
+    expect(window.location.hash).toBe('');
   });
 });

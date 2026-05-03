@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { Routes, Route } from 'react-router-dom';
-import { renderWithProviders, screen, userEvent, waitFor } from '../utils';
-import { ReportDetail } from '../../pages/ReportDetail';
-import { server } from '../mocks/server';
-import { mockReports } from '../mocks/handlers';
+import { renderWithProviders, screen, userEvent, waitFor } from '../../utils';
+import { ReportDetail } from '../../../pages/workspace/ReportDetail';
+import { server } from '../../mocks/server';
+import { mockReports } from '../../mocks/handlers';
 
 vi.mock('sonner', () => ({
   toast: {

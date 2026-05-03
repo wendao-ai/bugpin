@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderWithQuery, screen, userEvent, waitFor } from '../../utils';
-import { BrandingSettings } from '../../../pages/globalsettings/BrandingSettings';
+import { Branding } from '../../../pages/console/Branding';
 import { toast } from 'sonner';
-import { getCroppedImg } from '../../../pages/globalsettings/imageUtils';
+import { getCroppedImg } from '../../../lib/imageUtils';
 
 const brandingApiMocks = vi.hoisted(() => ({
   getConfig: vi.fn(),
@@ -43,7 +43,7 @@ vi.mock('../../../components/ThemeColorPicker', () => ({
   ),
 }));
 
-vi.mock('../../../pages/globalsettings/imageUtils', () => ({
+vi.mock('../../../lib/imageUtils', () => ({
   getCroppedImg: vi.fn(),
 }));
 
@@ -83,7 +83,7 @@ class MockImage {
   }
 }
 
-describe('BrandingSettings', () => {
+describe('Branding', () => {
   const originalImage = global.Image;
   const originalCreateObjectUrl = URL.createObjectURL;
   const originalRevokeObjectUrl = URL.revokeObjectURL;
@@ -142,7 +142,7 @@ describe('BrandingSettings', () => {
 
   it('saves and resets brand colors', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<BrandingSettings />);
+    renderWithQuery(<Branding />);
 
     expect(await screen.findByText('Brand Colors')).toBeInTheDocument();
 
@@ -166,7 +166,7 @@ describe('BrandingSettings', () => {
 
   it('validates icon uploads and supports cropping', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<BrandingSettings />);
+    renderWithQuery(<Branding />);
 
     const lightIcon = await screen.findByAltText('Light mode icon');
     await user.click(lightIcon);
@@ -214,7 +214,7 @@ describe('BrandingSettings', () => {
 
   it('uploads logos and favicons with validation', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<BrandingSettings />);
+    renderWithQuery(<Branding />);
 
     const darkLogo = await screen.findByAltText('Dark mode logo');
     await user.click(darkLogo);

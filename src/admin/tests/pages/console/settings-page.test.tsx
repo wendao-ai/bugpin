@@ -2,72 +2,57 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { server } from '../mocks/server';
-import { renderWithProviders } from '../utils';
-import { Settings } from '../../pages/globalsettings';
+import { server } from '../../mocks/server';
+import { renderWithProviders } from '../../utils';
+import { SettingsPage } from '../../../pages/console/SettingsPage';
+import { Screenshot } from '../../../pages/widget/Screenshot';
 
 describe('Settings Page', () => {
   beforeEach(() => {
-    // Reset hash before each test
     window.location.hash = '';
   });
 
   it('renders settings page', async () => {
-    renderWithProviders(<Settings />);
+    renderWithProviders(<SettingsPage />);
 
-    // Wait for the settings page to render (default is system settings)
     await waitFor(
       () => {
-        expect(screen.getByText('System Settings')).toBeInTheDocument();
+        expect(screen.getByText('General Settings')).toBeInTheDocument();
       },
       { timeout: 3000 }
     );
   });
 
-  it('renders without crashing', () => {
-    renderWithProviders(<Settings />);
-    expect(document.body).toBeInTheDocument();
-  });
-
-  it('displays system settings by default', async () => {
-    renderWithProviders(<Settings />);
+  it('displays general settings by default', async () => {
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(
       () => {
-        expect(screen.getByText('System Settings')).toBeInTheDocument();
+        expect(screen.getByText('General Settings')).toBeInTheDocument();
       },
       { timeout: 3000 }
     );
 
-    // Should show sub-tabs for system section
-    expect(screen.getByRole('tab', { name: /system/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /screenshot/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^general$/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /storage/i })).toBeInTheDocument();
   });
 
-  it('displays System tab as active by default', async () => {
-    renderWithProviders(<Settings />);
+  it('displays General tab as active by default', async () => {
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(
       () => {
-        expect(screen.getByRole('tab', { name: /^system$/i })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /^general$/i })).toBeInTheDocument();
       },
       { timeout: 3000 }
     );
 
-    const systemTab = screen.getByRole('tab', { name: /^system$/i });
-    expect(systemTab).toHaveAttribute('data-state', 'active');
+    const generalTab = screen.getByRole('tab', { name: /^general$/i });
+    expect(generalTab).toHaveAttribute('data-state', 'active');
   });
 
-  it('navigates to Screenshot tab', async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<Settings />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /screenshot/i })).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('tab', { name: /screenshot/i }));
+  it('renders Screenshot page directly', async () => {
+    renderWithProviders(<Screenshot />);
 
     await waitFor(() => {
       expect(screen.getByText('Screenshot Settings')).toBeInTheDocument();
@@ -76,7 +61,7 @@ describe('Settings Page', () => {
 
   it('navigates to Storage tab', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<Settings />);
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(() => {
       expect(screen.getByRole('tab', { name: /storage/i })).toBeInTheDocument();
@@ -89,11 +74,11 @@ describe('Settings Page', () => {
     });
   });
 
-  it('loads and displays settings in System tab', async () => {
-    renderWithProviders(<Settings />);
+  it('loads and displays settings in General tab', async () => {
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('System Settings')).toBeInTheDocument();
+      expect(screen.getByText('General Settings')).toBeInTheDocument();
     });
 
     await waitFor(() => {
@@ -101,12 +86,12 @@ describe('Settings Page', () => {
     });
   });
 
-  it('shows system settings fields', async () => {
-    renderWithProviders(<Settings />);
+  it('shows general settings fields', async () => {
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(
       () => {
-        expect(screen.getByText('System Settings')).toBeInTheDocument();
+        expect(screen.getByText('General Settings')).toBeInTheDocument();
       },
       { timeout: 3000 }
     );
@@ -119,12 +104,12 @@ describe('Settings Page', () => {
     );
   });
 
-  it('displays save button in System settings', async () => {
-    renderWithProviders(<Settings />);
+  it('displays save button in General settings', async () => {
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(
       () => {
-        expect(screen.getByText('System Settings')).toBeInTheDocument();
+        expect(screen.getByText('General Settings')).toBeInTheDocument();
       },
       { timeout: 3000 }
     );
@@ -214,10 +199,10 @@ describe('Settings Page', () => {
       })
     );
 
-    renderWithProviders(<Settings />);
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('System Settings')).toBeInTheDocument();
+      expect(screen.getByText('General Settings')).toBeInTheDocument();
     });
 
     await waitFor(() => {
@@ -226,9 +211,9 @@ describe('Settings Page', () => {
     });
   });
 
-  it('allows updating system settings', async () => {
+  it('allows updating general settings', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<Settings />);
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(() => {
       expect(screen.getByLabelText(/application name/i)).toBeInTheDocument();
@@ -241,34 +226,23 @@ describe('Settings Page', () => {
     const saveButton = screen.getByRole('button', { name: /save changes/i });
     await user.click(saveButton);
 
-    // Button should be in loading state while saving
     await waitFor(() => {
-      // After click, the form should submit (button may show loading state)
       expect(saveButton).toBeInTheDocument();
     });
   });
 
   it('displays correct sub-tabs in system section', async () => {
-    renderWithProviders(<Settings />);
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(() => {
       const tabs = screen.getAllByRole('tab');
-      expect(tabs.length).toBe(3); // System, Screenshot, Storage
-    });
-  });
-
-  it('hash navigation works for screenshot', async () => {
-    window.location.hash = 'screenshot';
-    renderWithProviders(<Settings />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Screenshot Settings')).toBeInTheDocument();
+      expect(tabs.length).toBe(3); // General, Storage, SMTP
     });
   });
 
   it('hash navigation works for storage', async () => {
     window.location.hash = 'storage';
-    renderWithProviders(<Settings />);
+    renderWithProviders(<SettingsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Storage Settings')).toBeInTheDocument();

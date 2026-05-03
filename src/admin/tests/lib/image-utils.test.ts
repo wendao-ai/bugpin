@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { createImage, getCroppedImg } from '../../../pages/globalsettings/imageUtils';
+import { createImage, getCroppedImg } from '../../lib/imageUtils';
 
 class TestImage {
   private listeners: Record<string, Array<(event?: unknown) => void>> = {};

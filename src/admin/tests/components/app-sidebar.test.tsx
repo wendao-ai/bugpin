@@ -32,7 +32,7 @@ describe('AppSidebar', () => {
     expect(await screen.findByText('Profile Settings')).toBeInTheDocument();
 
     await user.click(userButton as HTMLButtonElement);
-    await user.click(screen.getByText('Notifications'));
+    await user.click(await screen.findByRole('menuitem', { name: /notifications/i }));
     expect(await screen.findByText('Notification Preferences')).toBeInTheDocument();
 
     await waitFor(() => {

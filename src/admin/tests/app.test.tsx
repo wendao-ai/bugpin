@@ -20,24 +20,60 @@ vi.mock('../pages/Login', () => ({
   Login: () => <div>Login Page</div>,
 }));
 
-vi.mock('../pages/Dashboard', () => ({
+vi.mock('../pages/workspace/Dashboard', () => ({
   Dashboard: () => <div>Dashboard Page</div>,
 }));
 
-vi.mock('../pages/Reports', () => ({
+vi.mock('../pages/workspace/Reports', () => ({
   Reports: () => <div>Reports Page</div>,
 }));
 
-vi.mock('../pages/ReportDetail', () => ({
+vi.mock('../pages/workspace/ReportDetail', () => ({
   ReportDetail: () => <div>Report Detail Page</div>,
 }));
 
-vi.mock('../pages/Projects', () => ({
+vi.mock('../pages/workspace/Projects', () => ({
   Projects: () => <div>Projects Page</div>,
 }));
 
-vi.mock('../pages/globalsettings', () => ({
-  Settings: () => <div>Settings Page</div>,
+vi.mock('../pages/console/SettingsPage', () => ({
+  SettingsPage: () => <div>Settings Page</div>,
+}));
+
+vi.mock('../pages/console/NotificationsPage', () => ({
+  NotificationsPage: () => <div>Notifications Page</div>,
+}));
+
+vi.mock('../pages/console/Users', () => ({
+  Users: () => <div>Users Page</div>,
+}));
+
+vi.mock('../pages/console/Security', () => ({
+  Security: () => <div>Security Page</div>,
+}));
+
+vi.mock('../pages/console/Branding', () => ({
+  Branding: () => <div>Branding Page</div>,
+}));
+
+vi.mock('../pages/console/License', () => ({
+  License: () => <div>License Page</div>,
+}));
+
+vi.mock('../pages/widget/Button', () => ({
+  Button: () => <div>Button Page</div>,
+}));
+
+vi.mock('../pages/widget/Dialog', () => ({
+  Dialog: () => <div>Dialog Page</div>,
+}));
+
+vi.mock('../pages/widget/Screenshot', () => ({
+  Screenshot: () => <div>Screenshot Page</div>,
+}));
+
+vi.mock('../pages/widget/Language', () => ({
+  Language: () => <div>Language Page</div>,
 }));
 
 const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;

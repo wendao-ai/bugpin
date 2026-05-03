@@ -7,10 +7,10 @@ import {
   waitFor,
   fireEvent,
 } from '../../utils';
-import { SystemSettings } from '../../../pages/globalsettings/SystemSettings';
-import { ScreenshotSettings } from '../../../pages/globalsettings/ScreenshotSettings';
-import { SecuritySettings } from '../../../pages/globalsettings/SecuritySettings';
-import { SMTPSettings } from '../../../pages/globalsettings/SMTPSettings';
+import { Settings } from '../../../pages/console/Settings';
+import { Screenshot } from '../../../pages/widget/Screenshot';
+import { Security } from '../../../pages/console/Security';
+import { SMTP } from '../../../pages/console/SMTP';
 import { api } from '../../../api/client';
 import { toast } from 'sonner';
 
@@ -26,12 +26,12 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('Global settings sections', () => {
-  it('submits system settings updates', async () => {
+describe('Settings sections', () => {
+  it('submits general settings updates', async () => {
     const user = userEvent.setup();
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<SystemSettings />);
+    renderWithProviders(<Settings />);
 
     await screen.findByDisplayValue('BugPin');
     const appNameInput = screen.getByLabelText(/application name/i);
@@ -58,7 +58,7 @@ describe('Global settings sections', () => {
     const user = userEvent.setup();
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<SystemSettings />);
+    renderWithProviders(<Settings />);
 
     const updateSwitch = await screen.findByRole('switch', { name: /check for updates/i });
     expect(updateSwitch).toHaveAttribute('aria-checked', 'true');
@@ -94,7 +94,7 @@ describe('Global settings sections', () => {
     const user = userEvent.setup();
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithQuery(<ScreenshotSettings />);
+    renderWithQuery(<Screenshot />);
 
     await screen.findByLabelText(/max\.? screenshot size/i);
 
@@ -119,7 +119,7 @@ describe('Global settings sections', () => {
     const user = userEvent.setup();
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithQuery(<SecuritySettings />);
+    renderWithQuery(<Security />);
 
     const rateLimitInput = await screen.findByLabelText(/requests per minute/i);
     const sessionInput = screen.getByLabelText(/session duration/i);
@@ -145,7 +145,7 @@ describe('Global settings sections', () => {
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
     const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<SMTPSettings />);
+    renderWithProviders(<SMTP />);
 
     const hostInput = await screen.findByLabelText(/smtp host/i);
     const fromInput = screen.getByLabelText(/from email address/i);

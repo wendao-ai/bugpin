@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from '../utils';
-import { UsersSettings } from '../../pages/globalsettings/UsersSettings';
+import { renderWithProviders } from '../../utils';
+import { Users } from '../../../pages/console/Users';
 
 describe('Users Page', () => {
   it('renders users page heading', async () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
@@ -14,12 +14,12 @@ describe('Users Page', () => {
   });
 
   it('renders without crashing', () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
     expect(document.body).toBeInTheDocument();
   });
 
   it('displays add user button', async () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('Users Page', () => {
   });
 
   it('displays users table', async () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(() => {
       expect(screen.getByRole('table')).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe('Users Page', () => {
   });
 
   it('displays user data after loading', async () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(
       () => {
@@ -47,7 +47,7 @@ describe('Users Page', () => {
 
   it('opens add user modal when button clicked', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('Users Page', () => {
 
   it('validates required fields in add user form', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('Users Page', () => {
   });
 
   it('displays user avatar initials', async () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await waitFor(
       () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderWithQuery, screen, userEvent, waitFor } from '../../utils';
-import { WidgetDialogSettings } from '../../../pages/globalsettings/WidgetDialogSettings';
-import { WidgetLauncherButtonSettings } from '../../../pages/globalsettings/WidgetLauncherButtonSettings';
+import { Dialog } from '../../../pages/widget/Dialog';
+import { Button } from '../../../pages/widget/Button';
 import { api } from '../../../api/client';
 import { toast } from 'sonner';
 
@@ -75,7 +75,7 @@ describe('Widget settings pages', () => {
   it('saves widget dialog colors and resets to defaults', async () => {
     const user = userEvent.setup();
 
-    renderWithQuery(<WidgetDialogSettings />);
+    renderWithQuery(<Dialog />);
 
     expect(await screen.findByText('Widget Dialog Settings')).toBeInTheDocument();
 
@@ -101,7 +101,7 @@ describe('Widget settings pages', () => {
     const user = userEvent.setup();
     const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithQuery(<WidgetLauncherButtonSettings />);
+    renderWithQuery(<Button />);
 
     expect(await screen.findByText('Widget Button Settings')).toBeInTheDocument();
 

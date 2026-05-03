@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderWithQuery, screen, userEvent, waitFor } from '../../utils';
-import { StorageSettings } from '../../../pages/globalsettings/StorageSettings';
+import { Storage } from '../../../pages/console/Storage';
 import { server } from '../../mocks/server';
 import { http, HttpResponse } from 'msw';
 import { api } from '../../../api/client';
@@ -47,7 +47,7 @@ class MockEventSource {
   }
 }
 
-describe('StorageSettings', () => {
+describe('Storage', () => {
   const originalEventSource = global.EventSource;
 
   beforeEach(() => {
@@ -114,7 +114,7 @@ describe('StorageSettings', () => {
     const user = userEvent.setup();
     const postSpy = vi.spyOn(api, 'post');
 
-    renderWithQuery(<StorageSettings />);
+    renderWithQuery(<Storage />);
 
     expect(await screen.findByText('Storage Settings')).toBeInTheDocument();
 
@@ -137,7 +137,7 @@ describe('StorageSettings', () => {
 
   it('starts migration, tracks progress, and allows cancel', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<StorageSettings />);
+    renderWithQuery(<Storage />);
 
     await screen.findByText('Storage Migration');
 

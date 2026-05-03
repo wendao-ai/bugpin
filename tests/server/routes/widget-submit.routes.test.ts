@@ -84,6 +84,10 @@ const baseSettings: Partial<AppSettings> = {
   screenshot: {
     useScreenCaptureAPI: false,
   },
+  language: {
+    mode: 'auto',
+    defaultLanguage: 'en',
+  },
 };
 
 const originalProjectsRepo = { ...projectsRepo };

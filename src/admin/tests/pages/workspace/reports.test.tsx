@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { server } from '../mocks/server';
-import { renderWithProviders } from '../utils';
-import { Reports } from '../../pages/Reports';
-import { api } from '../../api/client';
+import { server } from '../../mocks/server';
+import { renderWithProviders } from '../../utils';
+import { Reports } from '../../../pages/workspace/Reports';
+import { api } from '../../../api/client';
 
 describe('Reports Page', () => {
   it('renders reports page heading', async () => {

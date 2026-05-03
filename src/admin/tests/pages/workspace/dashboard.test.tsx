@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from '../utils';
-import { Dashboard } from '../../pages/Dashboard';
-import { server } from '../mocks/server';
+import { renderWithProviders } from '../../utils';
+import { Dashboard } from '../../../pages/workspace/Dashboard';
+import { server } from '../../mocks/server';
 import { http, HttpResponse } from 'msw';
 
 describe('Dashboard Page', () => {

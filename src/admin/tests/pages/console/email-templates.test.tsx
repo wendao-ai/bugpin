@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderWithProviders, screen, userEvent, waitFor } from '../../utils';
-import { EmailTemplatesSettings } from '../../../pages/globalsettings/EmailTemplatesSettings';
+import { EmailTemplates } from '../../../pages/console/EmailTemplates';
 import { api } from '../../../api/client';
 import { toast } from 'sonner';
 
@@ -55,7 +55,7 @@ vi.mock('../../../contexts/AuthContext', async () => {
   };
 });
 
-describe('EmailTemplatesSettings', () => {
+describe('EmailTemplates', () => {
   beforeEach(() => {
     licenseApiMocks.getFeatures.mockResolvedValue({
       features: { 'custom-templates': true },
@@ -108,7 +108,7 @@ describe('EmailTemplatesSettings', () => {
 
   it('renders locale tabs and shows the empty-state hint for non-en tabs', async () => {
     mockApi();
-    renderWithProviders(<EmailTemplatesSettings />);
+    renderWithProviders(<EmailTemplates />);
 
     expect(await screen.findByRole('tab', { name: /English/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Deutsch/ })).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe('EmailTemplatesSettings', () => {
   it('preserves draft state when switching between locale tabs', async () => {
     mockApi();
     const user = userEvent.setup();
-    renderWithProviders(<EmailTemplatesSettings />);
+    renderWithProviders(<EmailTemplates />);
 
     await screen.findByRole('tab', { name: /English/ });
 
@@ -152,7 +152,7 @@ describe('EmailTemplatesSettings', () => {
     });
 
     const user = userEvent.setup();
-    renderWithProviders(<EmailTemplatesSettings />);
+    renderWithProviders(<EmailTemplates />);
 
     await screen.findByRole('tab', { name: /English/ });
     await user.click(screen.getByRole('tab', { name: /Deutsch/ }));

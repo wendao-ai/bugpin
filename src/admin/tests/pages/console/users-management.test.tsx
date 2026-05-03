@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderWithProviders, screen, userEvent, waitFor, within } from '../../utils';
-import { UsersSettings } from '../../../pages/globalsettings/UsersSettings';
+import { Users } from '../../../pages/console/Users';
 import { api } from '../../../api/client';
 import { toast } from 'sonner';
 
@@ -16,12 +16,12 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('UsersSettings', () => {
+describe('Users', () => {
   it('invites a user from the modal', async () => {
     const user = userEvent.setup();
     const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await screen.findByText('Users');
 
@@ -54,7 +54,7 @@ describe('UsersSettings', () => {
       .spyOn(api, 'delete')
       .mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     const viewerEmail = await screen.findByText('viewer@example.com');
     const viewerRow = viewerEmail.closest('tr');
@@ -89,7 +89,7 @@ describe('UsersSettings', () => {
       .spyOn(api, 'patch')
       .mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     const viewerEmail = await screen.findByText('viewer@example.com');
     const viewerRow = viewerEmail.closest('tr');
@@ -106,7 +106,7 @@ describe('UsersSettings', () => {
   });
 
   it('displays pending invitation status for users who have not accepted', async () => {
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     await screen.findByText('Users');
 
@@ -119,7 +119,7 @@ describe('UsersSettings', () => {
     const user = userEvent.setup();
     const postSpy = vi.spyOn(api, 'post').mockResolvedValue({ data: { success: true } } as unknown);
 
-    renderWithProviders(<UsersSettings />);
+    renderWithProviders(<Users />);
 
     // Wait for the pending user to appear
     await screen.findByText('pending@example.com');

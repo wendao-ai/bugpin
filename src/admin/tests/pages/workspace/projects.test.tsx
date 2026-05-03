@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { server } from '../mocks/server';
-import { renderWithProviders } from '../utils';
-import { Projects } from '../../pages/Projects';
+import { server } from '../../mocks/server';
+import { renderWithProviders } from '../../utils';
+import { Projects } from '../../../pages/workspace/Projects';
 
 vi.mock('sonner', () => ({
   toast: {
