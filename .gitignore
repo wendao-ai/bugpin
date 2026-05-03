@@ -39,7 +39,7 @@ Thumbs.db
 # AI agent files
 .claude/
 CLAUDE.md
-AGENT.md
+AGENTS.md
 GEMINI.md
 
 # Obsidian files
@@ -66,3 +66,4 @@ temp/
 # Vite
 .vite/
 .cache/
+AGENTS.md
