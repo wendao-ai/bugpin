@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,6 +97,7 @@ function saveExpandedProjects(ids: Set<string>): void {
 }
 
 export function Projects() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
@@ -155,10 +157,10 @@ export function Projects() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowCreateModal(false);
       setNewApiKeyData({ apiKey: data.project.apiKey, projectName: data.project.name });
-      toast.success('Project created successfully');
+      toast.success(t('projects.projectCreated'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to create project');
+      toast.error(err.response?.data?.message || t('projects.failedCreate'));
     },
   });
 
@@ -171,10 +173,10 @@ export function Projects() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setRegenerateProject(null);
       setNewApiKeyData({ apiKey: data.project.apiKey, projectName: data.project.name });
-      toast.success('API key regenerated successfully');
+      toast.success(t('projects.apiKeyRegenerated'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to regenerate API key');
+      toast.error(err.response?.data?.message || t('projects.failedRegenerate'));
     },
   });
 
@@ -185,10 +187,10 @@ export function Projects() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setDeleteProject(null);
-      toast.success('Project deleted successfully');
+      toast.success(t('projects.projectDeleted'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to delete project');
+      toast.error(err.response?.data?.message || t('projects.failedDelete'));
     },
   });
 
@@ -199,10 +201,10 @@ export function Projects() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success(variables.isActive ? 'Project activated' : 'Project paused');
+      toast.success(variables.isActive ? t('projects.projectActivated') : t('projects.projectPaused'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to update project');
+      toast.error(err.response?.data?.message || t('projects.failedUpdate'));
     },
   });
 
@@ -212,7 +214,7 @@ export function Projects() {
       return response.data;
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to reorder projects');
+      toast.error(err.response?.data?.message || t('projects.failedReorder'));
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
@@ -238,10 +240,10 @@ export function Projects() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-muted-foreground">Manage your projects and API keys</p>
+          <h1 className="text-2xl font-bold">{t('projects.title')}</h1>
+          <p className="text-muted-foreground">{t('projects.manage')}</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="sm:shrink-0">Create Project</Button>
+        <Button onClick={() => setShowCreateModal(true)} className="sm:shrink-0">{t('projects.createProject')}</Button>
       </div>
 
       {/* Projects list */}
@@ -253,7 +255,7 @@ export function Projects() {
         ) : data?.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground">No projects yet. Create one to get started.</p>
+              <p className="text-muted-foreground">{t('projects.noProjects')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -302,7 +304,7 @@ export function Projects() {
       <AlertDialog open={!!regenerateProject} onOpenChange={() => setRegenerateProject(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Regenerate API Key</AlertDialogTitle>
+            <AlertDialogTitle>{t('projects.regenerateApiKey')}</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to regenerate the API key for "{regenerateProject?.name}"? This
               will invalidate the current key and any widgets using it will stop working until
@@ -310,7 +312,7 @@ export function Projects() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => regenerateProject && regenerateKeyMutation.mutate(regenerateProject)}
             >
@@ -332,7 +334,7 @@ export function Projects() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>{t('projects.deleteProject')}</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deleteProject?.name}"? This action cannot be undone
               and all associated reports will be deleted.
@@ -340,8 +342,7 @@ export function Projects() {
           </AlertDialogHeader>
           <div className="py-4">
             <Label htmlFor="delete-confirmation" className="text-sm text-muted-foreground">
-              Type <span className="font-mono font-semibold text-foreground">DELETE</span> to
-              confirm
+              {t('projects.typeDeleteToConfirm')}
             </Label>
             <Input
               id="delete-confirmation"
@@ -353,7 +354,7 @@ export function Projects() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteConfirmation !== 'DELETE'}
@@ -417,6 +418,7 @@ function SortableProjectCard({
   onToggleActive: () => void;
   isToggling: boolean;
 }) {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: project.id,
   });
@@ -457,7 +459,7 @@ function SortableProjectCard({
               className="cursor-grab active:cursor-grabbing touch-none p-1 -ml-1 text-muted-foreground hover:text-foreground transition-colors"
               {...attributes}
               {...listeners}
-              aria-label="Drag to reorder"
+              aria-label={t('common.dragToReorder')}
             >
               <GripVertical className="h-5 w-5" />
             </button>
@@ -481,7 +483,7 @@ function SortableProjectCard({
                         : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                     }`}
                   >
-                    {project.isActive ? 'Active' : 'Paused'}
+                    {project.isActive ? t('common.active') : t('common.paused')}
                   </span>
                 </div>
                 {project.reportsCount > 0 ? (
@@ -490,10 +492,10 @@ function SortableProjectCard({
                     className="text-sm text-muted-foreground hover:text-primary hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {project.reportsCount} reports
+                    {t('projects.reports', { count: project.reportsCount })}
                   </Link>
                 ) : (
-                  <CardDescription>0 reports</CardDescription>
+                  <CardDescription>{t('projects.noReports')}</CardDescription>
                 )}
               </div>
             </button>
@@ -504,36 +506,36 @@ function SortableProjectCard({
               size="sm"
               onClick={onToggleActive}
               disabled={isToggling}
-              title={project.isActive ? 'Pause project' : 'Activate project'}
+              title={project.isActive ? t('projects.pauseProject') : t('projects.activateProject')}
             >
               {isToggling ? <Spinner size="sm" /> : <Power className="h-4 w-4" />}
-              <span className="hidden sm:inline">{project.isActive ? 'Pause' : 'Activate'}</span>
+              <span className="hidden sm:inline">{project.isActive ? t('projects.pause') : t('projects.activate')}</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={onConfigureSettings}
-              title="Project Settings"
+              title={t('common.settings')}
             >
               <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden sm:inline">{t('common.settings')}</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={onConfigureIntegrations}
-              title="Integrations"
+              title={t('common.integrations')}
             >
               <Plug className="h-4 w-4" />
-              <span className="hidden sm:inline">Integrations</span>
+              <span className="hidden sm:inline">{t('common.integrations')}</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={onRegenerateKey} title="Regenerate Key">
+            <Button variant="outline" size="sm" onClick={onRegenerateKey} title={t('projects.regenerateKey')}>
               <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">Regenerate Key</span>
+              <span className="hidden sm:inline">{t('projects.regenerateKey')}</span>
             </Button>
-            <Button variant="destructive" size="sm" onClick={onDelete} title="Delete">
+            <Button variant="destructive" size="sm" onClick={onDelete} title={t('common.delete')}>
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Delete</span>
+              <span className="hidden sm:inline">{t('common.delete')}</span>
             </Button>
           </div>
         </CardHeader>
@@ -541,7 +543,7 @@ function SortableProjectCard({
           <CardContent className="space-y-4">
             {/* API Key */}
             <div className="space-y-2">
-              <Label>API Key</Label>
+              <Label>{t('projects.apiKeyFor', { name: '' }).replace('"" 的 API 密钥', 'API Key')}</Label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 min-w-0 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-muted-foreground break-all">
                   {project.apiKey}
@@ -554,7 +556,7 @@ function SortableProjectCard({
 
             {/* Widget Snippet */}
             <div className="space-y-2">
-              <Label>Widget Snippet</Label>
+              <Label>{t('projects.widgetSnippet')}</Label>
               <div className="flex items-center gap-2">
                 <pre className="flex-1 min-w-0 px-3 py-2 bg-muted rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap break-all">
                   {widgetSnippet}
@@ -564,7 +566,7 @@ function SortableProjectCard({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Add this snippet to your website's HTML to enable bug reporting.
+                {t('projects.snippetHint')}
               </p>
             </div>
           </CardContent>
@@ -573,12 +575,6 @@ function SortableProjectCard({
     </div>
   );
 }
-
-const createProjectSchema = z.object({
-  name: z.string().min(1, 'Project name is required'),
-});
-
-type CreateProjectFormData = z.infer<typeof createProjectSchema>;
 
 function CreateProjectModal({
   open,
@@ -591,6 +587,11 @@ function CreateProjectModal({
   onCreate: (name: string) => void;
   isLoading: boolean;
 }) {
+  const { t } = useTranslation();
+  const createProjectSchema = z.object({
+    name: z.string().min(1, t('projects.projectNameRequired')),
+  });
+  type CreateProjectFormData = z.infer<typeof createProjectSchema>;
   const {
     register,
     handleSubmit,
@@ -616,9 +617,9 @@ function CreateProjectModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Project</DialogTitle>
+          <DialogTitle>{t('projects.createProject')}</DialogTitle>
           <DialogDescription>
-            Create a new project to get an API key for the widget.
+            {t('projects.createProjectDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -629,7 +630,7 @@ function CreateProjectModal({
               </Label>
               <Input
                 id="project-name"
-                placeholder="My Website"
+                placeholder={t('projects.projectNamePlaceholder')}
                 autoFocus
                 {...register('name')}
                 aria-invalid={!!errors.name}
@@ -648,7 +649,7 @@ function CreateProjectModal({
                   Creating...
                 </>
               ) : (
-                'Create'
+                t('common.create')
               )}
             </Button>
           </DialogFooter>
@@ -669,6 +670,7 @@ function ApiKeyModal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -725,7 +727,7 @@ function ApiKeyModal({
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>API Key</Label>
+            <Label>{t('projects.apiKeyFor', { name: '' }).replace('"" 的 API 密钥', 'API Key')}</Label>
             <code className="block px-3 py-2 bg-muted rounded-lg text-sm font-mono break-all">
               {apiKey}
             </code>
@@ -738,14 +740,14 @@ function ApiKeyModal({
               ) : (
                 <>
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy API Key
+                  {t('projects.copyApiKey')}
                 </>
               )}
             </Button>
           </div>
 
           <div className="space-y-2">
-            <Label>Widget Snippet</Label>
+            <Label>{t('projects.widgetSnippet')}</Label>
             <pre className="px-3 py-2 bg-muted rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap break-all">
               {widgetSnippet}
             </pre>
@@ -758,12 +760,12 @@ function ApiKeyModal({
               ) : (
                 <>
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy Widget Snippet
+                  {t('projects.copyWidgetSnippet')}
                 </>
               )}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Add this snippet to your website's HTML to enable bug reporting.
+              {t('projects.snippetHint')}
             </p>
           </div>
 
@@ -773,10 +775,9 @@ function ApiKeyModal({
                 <Settings className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">Advanced Integration</p>
+                <p className="text-sm font-medium">{t('projects.advancedIntegration')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Need more control? Use the Widget API for custom triggers, callbacks, and
-                  programmatic control.
+                  {t('projects.advancedIntegrationDescription')}
                 </p>
                 <a
                   href="https://docs.bugpin.io/widget/installation"
@@ -784,7 +785,7 @@ function ApiKeyModal({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-1"
                 >
-                  View documentation
+                  {t('projects.viewDocumentation')}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>
@@ -804,10 +805,10 @@ function ApiKeyModal({
             ) : (
               <Download className="h-4 w-4 mr-2" />
             )}
-            {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+            {isGeneratingPdf ? t('projects.generating') : t('projects.downloadPdf')}
           </Button>
           <Button onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-            Done
+            {t('common.done')}
           </Button>
         </DialogFooter>
       </DialogContent>

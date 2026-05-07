@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -10,19 +11,20 @@ interface AppearanceDialogProps {
 }
 
 export function AppearanceDialog({ open, onOpenChange }: AppearanceDialogProps) {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Appearance</DialogTitle>
-          <DialogDescription>Customize how BugPin looks on your device</DialogDescription>
+          <DialogTitle>{t('appearance.appearance')}</DialogTitle>
+          <DialogDescription>{t('appearance.customizeAppearance')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Theme</Label>
+            <Label>{t('appearance.theme')}</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
@@ -31,7 +33,7 @@ export function AppearanceDialog({ open, onOpenChange }: AppearanceDialogProps) 
                 className="appearance-theme-btn flex-1"
               >
                 <Sun />
-                Light
+                {t('appearance.light')}
               </Button>
               <Button
                 type="button"
@@ -40,7 +42,7 @@ export function AppearanceDialog({ open, onOpenChange }: AppearanceDialogProps) 
                 className="appearance-theme-btn flex-1"
               >
                 <Moon />
-                Dark
+                {t('appearance.dark')}
               </Button>
               <Button
                 type="button"
@@ -49,11 +51,11 @@ export function AppearanceDialog({ open, onOpenChange }: AppearanceDialogProps) 
                 className="appearance-theme-btn flex-1"
               >
                 <Monitor />
-                System
+                {t('appearance.system')}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Select your preferred theme or use your system settings
+              {t('appearance.customizeAppearance')}
             </p>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
 } from '../ui/sidebar';
 import { NavMain } from './NavMain';
 import { NavUser } from './NavUser';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { useBranding } from '../../contexts/BrandingContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -67,6 +68,9 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <div className="px-2 pb-2">
+          <LanguageSwitcher />
+        </div>
         <NavUser />
       </SidebarFooter>
 

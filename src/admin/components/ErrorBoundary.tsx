@@ -1,4 +1,5 @@
 import React, { Component, ReactNode } from 'react';
+import i18next from 'i18next';
 import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react';
 import {
   AlertDialog,
@@ -122,9 +123,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
               <div>
-                <AlertDialogTitle className="text-xl">Something went wrong</AlertDialogTitle>
+                <AlertDialogTitle className="text-xl">{i18next.t('errorBoundary.somethingWentWrong')}</AlertDialogTitle>
                 <AlertDialogDescription className="mt-1">
-                  An unexpected error occurred in the application.
+                  {i18next.t('errorBoundary.unexpectedError')}
                 </AlertDialogDescription>
               </div>
             </div>
@@ -134,7 +135,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             {/* Error message */}
             <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
               <p className="text-sm font-medium text-destructive break-words">
-                {error?.message || 'Unknown error'}
+                {error?.message || i18next.t('errorBoundary.unknownError')}
               </p>
             </div>
 
@@ -146,21 +147,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 onClick={this.toggleDetails}
                 className="h-auto p-0 text-foreground underline-offset-4 hover:underline"
               >
-                {showDetails ? 'Hide' : 'Show'} technical details
+                {showDetails ? i18next.t('errorBoundary.hideDetails') : i18next.t('errorBoundary.showDetails')} {i18next.t('errorBoundary.technicalDetails')}
               </Button>
 
               {showDetails && (
                 <div className="mt-2 space-y-2 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-xs font-medium text-muted-foreground">
-                      {error?.stack ? 'Stack Trace:' : 'Error Details:'}
+                      {error?.stack ? i18next.t('errorBoundary.stackTrace') : i18next.t('errorBoundary.errorDetails')}
                     </p>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
                       onClick={this.handleCopyError}
-                      title="Copy error details"
+                      title={i18next.t('errorBoundary.copyErrorDetails')}
                     >
                       {copied ? (
                         <Check className="h-3 w-3 text-green-500" />
@@ -179,7 +180,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   {errorInfo?.componentStack && (
                     <div className="min-w-0">
                       <p className="mb-1 text-xs font-medium text-muted-foreground">
-                        Component Stack:
+                        {i18next.t('errorBoundary.componentStack')}
                       </p>
                       <pre className="max-h-32 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap break-all">
                         <code className="text-muted-foreground">{errorInfo.componentStack}</code>
@@ -194,11 +195,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
             <AlertDialogCancel onClick={this.handleGoHome} className="gap-2">
               <Home className="h-4 w-4" />
-              Go to Dashboard
+              {i18next.t('errorBoundary.goToDashboard')}
             </AlertDialogCancel>
             <AlertDialogAction onClick={this.handleRetry} className="gap-2">
               <RefreshCw className="h-4 w-4" />
-              Try Again
+              {i18next.t('errorBoundary.tryAgain')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

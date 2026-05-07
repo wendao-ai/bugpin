@@ -7,6 +7,7 @@ import { App } from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { BrandingProvider } from './contexts/BrandingContext';
+import './i18n';
 import './styles/globals.css';
 
 // Create React Query client

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -13,6 +14,7 @@ interface DashboardStats {
 }
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
@@ -53,32 +55,32 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your bug reports</p>
+        <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+        <p className="text-muted-foreground">{t('dashboard.overview')}</p>
       </div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Reports"
+          title={t('dashboard.totalReports')}
           value={stats.total}
           icon={<ClipboardList className="h-5 w-5" />}
           variant="default"
         />
         <StatCard
-          title="Open"
+          title={t('dashboard.open')}
           value={openReports}
           icon={<Clock className="h-5 w-5" />}
           variant="blue"
         />
         <StatCard
-          title="In Progress"
+          title={t('dashboard.inProgress')}
           value={stats.byStatus.in_progress || 0}
           icon={<Zap className="h-5 w-5" />}
           variant="yellow"
         />
         <StatCard
-          title="Resolved"
+          title={t('dashboard.resolved')}
           value={resolvedReports}
           icon={<CheckCircle className="h-5 w-5" />}
           variant="green"
@@ -88,17 +90,17 @@ export function Dashboard() {
       {/* Recent reports */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between border-b py-4">
-          <CardTitle className="text-lg font-medium">Recent Reports</CardTitle>
+          <CardTitle className="text-lg font-medium">{t('dashboard.recentReports')}</CardTitle>
           <Link to="/reports" className="text-sm text-primary hover:underline">
-            View all
+            {t('dashboard.viewAll')}
           </Link>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
             {reportsLoading ? (
-              <div className="p-6 text-center text-muted-foreground">Loading...</div>
+              <div className="p-6 text-center text-muted-foreground">{t('common.loading')}</div>
             ) : recentReports?.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground">No reports yet</div>
+              <div className="p-6 text-center text-muted-foreground">{t('dashboard.noReports')}</div>
             ) : (
               recentReports?.map((report: ReportItem) => (
                 <Link
@@ -172,10 +174,11 @@ function StatCard({
 
 // Status Badge Component
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const labels: Record<string, string> = {
-    open: 'Open',
-    in_progress: 'In Progress',
-    resolved: 'Resolved',
+    open: t('dashboard.open'),
+    in_progress: t('dashboard.inProgress'),
+    resolved: t('dashboard.resolved'),
     closed: 'Closed',
   };
 

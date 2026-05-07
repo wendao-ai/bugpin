@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink } from 'lucide-react';
 import { AboutDialog } from './AboutDialog';
 
 const GITHUB_URL = 'https://github.com/aranticlabs/bugpin';
 
 export function Footer() {
+  const { t } = useTranslation();
   const [aboutOpen, setAboutOpen] = useState(false);
   const currentYear = new Date().getFullYear();
 
@@ -22,7 +24,7 @@ export function Footer() {
             }}
             className="text-primary hover:underline"
           >
-            About
+            {t('about.about')}
           </a>
           <span>|</span>
           <a
@@ -31,7 +33,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-primary hover:underline"
           >
-            <span>GitHub</span>
+            <span>{t('about.github')}</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>

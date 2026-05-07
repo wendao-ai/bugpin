@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import i18next from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { api, getApiErrorMessage } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
@@ -113,6 +115,7 @@ function normalizeManualReportUrl(value: string): string {
 }
 
 export function Reports() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const canManageReports = user?.role === 'admin' || user?.role === 'editor';
   const [searchParams, setSearchParams] = useSearchParams();
@@ -208,10 +211,10 @@ export function Reports() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setShowCreateDialog(false);
       setCreateForm(buildCreateReportForm(report.projectId));
-      toast.success('Report created successfully');
+      toast.success(t('reports.createdSuccess'));
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, 'Failed to create report'));
+      toast.error(getApiErrorMessage(error, t('reports.failedCreate')));
     },
   });
 
@@ -232,12 +235,11 @@ export function Reports() {
       setSelectedIds(new Set());
 
       // Show appropriate toast message
-      const reportText = count === 1 ? 'report' : 'reports';
       if (updates.status) {
         const statusLabel = updates.status.replace('_', ' ');
-        toast.success(`Updated status to "${statusLabel}" for ${count} ${reportText}`);
+        toast.success(t('reports.updatedStatus', { status: statusLabel, count }));
       } else if (updates.priority) {
-        toast.success(`Updated priority to "${updates.priority}" for ${count} ${reportText}`);
+        toast.success(t('reports.updatedPriority', { priority: updates.priority, count }));
       } else if (updates.assignedTo !== undefined) {
         const assigneeName =
           updates.assignedTo === null
@@ -246,13 +248,13 @@ export function Reports() {
               'updated assignee';
         toast.success(
           updates.assignedTo === null
-            ? `Unassigned ${count} ${reportText}`
-            : `Assigned ${count} ${reportText} to ${assigneeName}`,
+            ? t('reports.unassignedReports', { count })
+            : t('reports.assignedTo', { count, name: assigneeName }),
         );
       }
     },
     onError: () => {
-      toast.error('Failed to update reports');
+      toast.error(t('reports.failedUpdate'));
     },
   });
 
@@ -267,11 +269,10 @@ export function Reports() {
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
 
-      const reportText = count === 1 ? 'report' : 'reports';
-      toast.success(`Deleted ${count} ${reportText}`);
+      toast.success(t('reports.deletedReports', { count }));
     },
     onError: () => {
-      toast.error('Failed to delete reports');
+      toast.error(t('reports.failedDelete'));
     },
   });
 
@@ -368,12 +369,12 @@ export function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">Manage bug reports</p>
+          <h1 className="text-2xl font-bold">{t('reports.title')}</h1>
+          <p className="text-muted-foreground">{t('reports.manage')}</p>
         </div>
         {canManageReports && (
           <Button onClick={openCreateDialog} className="sm:shrink-0">
-            Create Report
+            {t('reports.createReport')}
           </Button>
         )}
       </div>
@@ -390,7 +391,7 @@ export function Reports() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search reports..."
+                  placeholder={t('reports.searchReports')}
                   className="pl-10"
                 />
               </div>
@@ -402,13 +403,13 @@ export function Reports() {
               onValueChange={(value) => handleFilterChange('status', value)}
             >
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder={t('reports.allStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="all">{t('reports.allStatus')}</SelectItem>
+                <SelectItem value="open">{t('dashboard.open')}</SelectItem>
+                <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
+                <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
@@ -419,10 +420,10 @@ export function Reports() {
               onValueChange={(value) => handleFilterChange('priority', value)}
             >
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Priority" />
+                <SelectValue placeholder={t('reports.allPriority')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
+                <SelectItem value="all">{t('reports.allPriority')}</SelectItem>
                 <SelectItem value="highest">Highest</SelectItem>
                 <SelectItem value="high">High</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
@@ -437,10 +438,10 @@ export function Reports() {
               onValueChange={(value) => handleFilterChange('projectId', value)}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Projects" />
+                <SelectValue placeholder={t('reports.allProjects')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem value="all">{t('reports.allProjects')}</SelectItem>
                 {projectsData?.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
@@ -455,10 +456,10 @@ export function Reports() {
                 onValueChange={(value) => handleFilterChange('assignedTo', value)}
               >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Assignees" />
+                  <SelectValue placeholder={t('reports.allAssignees')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Assignees</SelectItem>
+                  <SelectItem value="all">{t('reports.allAssignees')}</SelectItem>
                   {assignableUsers.map((assignee) => (
                     <SelectItem key={assignee.id} value={assignee.id}>
                       <AssigneeDisplay user={assignee} compact />
@@ -473,11 +474,11 @@ export function Reports() {
               onValueChange={(value) => handleFilterChange('source', value)}
             >
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Sources" />
+                <SelectValue placeholder={t('reports.allSources')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="widget">Widget</SelectItem>
+                <SelectItem value="all">{t('reports.allSources')}</SelectItem>
+                <SelectItem value="widget">{t('widget.widget')}</SelectItem>
                 <SelectItem value="manual">Manual</SelectItem>
               </SelectContent>
             </Select>
@@ -492,11 +493,11 @@ export function Reports() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">
-                  {selectedIds.size} {selectedIds.size === 1 ? 'report' : 'reports'} selected
+                  {t('reports.selected', { count: selectedIds.size })}
                 </span>
                 <Button variant="ghost" size="sm" onClick={clearSelection}>
                   <X className="h-4 w-4 mr-1" />
-                  Clear
+                  {t('common.clear')}
                 </Button>
               </div>
               <div className="flex items-center gap-2">
@@ -504,18 +505,18 @@ export function Reports() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" disabled={bulkUpdateMutation.isPending}>
-                      Set Status
+                      {t('reports.setStatus')}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => handleBulkStatusUpdate('open')}>
-                      Open
+                      {t('dashboard.open')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleBulkStatusUpdate('in_progress')}>
-                      In Progress
+                      {t('dashboard.inProgress')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleBulkStatusUpdate('resolved')}>
-                      Resolved
+                      {t('dashboard.resolved')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleBulkStatusUpdate('closed')}>
                       Closed
@@ -527,7 +528,7 @@ export function Reports() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" disabled={bulkUpdateMutation.isPending}>
-                      Set Priority
+                      {t('reports.setPriority')}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -553,12 +554,12 @@ export function Reports() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" disabled={bulkUpdateMutation.isPending}>
-                        Assign
+                        {t('reports.assign')}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem onClick={() => handleBulkAssigneeUpdate(null)}>
-                        Unassign
+                        {t('reports.unassign')}
                       </DropdownMenuItem>
                       {assignableUsers.map((assignee) => (
                         <DropdownMenuItem
@@ -580,7 +581,7 @@ export function Reports() {
                   disabled={bulkDeleteMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
+                  {t('common.delete')}
                 </Button>
               </div>
             </div>
@@ -591,22 +592,22 @@ export function Reports() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Create Report</DialogTitle>
+            <DialogTitle>{t('reports.createReportTitle')}</DialogTitle>
             <DialogDescription>
-              Create a manual report for issues that did not come from the widget.
+              {t('reports.createReportDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateReport} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="create-report-project">Project</Label>
+                <Label htmlFor="create-report-project">{t('reports.projectLabel')}</Label>
                 <Select
                   value={createForm.projectId}
                   onValueChange={(value) => updateCreateForm('projectId', value)}
                 >
                   <SelectTrigger id="create-report-project">
-                    <SelectValue placeholder="Select project" />
+                    <SelectValue placeholder={t('reports.selectProject')} />
                   </SelectTrigger>
                   <SelectContent>
                     {projectsData?.map((project) => (
@@ -619,7 +620,7 @@ export function Reports() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="create-report-priority">Priority</Label>
+                <Label htmlFor="create-report-priority">{t('reports.priorityLabel')}</Label>
                 <Select
                   value={createForm.priority}
                   onValueChange={(value) => updateCreateForm('priority', value)}
@@ -639,30 +640,30 @@ export function Reports() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="create-report-title">Title</Label>
+              <Label htmlFor="create-report-title">{t('reports.titleLabel')}</Label>
               <Input
                 id="create-report-title"
                 value={createForm.title}
                 onChange={(e) => updateCreateForm('title', e.target.value)}
-                placeholder="What needs attention?"
+                placeholder={t('reports.titlePlaceholder')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="create-report-description">Description</Label>
+              <Label htmlFor="create-report-description">{t('reports.descriptionLabel')}</Label>
               <Textarea
                 id="create-report-description"
                 value={createForm.description}
                 onChange={(e) => updateCreateForm('description', e.target.value)}
-                placeholder="Add context, reproduction notes, or customer details"
+                placeholder={t('reports.descriptionPlaceholder')}
                 rows={4}
               />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="create-report-assignee">Assignee</Label>
+                <Label htmlFor="create-report-assignee">{t('reports.assigneeLabel')}</Label>
                 <Select
                   value={createForm.assignedTo}
                   onValueChange={(value) => updateCreateForm('assignedTo', value)}
@@ -671,8 +672,8 @@ export function Reports() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={PROJECT_DEFAULT_ASSIGNEE}>Use project default</SelectItem>
-                    <SelectItem value={UNASSIGNED_ASSIGNEE}>Unassigned</SelectItem>
+                    <SelectItem value={PROJECT_DEFAULT_ASSIGNEE}>{t('reports.useProjectDefault')}</SelectItem>
+                    <SelectItem value={UNASSIGNED_ASSIGNEE}>{t('common.unassigned')}</SelectItem>
                     {assignableUsers.map((assignee) => (
                       <SelectItem key={assignee.id} value={assignee.id}>
                         {assignee.name}
@@ -683,7 +684,7 @@ export function Reports() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="create-report-channel">Channel</Label>
+                <Label htmlFor="create-report-channel">{t('reports.channelLabel')}</Label>
                 <Select
                   value={createForm.channel}
                   onValueChange={(value) => updateCreateForm('channel', value)}
@@ -692,7 +693,7 @@ export function Reports() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NO_CHANNEL}>No channel</SelectItem>
+                    <SelectItem value={NO_CHANNEL}>{t('reports.noChannel')}</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="chat">Chat</SelectItem>
                     <SelectItem value="phone">Phone</SelectItem>
@@ -705,29 +706,29 @@ export function Reports() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="create-report-reporter-name">Reporter Name</Label>
+                <Label htmlFor="create-report-reporter-name">{t('reports.reporterName')}</Label>
                 <Input
                   id="create-report-reporter-name"
                   value={createForm.reporterName}
                   onChange={(e) => updateCreateForm('reporterName', e.target.value)}
-                  placeholder="Optional"
+                  placeholder={t('common.optional')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="create-report-reporter-email">Reporter Email</Label>
+                <Label htmlFor="create-report-reporter-email">{t('reports.reporterEmail')}</Label>
                 <Input
                   id="create-report-reporter-email"
                   type="email"
                   value={createForm.reporterEmail}
                   onChange={(e) => updateCreateForm('reporterEmail', e.target.value)}
-                  placeholder="Optional"
+                  placeholder={t('common.optional')}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="create-report-url">URL</Label>
+              <Label htmlFor="create-report-url">{t('reports.urlLabel')}</Label>
               <Input
                 id="create-report-url"
                 type="text"
@@ -740,7 +741,7 @@ export function Reports() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="create-report-files">Files</Label>
+              <Label htmlFor="create-report-files">{t('reports.filesLabel')}</Label>
               <Input
                 id="create-report-files"
                 type="file"
@@ -750,7 +751,7 @@ export function Reports() {
               />
               {createForm.files.length > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {createForm.files.length} file{createForm.files.length === 1 ? '' : 's'} selected
+                  {t('reports.filesSelected', { count: createForm.files.length })}
                 </p>
               )}
             </div>
@@ -762,7 +763,7 @@ export function Reports() {
                 onClick={() => setShowCreateDialog(false)}
                 disabled={createReportMutation.isPending}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -771,10 +772,10 @@ export function Reports() {
                 {createReportMutation.isPending ? (
                   <>
                     <Spinner size="sm" className="mr-2" />
-                    Creating...
+                    {t('common.creating')}
                   </>
                 ) : (
-                  'Create Report'
+                  t('reports.createReport')
                 )}
               </Button>
             </DialogFooter>
@@ -786,14 +787,13 @@ export function Reports() {
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedIds.size} reports?</AlertDialogTitle>
+            <AlertDialogTitle>{t('reports.deleteReports', { count: selectedIds.size })}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The selected reports and all their associated files will
-              be permanently deleted.
+              {t('reports.deleteReportsDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleBulkDelete}
@@ -802,10 +802,10 @@ export function Reports() {
               {bulkDeleteMutation.isPending ? (
                 <>
                   <Spinner size="sm" className="mr-2" />
-                  Deleting...
+                  {t('common.deleting')}
                 </>
               ) : (
-                'Delete'
+                t('common.delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -820,7 +820,7 @@ export function Reports() {
           </div>
         ) : data?.data?.length === 0 ? (
           <Card>
-            <CardContent className="p-12 text-center text-muted-foreground">No reports found</CardContent>
+            <CardContent className="p-12 text-center text-muted-foreground">{t('reports.noReportsFound')}</CardContent>
           </Card>
         ) : (
           data?.data?.map((report: Report) => (
@@ -841,7 +841,7 @@ export function Reports() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium">{report.title}</p>
                     <p className="text-sm text-muted-foreground truncate">
-                      {report.metadata?.url || 'No URL'}
+                      {report.metadata?.url || t('reports.noUrl')}
                     </p>
                     {report.reporterEmail && (
                       <p className="text-xs text-muted-foreground">
@@ -855,7 +855,7 @@ export function Reports() {
                       <StatusBadge status={report.status} />
                       <PriorityBadge priority={report.priority} />
                       <span className="text-xs text-muted-foreground">
-                        {report.projectName || 'Unknown'}
+                        {report.projectName || t('common.unknown')}
                       </span>
                       <GitHubSyncIcon report={report} />
                       <span className="text-xs text-muted-foreground ml-auto">
@@ -871,7 +871,7 @@ export function Reports() {
         {data && data.totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Page {data.page} of {data.totalPages}
+              {t('reports.page', { current: data.page, total: data.totalPages })}
             </p>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => handleFilterChange('page', String(page - 1))} disabled={page <= 1}>Previous</Button>
@@ -893,7 +893,7 @@ export function Reports() {
                     data.data.every((r: Report) => selectedIds.has(r.id))
                   }
                   onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
+                  aria-label={t('reports.report')}
                 />
               </TableHead>
               <TableHead>Report</TableHead>
@@ -937,7 +937,7 @@ export function Reports() {
                   <TableCell>
                     <p className="font-medium">{report.title}</p>
                     <p className="text-sm text-muted-foreground truncate max-w-xs">
-                      {report.metadata?.url || 'No URL'}
+                      {report.metadata?.url || t('reports.noUrl')}
                     </p>
                     {report.reporterEmail && (
                       <p className="text-xs text-muted-foreground">
@@ -947,7 +947,7 @@ export function Reports() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {report.projectName || 'Unknown'}
+                      {report.projectName || t('common.unknown')}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -975,7 +975,7 @@ export function Reports() {
         {data && data.totalPages > 1 && (
           <div className="px-6 py-4 border-t flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Page {data.page} of {data.totalPages} ({data.total} total)
+              {t('reports.pageWithTotal', { current: data.page, total: data.total })}
             </p>
             <div className="flex gap-2">
               <Button
@@ -1003,10 +1003,11 @@ export function Reports() {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const labels: Record<string, string> = {
-    open: 'Open',
-    in_progress: 'In Progress',
-    resolved: 'Resolved',
+    open: t('dashboard.open'),
+    in_progress: t('dashboard.inProgress'),
+    resolved: t('dashboard.resolved'),
     closed: 'Closed',
   };
 
@@ -1032,9 +1033,9 @@ function formatDate(dateString: string): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return 'Today';
+    return i18next.t('reports.today');
   } else if (diffDays === 1) {
-    return 'Yesterday';
+    return i18next.t('reports.yesterday');
   } else if (diffDays < 7) {
     return `${diffDays} days ago`;
   } else {
@@ -1043,6 +1044,7 @@ function formatDate(dateString: string): string {
 }
 
 function GitHubSyncIcon({ report }: { report: Report }) {
+  const { t } = useTranslation();
   if (!report.githubSyncStatus && !report.githubIssueUrl) {
     return null;
   }
@@ -1063,7 +1065,7 @@ function GitHubSyncIcon({ report }: { report: Report }) {
             </a>
           </TooltipTrigger>
           <TooltipContent>
-            <p>GitHub Issue #{report.githubIssueNumber}</p>
+            <p>{t('reports.githubIssue', { number: report.githubIssueNumber })}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -1080,7 +1082,7 @@ function GitHubSyncIcon({ report }: { report: Report }) {
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Sync pending</p>
+            <p>{t('reports.syncPending')}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -1097,7 +1099,7 @@ function GitHubSyncIcon({ report }: { report: Report }) {
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Sync failed</p>
+            <p>{t('reports.syncFailed')}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -1114,8 +1116,9 @@ function AssigneeDisplay({
   user?: Pick<User, 'name' | 'email' | 'avatarUrl'>;
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   if (!user) {
-    return <span className="text-sm text-muted-foreground">Unassigned</span>;
+    return <span className="text-sm text-muted-foreground">{t('common.unassigned')}</span>;
   }
 
   const fallback = user.name

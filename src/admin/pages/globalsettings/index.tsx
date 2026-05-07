@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { SystemSettings } from './SystemSettings';
 import { ScreenshotSettings } from './ScreenshotSettings';
@@ -59,27 +60,29 @@ interface SubTab {
 }
 
 // Sub-tabs for each main settings page
-const tabConfigs: Record<MainTabValue, SubTab[]> = {
-  system: [
-    { hash: 'system', label: 'System' },
-    { hash: 'screenshot', label: 'Screenshot' },
-    { hash: 'storage', label: 'Storage' },
-  ],
-  design: [
-    { hash: 'widgetLauncherButton', label: 'Widget Button' },
-    { hash: 'widgetDialog', label: 'Widget Dialog' },
-    { hash: 'design', label: 'Admin Console' },
-  ],
-  notifications: [
-    { hash: 'notifications', label: 'Notifications' },
-    { hash: 'reporterNotifications', label: 'Reporter' },
-    { hash: 'smtp', label: 'SMTP' },
-    { hash: 'emailTemplates', label: 'Email Templates' },
-  ],
-  security: [{ hash: 'security', label: 'Rate Limits' }],
-  users: [{ hash: 'users', label: 'Users' }],
-  license: [{ hash: 'license', label: 'License' }],
-};
+function useTabConfigs(t: ReturnType<typeof useTranslation>['t']): Record<MainTabValue, SubTab[]> {
+  return {
+    system: [
+      { hash: 'system', label: t('settings.system') },
+      { hash: 'screenshot', label: t('settings.screenshot') },
+      { hash: 'storage', label: t('settings.storage') },
+    ],
+    design: [
+      { hash: 'widgetLauncherButton', label: t('settings.widgetButton') },
+      { hash: 'widgetDialog', label: t('settings.widgetDialog') },
+      { hash: 'design', label: t('settings.design') },
+    ],
+    notifications: [
+      { hash: 'notifications', label: t('settings.notificationsTab') },
+      { hash: 'reporterNotifications', label: t('settings.reporter') },
+      { hash: 'smtp', label: t('settings.smtp') },
+      { hash: 'emailTemplates', label: t('settings.emailTemplates') },
+    ],
+    security: [{ hash: 'security', label: t('settings.rateLimits') }],
+    users: [{ hash: 'users', label: t('settings.users') }],
+    license: [{ hash: 'license', label: t('settings.license') }],
+  };
+}
 
 interface SubPageTabsProps {
   mainTab: MainTabValue;
@@ -88,7 +91,8 @@ interface SubPageTabsProps {
 }
 
 function SubPageTabs({ mainTab, activeHash, children }: SubPageTabsProps) {
-  const subTabs = tabConfigs[mainTab];
+  const { t } = useTranslation();
+  const subTabs = useTabConfigs(t)[mainTab];
   const childArray = Array.isArray(children) ? children : [children];
 
   // Find the active sub-tab based on current hash

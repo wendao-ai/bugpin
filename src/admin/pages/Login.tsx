@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -12,8 +13,8 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Spinner } from '../components/ui/spinner';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().min(1, 'auth.emailRequired').email('auth.invalidEmail'),
+  password: z.string().min(1, 'auth.passwordRequired'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -21,15 +22,22 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Create a version of the schema with translated messages
+  const localizedSchema = z.object({
+    email: z.string().min(1, t('auth.emailRequired')).email(t('auth.invalidEmail')),
+    password: z.string().min(1, t('auth.passwordRequired')),
+  });
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(localizedSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -45,9 +53,9 @@ export function Login() {
       navigate('/');
     } catch (err) {
       if (err instanceof Error && err.message.includes('401')) {
-        setError('Invalid email or password. Please try again.');
+        setError(t('auth.invalidCredentials'));
       } else {
-        setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+        setError(err instanceof Error ? err.message : t('auth.loginFailed'));
       }
     } finally {
       setIsLoading(false);
@@ -70,7 +78,7 @@ export function Login() {
               className="h-10 hidden dark:block"
             />
           </div>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardDescription>{t('auth.signInToAccount')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
@@ -81,7 +89,7 @@ export function Login() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -94,12 +102,12 @@ export function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Enter your password"
+                placeholder={t('auth.enterPassword')}
                 {...register('password')}
                 aria-invalid={!!errors.password}
               />
@@ -112,10 +120,10 @@ export function Login() {
               {isLoading ? (
                 <>
                   <Spinner size="sm" className="mr-2" />
-                  Signing in...
+                  {t('auth.signingIn')}
                 </>
               ) : (
-                'Sign in'
+                t('auth.signIn')
               )}
             </Button>
           </form>

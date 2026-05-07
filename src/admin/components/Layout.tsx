@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from './ui/sidebar';
 import { Separator } from './ui/separator';
@@ -9,25 +10,26 @@ import { UpdateBanner } from './UpdateBanner';
 
 // Map hash to sub-tab label (for breadcrumb display)
 const hashToLabel: Record<string, string> = {
-  system: 'System',
-  screenshot: 'Screenshot',
-  storage: 'Storage',
-  design: 'Admin Console',
-  widgetDialog: 'Widget Dialog',
-  widgetLauncherButton: 'Widget Button',
-  notifications: 'Notifications',
-  reporterNotifications: 'Reporter',
-  smtp: 'SMTP',
-  emailTemplates: 'Email Templates',
-  security: 'Rate Limits',
-  users: 'Users',
+  system: 'settings.system',
+  screenshot: 'settings.screenshot',
+  storage: 'settings.storage',
+  design: 'settings.design',
+  widgetDialog: 'settings.widgetDialog',
+  widgetLauncherButton: 'settings.widgetButton',
+  notifications: 'settings.notificationsTab',
+  reporterNotifications: 'settings.reporter',
+  smtp: 'settings.smtp',
+  emailTemplates: 'settings.emailTemplates',
+  security: 'settings.rateLimits',
+  users: 'settings.users',
 };
 
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const isSettingsPage = location.pathname.startsWith('/globalsettings');
-  const [activeTabLabel, setActiveTabLabel] = useState('System');
+  const [activeTabLabel, setActiveTabLabel] = useState('settings.system');
 
   // Track hash changes for Settings breadcrumb
   useEffect(() => {
@@ -36,7 +38,7 @@ export function Layout() {
       if (hash && hashToLabel[hash]) {
         setActiveTabLabel(hashToLabel[hash]);
       } else {
-        setActiveTabLabel('System');
+        setActiveTabLabel('settings.system');
       }
     };
 
@@ -48,11 +50,11 @@ export function Layout() {
   // Get page title based on current route
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/') return 'Dashboard';
-    if (path.startsWith('/reports')) return 'Reports';
-    if (path.startsWith('/projects')) return 'Projects';
-    if (path.startsWith('/globalsettings')) return 'Settings';
-    return 'BugPin';
+    if (path === '/') return t('layout.dashboard');
+    if (path.startsWith('/reports')) return t('layout.reports');
+    if (path.startsWith('/projects')) return t('layout.projects');
+    if (path.startsWith('/globalsettings')) return t('layout.settings');
+    return t('app.bugpin');
   };
 
   return (
@@ -73,10 +75,10 @@ export function Layout() {
                 }}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Settings
+                {t('layout.settings')}
               </button>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{activeTabLabel}</span>
+              <span className="font-medium">{t(activeTabLabel)}</span>
             </nav>
           ) : (
             <h1 className="text-sm font-medium">{getPageTitle()}</h1>

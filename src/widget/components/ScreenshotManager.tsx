@@ -2,6 +2,7 @@ import { FunctionComponent } from 'preact';
 import { useState, useCallback, useRef } from 'preact/hooks';
 import { cn } from '../lib/utils';
 import { Button } from './ui';
+import { t } from '../i18n/index.js';
 
 export interface CapturedMedia {
   id: string;
@@ -178,7 +179,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
     <div class="flex flex-col gap-4">
       {/* Privacy notice */}
       <p class="text-xs text-muted-foreground">
-        Tip: Use the annotation tool to hide any sensitive data before submitting.
+        {t('media.tip')}
       </p>
 
       {/* Action button */}
@@ -190,7 +191,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
               fill="currentColor"
             />
           </svg>
-          {isCapturing ? 'Capturing...' : 'Capture Screenshot'}
+          {isCapturing ? t('media.capturing') : t('media.captureScreenshot')}
         </Button>
         <input
           ref={fileInputRef}
@@ -245,8 +246,8 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                 fill="currentColor"
               />
             </svg>
-            <p class="text-sm font-medium mb-1">Drag and drop files here</p>
-            <span class="text-xs text-muted-foreground">or click to browse</span>
+            <p class="text-sm font-medium mb-1">{t('media.dragAndDrop')}</p>
+            <span class="text-xs text-muted-foreground">{t('media.orClickToBrowse')}</span>
           </div>
         ) : (
           <div class="grid grid-cols-2 gap-3 p-3">
@@ -265,12 +266,12 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                   <div class="absolute top-1.5 left-1.5 flex gap-1">
                     {item.annotated && (
                       <span class="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-blue-100 dark:bg-blue-900/70 text-blue-700 dark:text-blue-300">
-                        Annotated
+                        {t('media.annotated')}
                       </span>
                     )}
                     {isVideo(item.mimeType) && (
                       <span class="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                        Video
+                        {t('media.video')}
                       </span>
                     )}
                   </div>
@@ -290,7 +291,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                       size="icon"
                       class="w-7 h-7 bg-background hover:bg-muted text-foreground"
                       onClick={() => onAnnotate(item.id)}
-                      title="Annotate"
+                      title={t('media.annotate')}
                     >
                       <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -305,7 +306,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
                     size="icon"
                     class="w-7 h-7 bg-background hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 text-foreground"
                     onClick={() => onRemove(item.id)}
-                    title="Remove"
+                    title={t('media.remove')}
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path
@@ -329,7 +330,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
               >
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor" />
               </svg>
-              <span class="text-xs text-muted-foreground transition-colors">Add more</span>
+              <span class="text-xs text-muted-foreground transition-colors">{t('media.addMore')}</span>
             </div>
           </div>
         )}
@@ -337,7 +338,7 @@ export const ScreenshotManager: FunctionComponent<ScreenshotManagerProps> = ({
 
       {/* Helper text */}
       <p class="text-xs text-muted-foreground text-center">
-        Supported: PNG, JPG, GIF, WebP (max {maxImageSizeMb}MB) - MP4, WebM, MOV, AVI (max {maxVideoSizeMb}MB)
+        {t('media.supported').replace('{maxImageSize}', String(maxImageSizeMb)).replace('{maxVideoSize}', String(maxVideoSizeMb))}
       </p>
     </div>
   );

@@ -3,6 +3,7 @@ import { useState, useCallback } from 'preact/hooks';
 import { ScreenshotManager, CapturedMedia } from './ScreenshotManager.js';
 import { Button, Input, Textarea, Select, Label, Tabs } from './ui';
 import { ScreenCaptureConsentDialog } from './ScreenCaptureConsentDialog.js';
+import { t } from '../i18n/index.js';
 
 export interface FormData {
   title: string;
@@ -38,7 +39,7 @@ interface WidgetDialogProps {
 const TABS = [
   {
     id: 'details',
-    label: 'Details',
+    label: t('widget.details'),
     icon: (
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -50,7 +51,7 @@ const TABS = [
   },
   {
     id: 'media',
-    label: 'Screenshots',
+    label: t('widget.screenshots'),
     icon: (
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -139,9 +140,9 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
         {/* Header */}
         <div class="flex items-center justify-between p-6 border-b border-solid border-border">
           <h1 id="bugpin-title">
-            Report a Bug
+            {t('widget.reportBug')}
           </h1>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t('widget.close')}>
             <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
@@ -178,12 +179,12 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                   {/* Title */}
                   <div class="flex flex-col gap-1.5">
                     <Label for="bugpin-title-input" required>
-                      Title
+                      {t('form.title')}
                     </Label>
                     <Input
                       id="bugpin-title-input"
                       type="text"
-                      placeholder="Brief description of the issue"
+                      placeholder={t('form.titlePlaceholder')}
                       value={formData.title}
                       onInput={(e) =>
                         handleInputChange('title', (e.target as HTMLInputElement).value)
@@ -194,17 +195,17 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                     />
                     {errors.title && (
                       <span id="bugpin-title-error" class="text-destructive text-xs mt-0.5">
-                        {errors.title}
+                        {errors.title === 'Title is required' ? t('form.titleRequired') : t('form.titleMinLength')}
                       </span>
                     )}
                   </div>
 
                   {/* Description */}
                   <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-description">Description</Label>
+                    <Label for="bugpin-description">{t('form.description')}</Label>
                     <Textarea
                       id="bugpin-description"
-                      placeholder="Steps to reproduce, expected behavior, etc."
+                      placeholder={t('form.descriptionPlaceholder')}
                       value={formData.description}
                       onInput={(e) =>
                         handleInputChange('description', (e.target as HTMLTextAreaElement).value)
@@ -214,7 +215,7 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
 
                   {/* Priority */}
                   <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-priority">Priority</Label>
+                    <Label for="bugpin-priority">{t('form.priority')}</Label>
                     <Select
                       id="bugpin-priority"
                       value={formData.priority}
@@ -222,21 +223,21 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                         handleInputChange('priority', (e.target as HTMLSelectElement).value)
                       }
                     >
-                      <option value="highest">Highest</option>
-                      <option value="high">High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                      <option value="lowest">Lowest</option>
+                      <option value="highest">{t('form.priorityHighest')}</option>
+                      <option value="high">{t('form.priorityHigh')}</option>
+                      <option value="medium">{t('form.priorityMedium')}</option>
+                      <option value="low">{t('form.priorityLow')}</option>
+                      <option value="lowest">{t('form.priorityLowest')}</option>
                     </Select>
                   </div>
 
                   {/* Name */}
                   <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-name">Name (optional)</Label>
+                    <Label for="bugpin-name">{t('form.name')}</Label>
                     <Input
                       id="bugpin-name"
                       type="text"
-                      placeholder="Your name"
+                      placeholder={t('form.namePlaceholder')}
                       value={formData.reporterName}
                       onInput={(e) =>
                         handleInputChange('reporterName', (e.target as HTMLInputElement).value)
@@ -246,11 +247,11 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
 
                   {/* Email */}
                   <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-email">Email (optional)</Label>
+                    <Label for="bugpin-email">{t('form.email')}</Label>
                     <Input
                       id="bugpin-email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder={t('form.emailPlaceholder')}
                       value={formData.reporterEmail}
                       onInput={(e) =>
                         handleInputChange('reporterEmail', (e.target as HTMLInputElement).value)
@@ -260,7 +261,7 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                     />
                     {errors.reporterEmail && (
                       <span id="bugpin-email-error" class="text-destructive text-xs mt-0.5">
-                        {errors.reporterEmail}
+                        {t('form.emailInvalid')}
                       </span>
                     )}
                   </div>
@@ -286,13 +287,13 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
             {/* Footer */}
             <div class="flex gap-3 p-6 border-t border-solid border-border bg-muted">
               <Button variant="outline" class="flex-1" onClick={onClose} disabled={isSubmitting}>
-                Cancel
+                {t('widget.cancel')}
               </Button>
               <Button class="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <span class="w-4 h-4 border-2 border-solid border-white/30 border-t-white rounded-full animate-[spin_0.8s_linear_infinite]" />
                 ) : (
-                  'Submit Report'
+                  t('widget.submitReport')
                 )}
               </Button>
             </div>
@@ -301,7 +302,7 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
 
         {/* Branding */}
         <div class="py-3 px-6 text-center text-xs text-muted-foreground border-t border-solid border-border bg-background">
-          Powered by{' '}
+          {t('widget.poweredBy')}{' '}
           <a
             href="https://bugpin.io"
             target="_blank"

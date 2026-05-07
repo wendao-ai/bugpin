@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { ExternalLink } from 'lucide-react';
 
@@ -12,19 +13,20 @@ const LICENSE_URL = 'https://docs.bugpin.io/legal/license';
 const TRADEMARK_URL = 'https://docs.bugpin.io/legal/trademark';
 
 export function AboutDialog({ open, onClose }: AboutDialogProps) {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>About BugPin</DialogTitle>
+          <DialogTitle>{t('about.about')} BugPin</DialogTitle>
           <DialogDescription>Self-hosted bug reporting and feedback widget</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div>
-            <p className="text-sm font-semibold text-foreground">Version</p>
+            <p className="text-sm font-semibold text-foreground">{t('about.version')}</p>
             <p className="text-sm text-muted-foreground">{__APP_VERSION__}</p>
           </div>
 

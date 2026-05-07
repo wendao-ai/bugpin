@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronRight,
   type LucideIcon,
@@ -35,44 +36,50 @@ interface NavItem {
   items?: NavSubItem[];
 }
 
-const navItems: NavItem[] = [
-  {
-    title: 'Dashboard',
-    url: '/',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Reports',
-    url: '/reports',
-    icon: ClipboardList,
-  },
-  {
-    title: 'Projects',
-    url: '/projects',
-    icon: FolderKanban,
-    roles: ['admin'],
-  },
-  {
-    title: 'Settings',
-    url: '/globalsettings',
-    icon: Settings,
-    roles: ['admin'],
-    items: [
-      { title: 'System', url: '#system' },
-      { title: 'Design', url: '#widgetLauncherButton' },
-      { title: 'Notifications', url: '#notifications' },
-      { title: 'Security', url: '#security' },
-      { title: 'Users', url: '#users' },
-      { title: 'License', url: '#license' },
-    ],
-  },
-];
+// Navigation items are built dynamically using translations
+function useNavItems(): NavItem[] {
+  const { t } = useTranslation();
+  return [
+    {
+      title: t('layout.dashboard'),
+      url: '/',
+      icon: LayoutDashboard,
+    },
+    {
+      title: t('layout.reports'),
+      url: '/reports',
+      icon: ClipboardList,
+    },
+    {
+      title: t('layout.projects'),
+      url: '/projects',
+      icon: FolderKanban,
+      roles: ['admin'],
+    },
+    {
+      title: t('layout.settings'),
+      url: '/globalsettings',
+      icon: Settings,
+      roles: ['admin'],
+      items: [
+        { title: t('settings.system'), url: '#system' },
+        { title: t('settings.design'), url: '#widgetLauncherButton' },
+        { title: t('settings.notificationsTab'), url: '#notifications' },
+        { title: t('settings.rateLimits'), url: '#security' },
+        { title: t('settings.users'), url: '#users' },
+        { title: t('settings.license'), url: '#license' },
+      ],
+    },
+  ];
+}
 
 export function NavMain() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
+  const { t } = useTranslation();
+  const navItems = useNavItems();
 
   const closeSidebarOnMobile = () => {
     if (isMobile) setOpenMobile(false);
@@ -86,7 +93,7 @@ export function NavMain() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+      <SidebarGroupLabel>{t('common.navigation')}</SidebarGroupLabel>
       <SidebarMenu>
         {filteredItems.map((item) => {
           const isActive =

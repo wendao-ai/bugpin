@@ -1,6 +1,7 @@
 import { FunctionComponent } from 'preact';
 import { useState } from 'preact/hooks';
 import { Button } from './ui';
+import { t } from '../i18n/index.js';
 
 const STORAGE_KEY = 'bugpin-skip-screen-capture-consent';
 
@@ -25,9 +26,9 @@ export const ScreenCaptureConsentDialog: FunctionComponent<ScreenCaptureConsentD
   return (
     <div class="flex-1 flex flex-col items-center justify-center p-6 gap-5 text-center">
       <div class="space-y-2 max-w-sm">
-        <h1>Browser permission required</h1>
+        <h1>{t('consent.title')}</h1>
         <p class="text-sm text-muted-foreground">
-          Your browser will ask for permission to share your screen. Follow the steps shown.
+          {t('consent.description')}
         </p>
       </div>
 
@@ -71,7 +72,7 @@ export const ScreenCaptureConsentDialog: FunctionComponent<ScreenCaptureConsentD
               <text x="164" y="130" dominant-baseline="central" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="white" font-weight="600" text-anchor="middle">Allow</text>
             </svg>
           </div>
-          <p class="text-xs font-medium text-muted-foreground">Firefox</p>
+          <p class="text-xs font-medium text-muted-foreground">{t('consent.firefox')}</p>
         </div>
 
         {/* Chrome / Edge — preferCurrentTab confirmation dialog */}
@@ -123,7 +124,7 @@ export const ScreenCaptureConsentDialog: FunctionComponent<ScreenCaptureConsentD
               <text x="165" y="130" dominant-baseline="central" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="white" font-weight="600" text-anchor="middle">Allow</text>
             </svg>
           </div>
-          <p class="text-xs font-medium text-muted-foreground">Chrome · Edge</p>
+          <p class="text-xs font-medium text-muted-foreground">{t('consent.chromeEdge')}</p>
         </div>
       </div>
       <label class="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
@@ -133,15 +134,15 @@ export const ScreenCaptureConsentDialog: FunctionComponent<ScreenCaptureConsentD
           onChange={(e) => setSkipNextTime((e.target as HTMLInputElement).checked)}
           class="w-3.5 h-3.5 accent-primary cursor-pointer"
         />
-        Don't show this again
+        {t('consent.skipNextTime')}
       </label>
 
       <div class="flex gap-3 w-full max-w-xs">
         <Button variant="outline" class="flex-1" onClick={onCancel}>
-          Back
+          {t('consent.back')}
         </Button>
         <Button class="flex-1" onClick={handleConfirm}>
-          Take Screenshot
+          {t('consent.takeScreenshot')}
         </Button>
       </div>
     </div>

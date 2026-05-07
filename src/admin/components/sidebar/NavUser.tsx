@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronsUpDown, User, SunMoon, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -18,6 +19,7 @@ import { NotificationsDialog } from './NotificationsDialog';
 export function NavUser() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -65,18 +67,18 @@ export function NavUser() {
             >
               <DropdownMenuItem onClick={() => setProfileOpen(true)} className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+                <span>{t('common.profile')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setAppearanceOpen(true)} className="cursor-pointer">
                 <SunMoon className="mr-2 h-4 w-4" />
-                <span>Appearance</span>
+                <span>{t('common.appearance')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setNotificationsOpen(true)}
                 className="cursor-pointer"
               >
                 <Bell className="mr-2 h-4 w-4" />
-                <span>Notifications</span>
+                <span>{t('common.notifications')}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -84,7 +86,7 @@ export function NavUser() {
                 className="cursor-pointer text-muted-foreground"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
+                <span>{t('common.logout')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
