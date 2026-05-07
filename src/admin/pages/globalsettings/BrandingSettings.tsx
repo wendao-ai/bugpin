@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Cropper from 'react-easy-crop';
@@ -42,6 +43,7 @@ const DEFAULT_ADMIN_COLORS: ThemeColors = {
 };
 
 export function BrandingSettings() {
+  const { t } = useTranslation('branding');
   const { data: featureStatus, isLoading } = useQuery({
     queryKey: ['license-features'],
     queryFn: licenseApi.getFeatures,
@@ -63,7 +65,7 @@ export function BrandingSettings() {
     return (
       <UpgradePrompt
         feature="custom-branding"
-        title="Custom Branding"
+        title={t('branding.customBranding')}
         description="Customize your BugPin instance with your own logo, icon, favicon, and brand colors. Make it truly yours."
       />
     );
@@ -80,6 +82,7 @@ export function BrandingSettings() {
 }
 
 function BrandColorSection() {
+  const { t } = useTranslation('branding');
   const queryClient = useQueryClient();
   // Track local edits separately - null means use config values
   const [localEdits, setLocalEdits] = useState<ThemeColors | null>(null);
@@ -94,10 +97,10 @@ function BrandColorSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
       setLocalEdits(null); // Clear local edits after save
-      toast.success('Brand colors updated');
+      toast.success(t('branding.brandColorsUpdated'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to update brand colors');
+      toast.error(err.response?.data?.message || t('branding.brandColorsUpdateFailed'));
     },
   });
 
@@ -168,6 +171,7 @@ function BrandColorSection() {
 }
 
 function IconSection() {
+  const { t } = useTranslation('branding');
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [currentMode, setCurrentMode] = useState<'light' | 'dark'>('light');
@@ -191,12 +195,12 @@ function IconSection() {
       brandingApi.uploadIcon(mode, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
-      toast.success('Icon uploaded successfully');
+      toast.success(t('branding.iconUploaded'));
       setUploading(false);
       setDialogOpen(null);
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to upload icon');
+      toast.error(err.response?.data?.message || t('branding.iconUploadFailed'));
       setUploading(false);
     },
   });
@@ -205,11 +209,11 @@ function IconSection() {
     mutationFn: brandingApi.resetIcon,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
-      toast.success('Icon removed');
+      toast.success(t('branding.iconRemoved'));
       setDialogOpen(null);
     },
     onError: () => {
-      toast.error('Failed to remove icon');
+      toast.error(t('branding.iconRemoveFailed'));
     },
   });
 
@@ -229,13 +233,13 @@ function IconSection() {
     // Validate file type
     const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Invalid file type. Allowed: PNG, JPEG, WebP');
+      toast.error(t('branding.invalidIconType'));
       return;
     }
 
     // Validate file size (1MB)
     if (file.size > 1024 * 1024) {
-      toast.error('File size must not exceed 1MB');
+      toast.error(t('branding.iconTooLarge'));
       return;
     }
 
@@ -280,7 +284,7 @@ function IconSection() {
       // Upload cropped image
       uploadMutation.mutate({ mode: currentMode, file: croppedFile });
     } catch {
-      toast.error('Failed to crop image');
+      toast.error(t('branding.cropFailed'));
       setUploading(false);
     }
   };
@@ -534,6 +538,7 @@ function IconSection() {
 }
 
 function LogoSection() {
+  const { t } = useTranslation('branding');
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState<'light' | 'dark' | null>(null);
@@ -549,12 +554,12 @@ function LogoSection() {
       brandingApi.uploadLogo(mode, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
-      toast.success('Logo uploaded successfully');
+      toast.success(t('branding.logoUploaded'));
       setUploading(false);
       setDialogOpen(null);
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to upload logo');
+      toast.error(err.response?.data?.message || t('branding.logoUploadFailed'));
       setUploading(false);
     },
   });
@@ -563,11 +568,11 @@ function LogoSection() {
     mutationFn: brandingApi.resetLogo,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
-      toast.success('Logo removed');
+      toast.success(t('branding.logoRemoved'));
       setDialogOpen(null);
     },
     onError: () => {
-      toast.error('Failed to remove logo');
+      toast.error(t('branding.logoRemoveFailed'));
     },
   });
 
@@ -583,13 +588,13 @@ function LogoSection() {
     // Validate file type
     const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Invalid file type. Allowed: SVG, PNG, JPEG, WebP');
+      toast.error(t('branding.invalidLogoType'));
       return;
     }
 
     // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('File size must not exceed 2MB');
+      toast.error(t('branding.logoTooLarge'));
       return;
     }
 
@@ -775,6 +780,7 @@ function LogoSection() {
 }
 
 function FaviconSection() {
+  const { t } = useTranslation('branding');
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState<'light' | 'dark' | null>(null);
@@ -790,12 +796,12 @@ function FaviconSection() {
       brandingApi.uploadFavicon(mode, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
-      toast.success('Favicon uploaded successfully');
+      toast.success(t('branding.faviconUploaded'));
       setUploading(false);
       setDialogOpen(null);
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to upload favicon');
+      toast.error(err.response?.data?.message || t('branding.faviconUploadFailed'));
       setUploading(false);
     },
   });
@@ -804,11 +810,11 @@ function FaviconSection() {
     mutationFn: brandingApi.resetFavicon,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
-      toast.success('Favicon reset to default');
+      toast.success(t('branding.faviconReset'));
       setDialogOpen(null);
     },
     onError: () => {
-      toast.error('Failed to reset favicon');
+      toast.error(t('branding.faviconResetFailed'));
     },
   });
 

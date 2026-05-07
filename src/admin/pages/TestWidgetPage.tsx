@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { Spinner } from '../components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -155,6 +156,7 @@ function getStatusBadgeClasses(status: string): string {
 }
 
 export function TestWidgetPage() {
+  const { t } = useTranslation('testWidget');
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -643,7 +645,7 @@ export function TestWidgetPage() {
                     <Input placeholder="Click to focus..." className="w-48" name="demo_input" />
                     <Select>
                       <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Select option" />
+                        <SelectValue placeholder={t('testWidget.selectOption')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="opt1">Option 1</SelectItem>

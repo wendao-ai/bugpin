@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,6 +34,7 @@ export function SystemSettings() {
 }
 
 function SystemSettingsSection() {
+  const { t } = useTranslation('system');
   const queryClient = useQueryClient();
 
   const {
@@ -78,10 +80,10 @@ function SystemSettingsSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
       queryClient.invalidateQueries({ queryKey: ['version'] });
-      toast.success('System settings saved successfully');
+      toast.success(t('system.settingsSaved'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to save settings');
+      toast.error(err.response?.data?.message || t('system.saveFailed'));
     },
   });
 
@@ -118,7 +120,7 @@ function SystemSettingsSection() {
             </Label>
             <Input
               id="app-name"
-              placeholder="BugPin"
+              placeholder={t('system.applicationNamePlaceholder')}
               {...register('appName')}
               aria-invalid={!!errors.appName}
             />

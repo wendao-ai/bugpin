@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TemplatePreviewProps {
   html: string;
@@ -6,6 +7,7 @@ interface TemplatePreviewProps {
 }
 
 export function TemplatePreview({ html, subject }: TemplatePreviewProps) {
+  const { t } = useTranslation('email');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function TemplatePreview({ html, subject }: TemplatePreviewProps) {
       </div>
       <iframe
         ref={iframeRef}
-        title="Email Preview"
+        title={t('email.emailPreview')}
         className="w-full h-[400px] bg-white"
         sandbox="allow-same-origin"
       />

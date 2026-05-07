@@ -1,4 +1,5 @@
 import { Label } from './ui/label';
+import { useTranslation } from 'react-i18next';
 import { Button } from './ui/button';
 import { ColorPicker } from './ui/color-picker';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
@@ -91,13 +92,14 @@ export function ThemeColorPicker({
   value,
   onChange,
   disabled = false,
-  lightModeTitle = 'Light Mode Colors',
-  darkModeTitle = 'Dark Mode Colors',
-  buttonColorLabel = 'Primary Color',
-  textColorLabel = 'Button Text Color',
+  lightModeTitle,
+  darkModeTitle,
+  buttonColorLabel,
+  textColorLabel,
   showGenerateButton = true,
   showSurfaceColors = false,
 }: ThemeColorPickerProps) {
+  const { t } = useTranslation('themeColors');
   const handleGenerateDarkColors = () => {
     const generated = generateDarkModeColors({
       buttonColor: value.lightButtonColor,
@@ -115,15 +117,15 @@ export function ThemeColorPicker({
   return (
     <Tabs defaultValue="light">
       <TabsList>
-        <TabsTrigger value="light">{lightModeTitle}</TabsTrigger>
-        <TabsTrigger value="dark">{darkModeTitle}</TabsTrigger>
+        <TabsTrigger value="light">{lightModeTitle || t('themeColors.lightModeColors')}</TabsTrigger>
+        <TabsTrigger value="dark">{darkModeTitle || t('themeColors.darkModeColors')}</TabsTrigger>
       </TabsList>
 
       {/* Light Mode Colors */}
       <TabsContent value="light" className="space-y-3 pt-2">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>{buttonColorLabel}</Label>
+            <Label>{buttonColorLabel || t('themeColors.buttonColor')}</Label>
             <ColorPicker
               value={value.lightButtonColor}
               onChange={(color) => onChange({ lightButtonColor: color })}
@@ -158,7 +160,7 @@ export function ThemeColorPicker({
         {showSurfaceColors && (
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div className="space-y-2">
-              <Label>Background Color</Label>
+              <Label>{t('themeColors.backgroundColor')}</Label>
               <ColorPicker
                 value={value.lightBackgroundColor ?? '#ffffff'}
                 onChange={(color) => onChange({ lightBackgroundColor: color })}
@@ -166,7 +168,7 @@ export function ThemeColorPicker({
               />
             </div>
             <div className="space-y-2">
-              <Label>Secondary Color</Label>
+              <Label>{t('themeColors.secondaryColor')}</Label>
               <ColorPicker
                 value={value.lightSecondaryColor ?? '#f5f5f5'}
                 onChange={(color) => onChange({ lightSecondaryColor: color })}
@@ -174,7 +176,7 @@ export function ThemeColorPicker({
               />
             </div>
             <div className="space-y-2">
-              <Label>Input Field Color</Label>
+              <Label>{t('themeColors.inputFieldColor')}</Label>
               <ColorPicker
                 value={value.lightInputColor ?? '#ffffff'}
                 onChange={(color) => onChange({ lightInputColor: color })}
@@ -182,7 +184,7 @@ export function ThemeColorPicker({
               />
             </div>
             <div className="space-y-2">
-              <Label>Text Color</Label>
+              <Label>{t('themeColors.textColor')}</Label>
               <ColorPicker
                 value={value.lightForegroundColor ?? '#0a0a0a'}
                 onChange={(color) => onChange({ lightForegroundColor: color })}
@@ -204,7 +206,7 @@ export function ThemeColorPicker({
               disabled={disabled}
               type="button"
             >
-              Generate from Light Mode
+              {t('themeColors.generateFromLightMode')}
             </Button>
           </div>
         )}

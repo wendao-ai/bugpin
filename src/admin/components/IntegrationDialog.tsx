@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -76,6 +77,7 @@ export function IntegrationDialog({
   integration,
   projectId,
 }: IntegrationDialogProps) {
+  const { t } = useTranslation('integration');
   const isEditing = !!integration;
   const createMutation = useCreateIntegration();
   const updateMutation = useUpdateIntegration();
@@ -195,7 +197,7 @@ export function IntegrationDialog({
 
   const handleFetchRepos = async () => {
     if (!watchedToken?.trim()) {
-      toast.error('Please enter an access token first');
+      toast.error(t('integration.pleaseEnterToken'));
       return;
     }
 
@@ -240,7 +242,7 @@ export function IntegrationDialog({
         setAvailableLabels(result);
       } catch {
         setLabelsError(true);
-        toast.error('Unable to load labels. Token needs Metadata: Read permission.');
+        toast.error(t('integration.unableToLoadLabels'));
       }
     }
     if (!enabled) {
@@ -262,7 +264,7 @@ export function IntegrationDialog({
         setAvailableAssignees(result);
       } catch {
         setAssigneesError(true);
-        toast.error('Unable to load assignees. Token needs Metadata: Read permission.');
+        toast.error(t('integration.unableToLoadAssignees'));
       }
     }
     if (!enabled) {
@@ -335,7 +337,7 @@ export function IntegrationDialog({
       // Toast is handled by the useTestIntegration hook
       await testMutation.mutateAsync(integration.id);
     } else {
-      toast.error('Save the integration first to test the connection');
+      toast.error(t('integration.saveFirstToTest'));
     }
   };
 
@@ -457,7 +459,7 @@ export function IntegrationDialog({
                         variant="outline"
                         onClick={handleFetchRepos}
                         disabled={fetchReposMutation.isPending || !watchedToken?.trim()}
-                        title="Load repositories"
+                        title={t('integration.loadRepositories')}
                       >
                         {fetchReposMutation.isPending ? (
                           <Spinner size="sm" />
@@ -511,7 +513,7 @@ export function IntegrationDialog({
                 {repositories.length > 0 ? (
                   <Select value={selectedRepo} onValueChange={handleRepoSelect}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a repository..." />
+                      <SelectValue placeholder={t('integration.chooseRepository')} />
                     </SelectTrigger>
                     <SelectContent>
                       {repositories.map((repo) => (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -19,6 +20,7 @@ import { Spinner } from '../../components/ui/spinner';
 import type { AppSettings } from '@shared/types';
 
 export function SecuritySettings() {
+  const { t } = useTranslation('security');
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     enforceHttps: false,
@@ -53,10 +55,10 @@ export function SecuritySettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Security settings saved successfully');
+      toast.success(t('security.settingsSaved'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to save settings');
+      toast.error(err.response?.data?.message || t('security.saveFailed'));
     },
   });
 

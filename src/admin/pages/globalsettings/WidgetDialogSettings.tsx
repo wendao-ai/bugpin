@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { brandingApi } from '../../api/branding';
@@ -35,6 +36,7 @@ const DEFAULT_WIDGET_COLORS: ThemeColors = {
 };
 
 export function WidgetDialogSettings() {
+  const { t } = useTranslation('widgetDialog');
   const queryClient = useQueryClient();
   // Track local edits separately - null means use config values
   const [localEdits, setLocalEdits] = useState<Partial<ThemeColors> | null>(null);
@@ -49,10 +51,10 @@ export function WidgetDialogSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['branding-config'] });
       setLocalEdits(null); // Clear local edits after save
-      toast.success('Widget dialog colors updated');
+      toast.success(t('widgetDialog.colorsUpdated'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to update widget dialog colors');
+      toast.error(err.response?.data?.message || t('widgetDialog.colorsUpdateFailed'));
     },
   });
 

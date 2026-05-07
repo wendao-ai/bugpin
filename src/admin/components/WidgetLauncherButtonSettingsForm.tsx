@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -147,6 +148,7 @@ export function WidgetLauncherButtonSettingsForm({
   onCustomToggle,
   useTabs = false,
 }: ButtonSettingsFormProps) {
+  const { t } = useTranslation('widgetLauncherButton');
   const effectivePosition =
     value.position ?? globalSettings?.widgetLauncherButton.position ?? 'bottom-right';
   const effectiveButtonText =
@@ -208,10 +210,10 @@ export function WidgetLauncherButtonSettingsForm({
     <div className="flex items-center justify-between pb-3 border-b">
       <div className="space-y-0.5">
         <Label htmlFor="use-custom-settings" className="text-sm font-medium">
-          Use Custom Settings
+          {t('widgetLauncherButton.useCustomSettings')}
         </Label>
         <p className="text-xs text-muted-foreground">
-          Enable individual widget settings for this project
+          {t('widgetLauncherButton.useCustomSettingsDescription')}
         </p>
       </div>
       <Switch
@@ -251,9 +253,9 @@ export function WidgetLauncherButtonSettingsForm({
     <div className="border rounded-lg p-6 bg-muted/30">
       <div className="space-y-4">
         <div>
-          <h4 className="text-sm font-medium mb-1">Live Preview</h4>
+          <h4 className="text-sm font-medium mb-1">{t('widgetLauncherButton.livePreview')}</h4>
           <p className="text-xs text-muted-foreground">
-            Preview how your button will look. Hover over it to see the effects.
+            {t('widgetLauncherButton.livePreviewDescription')}
           </p>
         </div>
         <div className="flex items-center justify-center min-h-[100px] bg-background rounded border">
@@ -288,7 +290,7 @@ export function WidgetLauncherButtonSettingsForm({
       {/* Position and Shape */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="widget-position">Button Position</Label>
+          <Label htmlFor="widget-position">{t('widgetLauncherButton.buttonPosition')}</Label>
           <Select
             value={effectivePosition}
             onValueChange={(val) =>
@@ -300,19 +302,19 @@ export function WidgetLauncherButtonSettingsForm({
             disabled={disabled}
           >
             <SelectTrigger id="widget-position">
-              <SelectValue placeholder="Select position" />
+              <SelectValue placeholder={t('widgetLauncherButton.selectPosition')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="bottom-right">Bottom Right</SelectItem>
-              <SelectItem value="bottom-left">Bottom Left</SelectItem>
-              <SelectItem value="top-right">Top Right</SelectItem>
-              <SelectItem value="top-left">Top Left</SelectItem>
+              <SelectItem value="bottom-right">{t('widgetLauncherButton.bottomRight')}</SelectItem>
+              <SelectItem value="bottom-left">{t('widgetLauncherButton.bottomLeft')}</SelectItem>
+              <SelectItem value="top-right">{t('widgetLauncherButton.topRight')}</SelectItem>
+              <SelectItem value="top-left">{t('widgetLauncherButton.topLeft')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="widget-button-shape">Button Shape</Label>
+          <Label htmlFor="widget-button-shape">{t('widgetLauncherButton.buttonShape')}</Label>
           <Select
             value={effectiveButtonShape}
             onValueChange={(val) =>
@@ -321,11 +323,11 @@ export function WidgetLauncherButtonSettingsForm({
             disabled={disabled}
           >
             <SelectTrigger id="widget-button-shape">
-              <SelectValue placeholder="Select shape" />
+              <SelectValue placeholder={t('widgetLauncherButton.selectShape')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="rectangle">Rectangle</SelectItem>
-              <SelectItem value="round">Round</SelectItem>
+              <SelectItem value="rectangle">{t('widgetLauncherButton.rectangle')}</SelectItem>
+              <SelectItem value="round">{t('widgetLauncherButton.round')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -334,29 +336,29 @@ export function WidgetLauncherButtonSettingsForm({
       {/* Button Text and Icon */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="widget-button-text">Button Text (Optional)</Label>
+          <Label htmlFor="widget-button-text">{t('widgetLauncherButton.buttonText')}</Label>
           <Input
             id="widget-button-text"
             value={effectiveButtonText || ''}
             onChange={(e) => onChange({ ...value, buttonText: e.target.value || null })}
-            placeholder="Leave empty for icon-only"
+            placeholder={t('widgetLauncherButton.buttonTextPlaceholder')}
             disabled={disabled}
           />
-          <p className="text-xs text-muted-foreground">Leave empty to show only an icon</p>
+          <p className="text-xs text-muted-foreground">{t('widgetLauncherButton.buttonTextHint')}</p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="widget-button-icon">Button Icon (Optional)</Label>
+          <Label htmlFor="widget-button-icon">{t('widgetLauncherButton.buttonIcon')}</Label>
           <Select
             value={effectiveButtonIcon ?? 'none'}
             onValueChange={(val) => onChange({ ...value, buttonIcon: val === 'none' ? null : val })}
             disabled={disabled}
           >
             <SelectTrigger id="widget-button-icon">
-              <SelectValue placeholder="Select icon" />
+              <SelectValue placeholder={t('widgetLauncherButton.selectIcon')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">No Icon</SelectItem>
+              <SelectItem value="none">{t('widgetLauncherButton.noIcon')}</SelectItem>
               {AVAILABLE_ICONS.map((iconOption) => {
                 const IconComponent = iconOption.icon;
                 return (
@@ -370,14 +372,14 @@ export function WidgetLauncherButtonSettingsForm({
               })}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">Choose an icon to display on the button</p>
+          <p className="text-xs text-muted-foreground">{t('widgetLauncherButton.buttonIconHint')}</p>
         </div>
       </div>
 
       {/* Icon Size and Stroke Width */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="widget-icon-size">Icon Size (px)</Label>
+          <Label htmlFor="widget-icon-size">{t('widgetLauncherButton.iconSize')}</Label>
           <Input
             id="widget-icon-size"
             type="number"
@@ -389,11 +391,11 @@ export function WidgetLauncherButtonSettingsForm({
             }
             disabled={disabled}
           />
-          <p className="text-xs text-muted-foreground">Icon size in pixels (12-32)</p>
+          <p className="text-xs text-muted-foreground">{t('widgetLauncherButton.iconSizeHint')}</p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="widget-icon-stroke">Icon Stroke Width</Label>
+          <Label htmlFor="widget-icon-stroke">{t('widgetLauncherButton.iconStrokeWidth')}</Label>
           <Input
             id="widget-icon-stroke"
             type="number"
@@ -406,29 +408,29 @@ export function WidgetLauncherButtonSettingsForm({
             }
             disabled={disabled}
           />
-          <p className="text-xs text-muted-foreground">Icon stroke thickness (1-3)</p>
+          <p className="text-xs text-muted-foreground">{t('widgetLauncherButton.iconStrokeHint')}</p>
         </div>
       </div>
 
       {/* Theme */}
       <div className="space-y-2">
-        <Label htmlFor="widget-theme">Theme</Label>
+        <Label htmlFor="widget-theme">{t('widgetLauncherButton.theme')}</Label>
         <Select
           value={effectiveTheme}
           onValueChange={(val) => onChange({ ...value, theme: val as 'auto' | 'light' | 'dark' })}
           disabled={disabled}
         >
           <SelectTrigger id="widget-theme">
-            <SelectValue placeholder="Select theme" />
+            <SelectValue placeholder={t('widgetLauncherButton.selectTheme')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="auto">Auto (Detect from page)</SelectItem>
+            <SelectItem value="auto">{t('widgetLauncherButton.autoDetect')}</SelectItem>
             <SelectItem value="light">Light</SelectItem>
             <SelectItem value="dark">Dark</SelectItem>
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Auto detects the page's color scheme automatically
+          {t('widgetLauncherButton.themeHint')}
         </p>
       </div>
 
@@ -463,7 +465,7 @@ export function WidgetLauncherButtonSettingsForm({
           onClick={() => onChange({ ...value, enableHoverScaleEffect: undefined })}
           className="w-full"
         >
-          Reset to Global Default
+          {t('widgetLauncherButton.resetToGlobalDefault')}
         </Button>
       )}
 
@@ -472,10 +474,10 @@ export function WidgetLauncherButtonSettingsForm({
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="enable-tooltip" className="text-sm font-normal">
-              Show Tooltip
+              {t('widgetLauncherButton.showTooltip')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              Display a tooltip when hovering over the button
+              {t('widgetLauncherButton.showTooltipDescription')}
             </p>
           </div>
           <Switch
@@ -488,15 +490,15 @@ export function WidgetLauncherButtonSettingsForm({
 
         {effectiveTooltipEnabled && (
           <div className="space-y-2">
-            <Label htmlFor="tooltip-text">Tooltip Text</Label>
+            <Label htmlFor="tooltip-text">{t('widgetLauncherButton.tooltipText')}</Label>
             <Input
               id="tooltip-text"
               value={effectiveTooltipText || ''}
               onChange={(e) => onChange({ ...value, tooltipText: e.target.value || null })}
-              placeholder="Report a bug"
+              placeholder={t('widgetLauncherButton.tooltipTextPlaceholder')}
               disabled={disabled}
             />
-            <p className="text-xs text-muted-foreground">Text shown in the tooltip on hover</p>
+            <p className="text-xs text-muted-foreground">{t('widgetLauncherButton.tooltipTextHint')}</p>
           </div>
         )}
       </div>
@@ -544,8 +546,8 @@ export function WidgetLauncherButtonSettingsForm({
             {livePreviewSection}
             <Tabs defaultValue="button" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="button">Button</TabsTrigger>
-                <TabsTrigger value="colors">Colors</TabsTrigger>
+                <TabsTrigger value="button">{t('widgetLauncherButton.buttonTab')}</TabsTrigger>
+                <TabsTrigger value="colors">{t('widgetLauncherButton.colorsTab')}</TabsTrigger>
               </TabsList>
               <TabsContent value="button" className="mt-4">
                 {buttonSettingsContent}

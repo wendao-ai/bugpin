@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -59,6 +60,7 @@ export function ProjectSettingsDialog({
   onOpenChange,
   defaultTab = 'assignments',
 }: ProjectSettingsDialogProps) {
+  const { t } = useTranslation('projectSettings');
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -309,11 +311,11 @@ export function ProjectSettingsDialog({
         await deleteNotificationMutation.mutateAsync();
       }
 
-      toast.success('Settings saved successfully');
+      toast.success(t('projectSettings.settingsSaved'));
       onOpenChange(false);
     } catch (err: unknown) {
       const error = err as Error & { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || 'Failed to save settings');
+      toast.error(error.response?.data?.message || t('projectSettings.saveFailed'));
     }
   };
 
@@ -425,7 +427,7 @@ export function ProjectSettingsDialog({
                     }
                   >
                     <SelectTrigger id="default-assignee" className="h-11 max-w-xl">
-                      <SelectValue placeholder="Choose a default assignee" />
+                      <SelectValue placeholder={t('projectSettings.chooseDefaultAssignee')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={UNASSIGNED_VALUE}>No default assignee</SelectItem>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -30,6 +31,7 @@ interface NotificationsDialogProps {
 }
 
 export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogProps) {
+  const { t } = useTranslation('notificationsDialog');
   const queryClient = useQueryClient();
   const [perProject, setPerProject] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -128,10 +130,10 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
-      toast.success('Notification preferences saved for all projects');
+      toast.success(t('notificationsDialog.savedForAllProjects'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to save preferences');
+      toast.error(err.response?.data?.message || t('notificationsDialog.saveFailed'));
     },
   });
 
@@ -152,7 +154,7 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
-      toast.success('Notification preferences saved');
+      toast.success(t('notificationsDialog.saved'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
       toast.error(err.response?.data?.message || 'Failed to save preferences');
@@ -175,10 +177,9 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Notification Preferences</DialogTitle>
+          <DialogTitle>{t('notificationsDialog.notificationPreferences')}</DialogTitle>
           <DialogDescription>
-            Configure your personal notification preferences.
-            {!perProject && ' These settings apply to all projects.'}
+            {t('notificationsDialog.description')}{!perProject && t('notificationsDialog.descriptionGlobal')}
           </DialogDescription>
         </DialogHeader>
 
@@ -192,10 +193,10 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
             <div className="flex items-center justify-between pb-3 border-b">
               <div className="space-y-0.5">
                 <Label htmlFor="per-project-toggle" className="text-sm font-medium">
-                  Customize per project
+                  {t('notificationsDialog.customizePerProject')}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Set different notification preferences for each project
+                  {t('notificationsDialog.customizePerProjectDescription')}
                 </p>
               </div>
               <Switch
@@ -214,11 +215,11 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
             {perProject && (
               <div className="space-y-2">
                 <Label htmlFor="project-select" className="text-sm font-medium">
-                  Project
+                  {t('common.project')}
                 </Label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
                   <SelectTrigger id="project-select">
-                    <SelectValue placeholder="Select a project" />
+                    <SelectValue placeholder={t('notificationsDialog.selectProject')} />
                   </SelectTrigger>
                   <SelectContent>
                     {projectsData?.map((project) => (
@@ -247,7 +248,7 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
                     Saving...
                   </>
                 ) : (
-                  'Save Changes'
+                  t('notificationsDialog.saveChanges')
                 )}
               </Button>
             </DialogFooter>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -77,6 +78,7 @@ export function StorageSettings() {
 }
 
 function StorageSettingsSection() {
+  const { t } = useTranslation('storage');
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     s3Enabled: false,
@@ -127,7 +129,7 @@ function StorageSettingsSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
       queryClient.invalidateQueries({ queryKey: ['storage-stats'] });
-      toast.success('Storage settings saved successfully');
+      toast.success(t('storage.settingsSaved'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
       toast.error(err.response?.data?.message || 'Failed to save settings');
@@ -139,13 +141,13 @@ function StorageSettingsSection() {
     try {
       const response = await api.post('/storage/s3/test');
       if (response.data.success) {
-        if (!silent) toast.success('S3 connection successful!');
+        if (!silent) toast.success(t('storage.connectionSuccessful'));
         setConnectionStatus('online');
         localStorage.setItem('s3ConnectionStatus', 'online');
       }
     } catch (err: unknown) {
       const error = err as Error & { response?: { data?: { message?: string } } };
-      if (!silent) toast.error(error.response?.data?.message || 'Failed to connect to S3');
+      if (!silent) toast.error(error.response?.data?.message || t('storage.connectionFailed'));
       setConnectionStatus('offline');
       localStorage.setItem('s3ConnectionStatus', 'offline');
     } finally {
@@ -271,7 +273,7 @@ function StorageSettingsSection() {
                       s3Config: { ...formData.s3Config, accessKeyId: e.target.value },
                     })
                   }
-                  placeholder="AKIAIOSFODNN7EXAMPLE"
+                  placeholder={t('storage.accessKeyIdPlaceholder')}
                   required={formData.s3Enabled}
                 />
                 <p className="text-sm text-muted-foreground">
@@ -291,7 +293,7 @@ function StorageSettingsSection() {
                       s3Config: { ...formData.s3Config, secretAccessKey: e.target.value },
                     })
                   }
-                  placeholder="Enter secret access key"
+                  placeholder={t('storage.secretAccessKeyPlaceholder')}
                   required={formData.s3Enabled}
                 />
                 <p className="text-sm text-muted-foreground">
@@ -368,6 +370,7 @@ function StorageSettingsSection() {
 }
 
 function MigrationSection() {
+  const { t } = useTranslation('storage');
   const [progress, setProgress] = useState<MigrationProgress | null>(null);
   const [deleteLocal, setDeleteLocal] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -418,12 +421,12 @@ function MigrationSection() {
     try {
       const response = await api.post('/storage/migrate', { deleteLocalAfterUpload: deleteLocal });
       if (response.data.success) {
-        toast.success('Migration started');
+        toast.success(t('storage.migrationStarted'));
         queryClient.invalidateQueries({ queryKey: ['storage-stats'] });
       }
     } catch (err: unknown) {
       const error = err as Error & { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || 'Failed to start migration');
+      toast.error(error.response?.data?.message || t('storage.migrationStartFailed'));
     }
   };
 
@@ -431,11 +434,11 @@ function MigrationSection() {
     try {
       const response = await api.post('/storage/migrate/cancel');
       if (response.data.success) {
-        toast.info('Migration cancelled');
+        toast.info(t('storage.migrationCancelled'));
       }
     } catch (err: unknown) {
       const error = err as Error & { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || 'Failed to cancel migration');
+      toast.error(error.response?.data?.message || t('storage.migrationCancelFailed'));
     }
   };
 

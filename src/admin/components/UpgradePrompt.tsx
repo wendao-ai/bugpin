@@ -1,4 +1,5 @@
 import { Crown, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 
@@ -11,6 +12,7 @@ interface UpgradePromptProps {
 const EDITIONS_URL = 'https://bugpin.io/editions/';
 
 export function UpgradePrompt({ feature: _feature, title, description }: UpgradePromptProps) {
+  const { t } = useTranslation('upgradePrompt');
   return (
     <Card className="border-dashed">
       <CardHeader className="text-center pb-2">
@@ -23,12 +25,12 @@ export function UpgradePrompt({ feature: _feature, title, description }: Upgrade
       <CardContent className="text-center">
         <Button asChild>
           <a href={EDITIONS_URL} target="_blank" rel="noopener noreferrer">
-            Upgrade to Enterprise
+            {t('upgradePrompt.upgradeToEnterprise')}
             <ExternalLink className="ml-2 h-4 w-4" />
           </a>
         </Button>
         <p className="mt-4 text-xs text-muted-foreground">
-          This feature requires an Enterprise license.
+          {t('upgradePrompt.enterpriseFeature')}
         </p>
       </CardContent>
     </Card>

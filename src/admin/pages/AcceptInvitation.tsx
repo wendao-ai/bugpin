@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,6 +33,7 @@ interface InvitationData {
 }
 
 export function AcceptInvitation() {
+  const { t } = useTranslation('acceptInvitation');
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [searchParams] = useSearchParams();
@@ -208,7 +210,7 @@ export function AcceptInvitation() {
               </Label>
               <Input
                 id="name"
-                placeholder="John Doe"
+                placeholder={t('acceptInvitation.namePlaceholder')}
                 {...register('name')}
                 aria-invalid={!!errors.name}
               />
@@ -222,7 +224,7 @@ export function AcceptInvitation() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Min. 8 characters"
+                placeholder={t('acceptInvitation.passwordPlaceholder')}
                 {...register('password')}
                 aria-invalid={!!errors.password}
               />
@@ -238,7 +240,7 @@ export function AcceptInvitation() {
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Repeat your password"
+                placeholder={t('acceptInvitation.confirmPasswordPlaceholder')}
                 {...register('confirmPassword')}
                 aria-invalid={!!errors.confirmPassword}
               />

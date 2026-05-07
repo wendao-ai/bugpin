@@ -1,4 +1,5 @@
 import { Label } from './ui/label';
+import { useTranslation } from 'react-i18next';
 import { Switch } from './ui/switch';
 import { ThemeColorPicker } from './ThemeColorPicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -44,6 +45,7 @@ export function WidgetDialogSettingsForm({
   onCustomToggle,
   showCard = true,
 }: WidgetDialogSettingsFormProps) {
+  const { t } = useTranslation('widgetDialog');
   // Merge value with global colors and defaults
   const currentColors: ThemeColors = {
     lightButtonColor:
@@ -129,10 +131,10 @@ export function WidgetDialogSettingsForm({
         <div className="flex items-center justify-between pb-3 border-b">
           <div className="space-y-0.5">
             <Label htmlFor="use-custom-widget-dialog" className="text-sm font-medium">
-              Use Custom Settings
+              {t('widgetDialog.useCustomSettings')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              Enable custom widget dialog colors for this project
+              {t('widgetDialog.useCustomSettingsDescription')}
             </p>
           </div>
           <Switch
@@ -155,10 +157,9 @@ export function WidgetDialogSettingsForm({
           {showCard ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Widget Dialog Colors</CardTitle>
+                <CardTitle className="text-base">{t('widgetDialog.widgetDialogColors')}</CardTitle>
                 <CardDescription>
-                  Configure the colors for buttons inside the feedback widget dialog (submit, action
-                  buttons).
+                  {t('widgetDialog.widgetDialogColorsDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>{colorPicker}</CardContent>

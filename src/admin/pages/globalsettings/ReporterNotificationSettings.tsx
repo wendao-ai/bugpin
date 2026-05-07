@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -16,6 +17,7 @@ import { Spinner } from '../../components/ui/spinner';
 import type { AppSettings, ReporterNotificationSettings as ReporterSettings } from '@shared/types';
 
 export function ReporterNotificationSettings() {
+  const { t } = useTranslation('reporterNotifications');
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<ReporterSettings>({
     emailEnabled: true,
@@ -47,10 +49,10 @@ export function ReporterNotificationSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Reporter notification settings saved successfully');
+      toast.success(t('globalSettings.reporterNotificationSaved'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to save settings');
+      toast.error(err.response?.data?.message || t('globalSettings.reporterNotificationSaveFailed'));
     },
   });
 

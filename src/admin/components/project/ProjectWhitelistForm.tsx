@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -24,6 +25,7 @@ export function ProjectWhitelistForm({
   useCustomSettings = true,
   onCustomToggle,
 }: ProjectWhitelistFormProps) {
+  const { t } = useTranslation('projectWhitelist');
   const [newOrigin, setNewOrigin] = useState('');
 
   const handleAddOrigin = () => {
@@ -36,12 +38,12 @@ export function ProjectWhitelistForm({
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/; // IP address with optional port
 
     if (!domainRegex.test(trimmed) && !localhostRegex.test(trimmed) && !ipRegex.test(trimmed)) {
-      toast.error('Please enter a valid domain (e.g., example.com, localhost, or 127.0.0.1)');
+      toast.error(t('projectWhitelist.invalidDomain'));
       return;
     }
 
     if (value.includes(trimmed)) {
-      toast.error('This origin is already in the list');
+      toast.error(t('projectWhitelist.originAlreadyExists'));
       return;
     }
 

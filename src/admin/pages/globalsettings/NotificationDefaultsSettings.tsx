@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -15,6 +16,7 @@ import { NotificationSettingsForm } from '../../components/NotificationSettingsF
 import type { AppSettings, NotificationDefaultSettings } from '@shared/types';
 
 export function NotificationDefaultsSettings() {
+  const { t } = useTranslation('globalSettings');
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Partial<NotificationDefaultSettings>>({});
 
@@ -39,10 +41,10 @@ export function NotificationDefaultsSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Notification defaults saved successfully');
+      toast.success(t('globalSettings.notificationDefaultsSaved'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to save settings');
+      toast.error(err.response?.data?.message || t('globalSettings.notificationDefaultsSaveFailed'));
     },
   });
 

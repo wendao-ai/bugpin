@@ -21,7 +21,7 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('about.about')} BugPin</DialogTitle>
-          <DialogDescription>Self-hosted bug reporting and feedback widget</DialogDescription>
+          <DialogDescription>{t('about.selfHostedDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -31,14 +31,14 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-foreground">Copyright</p>
+            <p className="text-sm font-semibold text-foreground">{t('about.copyright')}</p>
             <p className="text-sm text-muted-foreground">© {currentYear} Arantic Digital</p>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-foreground">License</p>
+            <p className="text-sm font-semibold text-foreground">{t('about.license')}</p>
             <p className="text-sm text-muted-foreground">
-              AGPL-3.0 (Server/Admin Console), MIT (Widget)
+              {t('about.licenseDetail')}
             </p>
             <a
               href={LICENSE_URL}
@@ -46,13 +46,13 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1"
             >
-              View License
+              {t('about.viewLicense')}
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-foreground">Source Code</p>
+            <p className="text-sm font-semibold text-foreground">{t('about.sourceCode')}</p>
             <a
               href={GITHUB_URL}
               target="_blank"
@@ -63,14 +63,14 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
               <ExternalLink className="h-3 w-3" />
             </a>
             <p className="text-xs text-muted-foreground mt-1">
-              BugPin is open source software. Contributions are welcome!
+              {t('about.openSourceNote')}
             </p>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-foreground">Trademark</p>
+            <p className="text-sm font-semibold text-foreground">{t('about.trademark')}</p>
             <p className="text-sm text-muted-foreground">
-              BugPin is a trademark of Arantic Digital
+              {t('about.trademarkDetail')}
             </p>
             <a
               href={TRADEMARK_URL}
@@ -78,7 +78,7 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1"
             >
-              View Trademark Policy
+              {t('about.viewTrademarkPolicy')}
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>

@@ -1,4 +1,5 @@
 import { Label } from './ui/label';
+import { useTranslation } from 'react-i18next';
 import { Switch } from './ui/switch';
 import type { ReporterNotificationSettings } from '@shared/types';
 
@@ -17,6 +18,7 @@ export function ReporterNotificationSettingsForm({
   globalSettings,
   disabled = false,
 }: ReporterNotificationSettingsFormProps) {
+  const { t } = useTranslation('reporterNotifications');
   const effectiveEmailEnabled =
     value.emailEnabled ?? globalSettings?.reporterNotifications?.emailEnabled ?? true;
 
@@ -25,10 +27,10 @@ export function ReporterNotificationSettingsForm({
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <Label htmlFor="reporter-email-enabled" className="text-sm font-normal">
-            Email Notifications
+            {t('reporterNotifications.emailNotifications')}
           </Label>
           <p className="text-xs text-muted-foreground">
-            Enable email notifications for reporters
+            {t('reporterNotifications.emailNotificationsDescription')}
           </p>
         </div>
         <Switch
@@ -43,10 +45,10 @@ export function ReporterNotificationSettingsForm({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="reporter-new-report" className="text-sm font-normal">
-                New Reports
+                {t('reporterNotifications.newReports')}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Send confirmation email when a report is submitted
+                {t('reporterNotifications.newReportsDescription')}
               </p>
             </div>
             <Switch
@@ -63,9 +65,9 @@ export function ReporterNotificationSettingsForm({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="reporter-status-change" className="text-sm font-normal">
-                Status Changes
+                {t('reporterNotifications.statusChanges')}
               </Label>
-              <p className="text-xs text-muted-foreground">Notify reporters on status changes</p>
+              <p className="text-xs text-muted-foreground">{t('reporterNotifications.statusChangesDescription')}</p>
             </div>
             <Switch
               id="reporter-status-change"
@@ -81,9 +83,9 @@ export function ReporterNotificationSettingsForm({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="reporter-priority-change" className="text-sm font-normal">
-                Priority Changes
+                {t('reporterNotifications.priorityChanges')}
               </Label>
-              <p className="text-xs text-muted-foreground">Notify reporters on priority changes</p>
+              <p className="text-xs text-muted-foreground">{t('reporterNotifications.priorityChangesDescription')}</p>
             </div>
             <Switch
               id="reporter-priority-change"
@@ -101,10 +103,10 @@ export function ReporterNotificationSettingsForm({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="reporter-assignment-change" className="text-sm font-normal">
-                Assignment Changes
+                {t('reporterNotifications.assignmentChanges')}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Notify reporters when a report is assigned or reassigned
+                {t('reporterNotifications.assignmentChangesDescription')}
               </p>
             </div>
             <Switch
@@ -121,10 +123,10 @@ export function ReporterNotificationSettingsForm({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="reporter-messaging" className="text-sm font-normal">
-                Messaging System
+                {t('reporterNotifications.messagingSystem')}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Allow sending messages to reporters
+                {t('reporterNotifications.messagingSystemDescription')}
               </p>
             </div>
             <Switch

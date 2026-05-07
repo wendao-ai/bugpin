@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,6 +67,7 @@ function formatRelativeTime(dateString: string): string {
 }
 
 export function UsersSettings() {
+  const { t } = useTranslation('users');
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -98,11 +100,11 @@ export function UsersSettings() {
       if (data.warning) {
         toast.warning(data.warning);
       } else {
-        toast.success('Invitation sent successfully');
+        toast.success(t('users.invitationSent'));
       }
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to send invitation');
+      toast.error(err.response?.data?.message || t('users.invitationSendFailed'));
     },
   });
 
@@ -116,11 +118,11 @@ export function UsersSettings() {
       if (data.warning) {
         toast.warning(data.warning);
       } else {
-        toast.success('Invitation resent successfully');
+        toast.success(t('users.invitationResent'));
       }
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to resend invitation');
+      toast.error(err.response?.data?.message || t('users.invitationResendFailed'));
     },
   });
 
@@ -140,10 +142,10 @@ export function UsersSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success('User updated successfully');
+      toast.success(t('users.userUpdated'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to update user');
+      toast.error(err.response?.data?.message || t('users.userUpdateFailed'));
     },
   });
 
@@ -154,10 +156,10 @@ export function UsersSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setDeleteUser(null);
-      toast.success('User deleted successfully');
+      toast.success(t('users.userDeleted'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to delete user');
+      toast.error(err.response?.data?.message || t('users.userDeleteFailed'));
     },
   });
 
@@ -356,7 +358,7 @@ export function UsersSettings() {
                           size="sm"
                           onClick={() => resendInvitationMutation.mutate(user.id)}
                           disabled={resendInvitationMutation.isPending}
-                          title="Resend invitation"
+                          title={t('users.resendInvitationTitle')}
                         >
                           {resendInvitationMutation.isPending ? (
                             <Spinner size="sm" />
@@ -434,6 +436,7 @@ function InviteUserModal({
   onInvite: (data: { email: string; name: string; role: string }) => void;
   isLoading: boolean;
 }) {
+  const { t } = useTranslation('users');
   const [selectedRole, setSelectedRole] = useState('viewer');
 
   const {
@@ -480,7 +483,7 @@ function InviteUserModal({
               </Label>
               <Input
                 id="user-name"
-                placeholder="John Doe"
+                placeholder={t('users.namePlaceholder')}
                 {...register('name')}
                 aria-invalid={!!errors.name}
               />

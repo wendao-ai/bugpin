@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../api/client';
@@ -191,6 +192,7 @@ const TEMPLATE_VARIABLES: Record<EmailTemplateType, string[]> = {
 };
 
 export function EmailTemplatesSettings() {
+  const { t } = useTranslation('emailTemplates');
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<EmailTemplateType>('newReport');
@@ -258,11 +260,11 @@ export function EmailTemplatesSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Template saved successfully');
+      toast.success(t('emailTemplates.templateSaved'));
       setHasChanges(false);
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to save template');
+      toast.error(err.response?.data?.message || t('emailTemplates.saveFailed'));
     },
   });
 
@@ -281,7 +283,7 @@ export function EmailTemplatesSettings() {
       setShowPreview(true);
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to generate preview');
+      toast.error(err.response?.data?.message || t('emailTemplates.previewFailed'));
     },
   });
 
@@ -300,10 +302,10 @@ export function EmailTemplatesSettings() {
       return response.data;
     },
     onSuccess: () => {
-      toast.success(`Test email sent to ${user?.email}`);
+      toast.success(t('emailTemplates.testEmailSent', { email: user?.email }));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to send test email');
+      toast.error(err.response?.data?.message || t('emailTemplates.testEmailFailed'));
     },
   });
 
@@ -316,9 +318,9 @@ export function EmailTemplatesSettings() {
       setHasChanges(true);
       setShowPreview(false);
       setPreviewData(null);
-      toast.success('Template reset to default');
+      toast.success(t('emailTemplates.templateReset'));
     } catch {
-      toast.error('Failed to fetch default template');
+      toast.error(t('emailTemplates.templateResetFailed'));
     }
   };
 
@@ -348,7 +350,7 @@ export function EmailTemplatesSettings() {
     return (
       <UpgradePrompt
         feature="custom-templates"
-        title="Email Templates"
+        title={t('emailTemplates.emailTemplates')}
         description="Customize the email notification templates sent to users. Personalize subject lines, content, and styling to match your brand."
       />
     );
@@ -391,7 +393,7 @@ export function EmailTemplatesSettings() {
             id="subject"
             value={subject}
             onChange={(e) => handleSubjectChange(e.target.value)}
-            placeholder="Email subject..."
+            placeholder={t('emailTemplates.subjectPlaceholder')}
           />
           <p className="text-xs text-muted-foreground">
             You can use variables like {`{{app.name}}`} in the subject line
@@ -408,7 +410,7 @@ export function EmailTemplatesSettings() {
             value={html}
             onChange={handleHtmlChange}
             availableVariables={availableVariables}
-            placeholder="Enter your email template HTML..."
+            placeholder={t('emailTemplates.htmlContentPlaceholder')}
           />
         </div>
 

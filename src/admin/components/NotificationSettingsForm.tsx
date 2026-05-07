@@ -1,4 +1,5 @@
 import { Label } from './ui/label';
+import { useTranslation } from 'react-i18next';
 import { Switch } from './ui/switch';
 import type { NotificationDefaultSettings } from '@shared/types';
 
@@ -23,6 +24,7 @@ export function NotificationSettingsForm({
   useCustomSettings = true,
   onCustomToggle,
 }: NotificationSettingsFormProps) {
+  const { t } = useTranslation('notificationSettings');
   const effectiveEmailEnabled =
     value.emailEnabled ?? globalSettings?.notifications.emailEnabled ?? true;
   const effectiveNotifyOnNewReport =
@@ -43,10 +45,10 @@ export function NotificationSettingsForm({
         <div className="flex items-center justify-between pb-3 border-b">
           <div className="space-y-0.5">
             <Label htmlFor="use-custom-notifications" className="text-sm font-medium">
-              Use Custom Notifications
+              {t('notificationSettings.useCustomNotifications')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              Enable individual notification defaults for this project
+              {t('notificationSettings.useCustomNotificationsDescription')}
             </p>
           </div>
           <Switch
@@ -77,9 +79,9 @@ export function NotificationSettingsForm({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="default-email-enabled" className="text-sm font-normal">
-                Email Notifications
+                {t('notificationSettings.emailNotifications')}
               </Label>
-              <p className="text-xs text-muted-foreground">Enable email notifications by default</p>
+              <p className="text-xs text-muted-foreground">{t('notificationSettings.emailNotificationsDescription')}</p>
             </div>
             <Switch
               id="default-email-enabled"
@@ -95,9 +97,9 @@ export function NotificationSettingsForm({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="default-new-report" className="text-sm font-normal">
-                    New Reports
+                    {t('notificationSettings.newReports')}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Notify on new reports</p>
+                  <p className="text-xs text-muted-foreground">{t('notificationSettings.newReportsDescription')}</p>
                 </div>
                 <Switch
                   id="default-new-report"
@@ -111,9 +113,9 @@ export function NotificationSettingsForm({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="default-status-change" className="text-sm font-normal">
-                    Status Changes
+                    {t('notificationSettings.statusChanges')}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Notify on status changes</p>
+                  <p className="text-xs text-muted-foreground">{t('notificationSettings.statusChangesDescription')}</p>
                 </div>
                 <Switch
                   id="default-status-change"
@@ -129,9 +131,9 @@ export function NotificationSettingsForm({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="default-priority-change" className="text-sm font-normal">
-                    Priority Changes
+                    {t('notificationSettings.priorityChanges')}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Notify on priority changes</p>
+                  <p className="text-xs text-muted-foreground">{t('notificationSettings.priorityChangesDescription')}</p>
                 </div>
                 <Switch
                   id="default-priority-change"
@@ -147,9 +149,9 @@ export function NotificationSettingsForm({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="default-assignment" className="text-sm font-normal">
-                    Assignments
+                    {t('notificationSettings.assignments')}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Notify on assignments</p>
+                  <p className="text-xs text-muted-foreground">{t('notificationSettings.assignmentsDescription')}</p>
                 </div>
                 <Switch
                   id="default-assignment"
@@ -163,9 +165,9 @@ export function NotificationSettingsForm({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="default-deletion" className="text-sm font-normal">
-                    Deletions
+                    {t('notificationSettings.deletions')}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Notify when reports are deleted</p>
+                  <p className="text-xs text-muted-foreground">{t('notificationSettings.deletionsDescription')}</p>
                 </div>
                 <Switch
                   id="default-deletion"

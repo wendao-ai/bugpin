@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { licenseApi } from '../../api/license';
@@ -28,6 +29,7 @@ import {
 } from '../../components/ui/alert-dialog';
 
 export function LicenseSettings() {
+  const { t } = useTranslation('license');
   const queryClient = useQueryClient();
   const [licenseKey, setLicenseKey] = useState('');
 
@@ -41,11 +43,11 @@ export function LicenseSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['license-status'] });
       queryClient.invalidateQueries({ queryKey: ['license-features'] });
-      toast.success('License activated successfully');
+      toast.success(t('license.licenseActivated'));
       setLicenseKey('');
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(err.response?.data?.message || 'Failed to activate license');
+      toast.error(err.response?.data?.message || t('license.activationFailed'));
     },
   });
 
@@ -54,17 +56,17 @@ export function LicenseSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['license-status'] });
       queryClient.invalidateQueries({ queryKey: ['license-features'] });
-      toast.success('License removed');
+      toast.success(t('license.licenseRemoved'));
     },
     onError: () => {
-      toast.error('Failed to remove license');
+      toast.error(t('license.licenseRemoveFailed'));
     },
   });
 
   const handleActivate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!licenseKey.trim()) {
-      toast.error('Please enter a license key');
+      toast.error(t('license.enterLicenseKey'));
       return;
     }
     activateMutation.mutate(licenseKey.trim());
@@ -189,7 +191,7 @@ export function LicenseSettings() {
                 <Label htmlFor="license-key">License Key</Label>
                 <Textarea
                   id="license-key"
-                  placeholder="Paste your license key here..."
+                  placeholder={t('license.licenseKeyPlaceholder')}
                   value={licenseKey}
                   onChange={(e) => setLicenseKey(e.target.value)}
                   rows={4}
