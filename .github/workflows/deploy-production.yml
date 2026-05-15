@@ -22,10 +22,10 @@ jobs:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           key: ${{ secrets.ECS_SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER,IMAGE
+          envs: ZOT_USERNAME,ZOT_PASSWORD,IMAGE
           command_timeout: 30m
           script: |
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            echo "$ZOT_PASSWORD" | docker login zot.migelab.com -u "$ZOT_USERNAME" --password-stdin
             docker pull "$IMAGE"
             docker stop bugpin || true
             docker rm   bugpin || true
@@ -38,8 +38,8 @@ jobs:
               -p 7300:7300 \
               -v /opt/bugpin/data:/data \
               "$IMAGE"
-            docker logout ghcr.io
+            docker logout zot.migelab.com
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USER: ${{ github.repository_owner }}
-          IMAGE: ghcr.io/${{ github.repository_owner }}/bugpin:latest
+          ZOT_USERNAME: ${{ secrets.ZOT_USERNAME }}
+          ZOT_PASSWORD: ${{ secrets.ZOT_PASSWORD }}
+          IMAGE: zot.migelab.com/bugpin:latest

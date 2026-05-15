@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Allows manual triggering
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: zot.migelab.com
   IMAGE_NAME: bugpin
 
 jobs:
@@ -16,7 +16,6 @@ jobs:
     # Runs on: version tags only (v1.0.0 for production, v1.0.0-dev for development)
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -34,18 +33,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to Zot Registry
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.ZOT_USERNAME }}
+          password: ${{ secrets.ZOT_PASSWORD }}
 
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
