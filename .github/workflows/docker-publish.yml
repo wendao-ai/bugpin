@@ -7,8 +7,7 @@ on:
   workflow_dispatch:  # Allows manual triggering
 
 env:
-  HARBOR_REGISTRY: registry.arantic.cloud
-  HARBOR_PROJECT: bugpin
+  REGISTRY: ghcr.io
   IMAGE_NAME: bugpin
 
 jobs:
@@ -38,27 +37,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to Harbor Registry (Production)
-        if: steps.check.outputs.is_dev == 'false'
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.HARBOR_REGISTRY }}
-          username: ${{ vars.HARBOR_ROBOT }}
-          password: ${{ secrets.HARBOR_KEY }}
-
-      - name: Log in to Harbor Registry (Dev/Stage)
-        if: steps.check.outputs.is_dev == 'true'
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.HARBOR_REGISTRY }}
-          username: ${{ vars.HARBOR_ROBOT_DEV }}
-          password: ${{ secrets.HARBOR_KEY_DEV }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |

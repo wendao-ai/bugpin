@@ -1,0 +1,41 @@
+name: Deploy to Production (Alibaba Cloud ECS)
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only run when docker-publish succeeded on a production tag (no -dev / -beta suffix)
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      !contains(github.event.workflow_run.head_branch, '-dev') &&
+      !contains(github.event.workflow_run.head_branch, '-beta')
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_KEY }}
+          envs: GHCR_TOKEN,GHCR_USER,IMAGE
+          script: |
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            docker pull "$IMAGE"
+            docker stop bugpin || true
+            docker rm   bugpin || true
+            docker run -d \
+              --name bugpin \
+              --restart unless-stopped \
+              -p 7300:7300 \
+              -v /opt/bugpin/data:/data \
+              "$IMAGE"
+            docker logout ghcr.io
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.repository_owner }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/bugpin:latest
