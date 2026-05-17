@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    # Runner 切换：默认 self-hosted Linux X64（cw-linux-x64）；在仓库 Settings → Variables 设 RUNNER_LABELS=["ubuntu-latest"] 可一键切回 GitHub runner
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","Linux","X64"]') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

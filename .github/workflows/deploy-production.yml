@@ -8,7 +8,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    # Runner 切换：默认 self-hosted Linux X64（cw-linux-x64）；在仓库 Settings → Variables 设 RUNNER_LABELS=["ubuntu-latest"] 可一键切回 GitHub runner
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","Linux","X64"]') }}
     # Only run when docker-publish succeeded on a production tag (no -dev / -beta suffix)
     if: >-
       github.event.workflow_run.conclusion == 'success' &&

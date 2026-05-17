@@ -1,10 +1,22 @@
 # BugPin Dockerfile
 # Multi-stage build for optimized production image
 
+# USE_CN_MIRRORS=true  → 启用国内镜像源（self-hosted runner / 本地 CN 构建加速）
+# USE_CN_MIRRORS=false → 走官方源（GitHub-hosted runner / 国际环境，默认）
+# 由 .github/workflows/docker-publish.yml 根据 runner 类型自动传入
+ARG USE_CN_MIRRORS=false
+
 # =============================================================================
 # Stage 1: Builder
 # =============================================================================
 FROM oven/bun:1-alpine AS builder
+ARG USE_CN_MIRRORS
+
+# 切换 Alpine apk + npm registry 到国内镜像（仅 USE_CN_MIRRORS=true 时生效）
+RUN if [ "$USE_CN_MIRRORS" = "true" ]; then \
+      sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \
+      echo "registry=https://registry.npmmirror.com" > /root/.npmrc; \
+    fi
 
 # Pull latest Alpine security patches (libssl3, libcrypto3, musl, zlib, etc.)
 RUN apk update && apk upgrade --no-cache
@@ -46,8 +58,15 @@ RUN if [ -d "ee/src" ]; then cd ee && bun run build.ts; fi && \
 # Stage 2: Production
 # =============================================================================
 FROM oven/bun:1-alpine
+ARG USE_CN_MIRRORS
 
 WORKDIR /app
+
+# 切换 Alpine apk + npm registry 到国内镜像（仅 USE_CN_MIRRORS=true 时生效）
+RUN if [ "$USE_CN_MIRRORS" = "true" ]; then \
+      sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \
+      echo "registry=https://registry.npmmirror.com" > /root/.npmrc; \
+    fi
 
 # Pull latest Alpine security patches (libssl3, libcrypto3, musl, zlib, etc.)
 # and install tini for signal handling and wget for health checks.

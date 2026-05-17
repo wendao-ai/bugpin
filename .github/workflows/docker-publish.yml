@@ -12,7 +12,8 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Runner 切换：默认 self-hosted Linux X64（cw-linux-x64）；在仓库 Settings → Variables 设 RUNNER_LABELS=["ubuntu-latest"] 可一键切回 GitHub runner
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","Linux","X64"]') }}
     # Runs on: version tags only (v1.0.0 for production, v1.0.0-dev for development)
     permissions:
       contents: read
@@ -32,6 +33,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+        with:
+          # self-hosted（CN）→ docker driver：默认 docker-container 的 BuildKit 容器有独立网络栈，
+          #   不继承宿主 /etc/docker/daemon.json 的 registry mirrors，拉基础镜像（oven/bun:1-alpine）超时；
+          #   切 docker driver 直接用宿主 daemon，复用宿主的镜像加速配置。
+          # github-hosted（Azure）→ docker-container driver（默认）：Azure 直连 Docker Hub 无网络问题，
+          #   保留默认 driver 才能用 BuildKit 高级特性（多平台、cache export 等）。
+          # 详见 mige-lims-jeecgboot/docs/solutions/integration-issues/self-hosted-runner-and-zot-registry-pitfalls-2026-05-17.md
+          driver: ${{ runner.environment == 'self-hosted' && 'docker' || 'docker-container' }}
 
       - name: Log in to Zot Registry
         uses: docker/login-action@v4
@@ -70,9 +79,20 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: APP_VERSION=${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # USE_CN_MIRRORS：仅 self-hosted runner（CN 网络）→ true，启用 Alpine/npm 国内镜像加速；
+          # GitHub-hosted runner（ubuntu-latest 等，在 Azure 国际网络）→ false，走官方源
+          # runner.environment 由 GitHub 在运行时注入，值为 'self-hosted' 或 'github-hosted'，不依赖 label 命名
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+            USE_CN_MIRRORS=${{ runner.environment == 'self-hosted' && 'true' || 'false' }}
+          # provenance=false：避免 buildx 产出 OCI attestation manifest，Zot 收到非 OCI manifest 会返回 HTTP 415 "manifest invalid"
+          # 配合 Zot 服务端 "compat": ["docker2s2"] 配置才能完全消除 415
+          provenance: false
+          # GHA cache 仅在 github-hosted runner 上启用：
+          # - github-hosted：cache backend 与 runner 同机房，又快又稳，能复用历史 layer
+          # - self-hosted：cache backend 经常 503，且需走 HTTPS 出网（GFW），改用宿主 Docker 自带 layer cache
+          cache-from: ${{ runner.environment == 'github-hosted' && 'type=gha' || '' }}
+          cache-to: ${{ runner.environment == 'github-hosted' && 'type=gha,mode=max' || '' }}
           platforms: linux/amd64  # Add linux/arm64 if needed
 
       - name: Image digest
