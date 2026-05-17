@@ -81,8 +81,10 @@ RUN bun install --production
 # Back to app root
 WORKDIR /app
 
-# Copy root package.json (used for version at runtime)
-COPY package.json ./
+# Copy root package.json from builder (where APP_VERSION arg stamped the version).
+# 不能直接 COPY package.json ./ —— 那是 build context 里未 stamp 的原始版本，
+# runtime /health endpoint 会永远报 git tag 之前的旧版本号。
+COPY --from=builder /app/package.json ./
 
 # Copy server source (Bun runs TypeScript directly)
 COPY src/server ./src/server

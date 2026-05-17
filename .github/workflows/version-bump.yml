@@ -13,15 +13,26 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.base_ref || 'dev' }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+      # 先确定目标分支再 checkout，避免在 base_ref 上 commit、推到 target 时被拒（dev/main 历史不一致）
       - name: Extract version from tag
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine target branch
+        id: branch
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if echo "$VERSION" | grep -qE '(-dev|-beta)'; then
+            echo "target=dev" >> "$GITHUB_OUTPUT"
+          else
+            echo "target=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch.outputs.target }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if bump needed
         id: check
@@ -45,17 +56,6 @@ jobs:
               fs.writeFileSync('$PKG', JSON.stringify(j, null, 2) + '\n');
             "
           done
-
-      - name: Determine target branch
-        if: steps.check.outputs.skip == 'false'
-        id: branch
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          if echo "$VERSION" | grep -qE '(-dev|-beta)'; then
-            echo "target=dev" >> "$GITHUB_OUTPUT"
-          else
-            echo "target=main" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Commit and push
         if: steps.check.outputs.skip == 'false'
