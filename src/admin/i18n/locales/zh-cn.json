@@ -87,7 +87,7 @@
     "title": "报告",
     "manage": "管理 Bug 报告",
     "createReport": "创建报告",
-    "searchReports": "搜索报告...",
+    "searchReports": "搜索标题 / 描述 / 页面 URL...",
     "allStatus": "全部状态",
     "allPriority": "全部优先级",
     "allProjects": "全部项目",

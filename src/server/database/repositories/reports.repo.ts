@@ -199,18 +199,29 @@ export const reportsRepo = {
       params.push(filter.createdBefore);
     }
 
-    // Full-text search
-    let searchJoin = '';
+    // Full-text search (title/description via FTS5) OR substring match on
+    // metadata.url（页面 URL）。
+    //
+    // 设计要点：
+    // - FTS5 默认按词分词，URL 里 `/` 是非词字符被丢弃，无法用 MATCH 直接搜
+    //   `/lims/order/create` 这样的路径；故 URL 单独走 json_extract + LIKE
+    //   子串匹配。
+    // - 用 `rowid IN (SELECT … FROM reports_fts WHERE … MATCH ?)` 子查询替代
+    //   INNER JOIN，避免和 OR 分支耦合，保留 FTS5 在自然语言搜索上的能力。
+    // - 单次搜索词同时尝试两个路径，匹配任一即命中，对 PM 「按页面归类反馈」
+    //   场景最实用（输 `/lims/order` 圈出所有订单页反馈）。
     if (filter.search) {
-      searchJoin = 'INNER JOIN reports_fts ON reports.rowid = reports_fts.rowid';
-      conditions.push('reports_fts MATCH ?');
-      params.push(filter.search);
+      conditions.push(
+        `(reports.rowid IN (SELECT rowid FROM reports_fts WHERE reports_fts MATCH ?)
+          OR json_extract(reports.metadata, '$.url') LIKE ?)`
+      );
+      params.push(filter.search, `%${filter.search}%`);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Get total count
-    const countQuery = `SELECT COUNT(*) as count FROM reports ${searchJoin} ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) as count FROM reports ${whereClause}`;
     const countResult = db.query(countQuery).get(...params) as { count: number };
     const total = countResult.count;
 
@@ -236,7 +247,6 @@ export const reportsRepo = {
       FROM reports
       LEFT JOIN projects ON reports.project_id = projects.id
       LEFT JOIN users ON users.id = reports.assigned_to
-      ${searchJoin}
       ${whereClause}
       ORDER BY ${orderBy} ${sortOrder}
       LIMIT ? OFFSET ?
