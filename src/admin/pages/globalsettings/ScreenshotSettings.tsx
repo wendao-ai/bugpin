@@ -13,20 +13,17 @@ import {
 import { Button } from '../../components/ui/button';
 import { Spinner } from '../../components/ui/spinner';
 import { ScreenshotSettingsForm } from '../../components/ScreenshotSettingsForm';
-import type { AppSettings } from '@shared/types';
-
-interface ScreenshotFormData {
-  useScreenCaptureAPI?: boolean;
-  maxScreenshotSizeMb?: number;
-  maxImageUploadSizeMb?: number;
-  maxVideoUploadSizeMb?: number;
-}
+import type { AppSettings, ScreenshotSettings as ScreenshotSettingsType } from '@shared/types';
 
 export function ScreenshotSettings() {
   const { t } = useTranslation('screenshotSettings');
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<ScreenshotFormData>({
-    maxScreenshotSizeMb: 5,
+  // 字段名必须与 ScreenshotSettingsForm 子组件期待的对齐——子组件读写
+  // `maxScreenshotSize`，旧版本父表单用 `maxScreenshotSizeMb`，导致 onChange
+  // 把新值写进旁路键，submit 时读 `maxScreenshotSizeMb`（旧值/默认值），
+  // 用户输入静默丢失。统一为 `maxScreenshotSize` 即修复。
+  const [formData, setFormData] = useState<ScreenshotSettingsType>({
+    maxScreenshotSize: 5,
     maxImageUploadSizeMb: 10,
     maxVideoUploadSizeMb: 50,
     useScreenCaptureAPI: false,
@@ -43,7 +40,7 @@ export function ScreenshotSettings() {
   useEffect(() => {
     if (settings) {
       setFormData({
-        maxScreenshotSizeMb: settings.screenshot.maxScreenshotSize || 5,
+        maxScreenshotSize: settings.screenshot.maxScreenshotSize || 5,
         maxImageUploadSizeMb: settings.screenshot.maxImageUploadSizeMb || 10,
         maxVideoUploadSizeMb: settings.screenshot.maxVideoUploadSizeMb || 50,
         useScreenCaptureAPI: settings.screenshot.useScreenCaptureAPI || false,
@@ -69,7 +66,7 @@ export function ScreenshotSettings() {
     e.preventDefault();
     mutation.mutate({
       screenshot: {
-        maxScreenshotSize: formData.maxScreenshotSizeMb || 5,
+        maxScreenshotSize: formData.maxScreenshotSize || 5,
         maxImageUploadSizeMb: formData.maxImageUploadSizeMb || 10,
         maxVideoUploadSizeMb: formData.maxVideoUploadSizeMb || 50,
         useScreenCaptureAPI: formData.useScreenCaptureAPI || false,
