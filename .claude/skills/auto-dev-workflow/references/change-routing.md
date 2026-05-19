@@ -14,7 +14,7 @@
 | 仅 `src/server/database/migrations/*.sql` | 3.C 数据库迁移验证 | `bun run --cwd src/server migrate` + `sqlite3` 校验 |
 | 仅 `docker-compose.yml` / `Dockerfile` / `bugpin.service` / `.github/workflows/**` | 3.D 脚本/服务冒烟 | 直接执行 `docker compose ...` / `bun run build` + `bun run start` + 健康检查 |
 | 仅 `client-integrations/**` | 3.D（按集成示例文档自测）+ 跳过浏览器 | 参考该目录 README 跑示例 |
-| 仅文档（`docs/`、`CLAUDE.md`、`README*`、`Changelog/**`、`.claude/plans/archive/**`） | 跳过测试 | 直接进入步骤 4 |
+| 仅文档（`docs/`、`CLAUDE.md`、`README*`、`Changelog/**`、`openspec/specs/**`、`openspec/changes/archive/**`、`.claude/**`） | 跳过测试 | 直接进入步骤 4 |
 
 ## 跨模块归属说明
 

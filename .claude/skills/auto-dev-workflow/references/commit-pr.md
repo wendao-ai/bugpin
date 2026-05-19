@@ -91,7 +91,7 @@ BASE_URL="https://github.com/$REPO/releases/download/$TAG"
 
 cat > /tmp/pr-body.md <<EOF
 ## 改动概述
-<提取自 .claude/plans/<change-name>/plan.md 的"改动范围"段落>
+<提取自 openspec/changes/<change-name>/proposal.md 的"Why / What Changes"段落>
 
 ## 测试证据
 

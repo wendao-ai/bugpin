@@ -9,8 +9,9 @@
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 SKILL_DIR="$PROJECT_ROOT/.claude/skills/auto-dev-workflow"
 TEST_RESULTS="$PROJECT_ROOT/test-results"
-PLANS_DIR="$PROJECT_ROOT/.claude/plans"
-PLANS_ARCHIVE_DIR="$PLANS_DIR/archive"
+SPECS_DIR="$PROJECT_ROOT/openspec/changes"
+SPECS_ARCHIVE_DIR="$SPECS_DIR/archive"
+SPECS_MAIN_DIR="$PROJECT_ROOT/openspec/specs"
 
 # === 后端（Bun + Hono） ===
 BACKEND_PORT_DEV=7301           # bun --watch 在 dev 下监听端口

@@ -13,7 +13,7 @@ description: |
   - 用户说"新需求："或给出 PRD/需求描述/brainstorm 文档
 
   适用场景：BugPin 全栈项目（Bun/Hono 后端 + React/Vite 管理后台 + 嵌入式 Widget + SQLite，
-  使用 GitHub PR 协作模式与 DCO sign-off）。
+  使用 OpenSpec 规格驱动工作流 + GitHub PR 协作模式 + DCO sign-off）。
   当前项目身份与技术栈关键词见 references/portability.md。
 
   重要：用户描述需求后立即触发，不等待用户逐步调用每个子命令。如果无法判断改动类型，默认按"全栈"路径走。
@@ -45,21 +45,21 @@ description: |
 
 ---
 
-## 步骤 1：规划（生成计划文档）
+## 步骤 1：规划（生成规格文档）
 
 **调用语义角色**：`spec-propose`，参数为用户原始需求描述（或 brainstorm 文档路径）。
 
-期望产物：`.claude/plans/<change-name>/plan.md`（含背景、改动范围、tasks 列表、验收要点），并在该目录下登记 change 名称（kebab-case）。
+期望产物：`$SPECS_DIR/<change-name>/` 下的完整 artifact 集（`proposal.md` + `design.md` + `specs/*.md` + `tasks.md`），change 名称为 kebab-case。
 
-**衔接**：确认 change 名称，记录到上下文供后续步骤复用。
+**衔接**：从 `$SPECS_DIR` 确认 change 名称，记录到上下文供后续步骤复用。
 
 ---
 
 ## 步骤 2：实现代码
 
-**调用语义角色**：`spec-apply`（参数为步骤 1 的 plan 路径）。
+**调用语义角色**：`spec-apply`（参数为步骤 1 的 change 名称；省略时由角色绑定的工具自行从 `$SPECS_DIR` 推断）。
 
-按 plan 中的 tasks 列表逐条实现，每条完成后在 plan 文件打 `[x]`。
+按 `tasks.md` 列表逐条实现，每条完成后在 tasks 文件打 `[x]`。
 
 **衔接**：实现完成后必须**显式列出本次涉及的文件路径列表**，用于步骤 2.5 改动分类与步骤 3 测试路径选择。
 
@@ -104,11 +104,11 @@ description: |
 
 ## 步骤 4：归档变更
 
-**调用语义角色**：`spec-archive`。
+**调用语义角色**：`spec-archive`（参数为 change 名称）。
 
-期望行为：检查 plan tasks 全部勾选 → 在 plan.md 追加 review 段（实际改动、与计划差异、遗留问题）→ 把 plan 目录移动到 `$PLANS_ARCHIVE_DIR`。
+期望行为：检查 `tasks.md` 完成度 → 同步 delta specs 到主 `openspec/specs/` → 把 change 目录移动到 `$SPECS_ARCHIVE_DIR`。
 
-无需用户干预，所有提示均按推荐项推进。
+无需用户干预，所有提示均按推荐项推进（默认选"同步后归档"）。
 
 ---
 
@@ -143,7 +143,7 @@ description: |
 
 | 变动类型 | 改哪里 | 是否改本文件 |
 |---|---|---|
-| 当前项目改名/换技术栈/换 plan 工具 | `references/portability.md` | ❌ |
+| 当前项目改名/换技术栈/换 spec 工具 | `references/portability.md` | ❌ |
 | 端口/workspace 名/容器名/账号变更 | `references/project-config.md` | ❌ |
 | 改动类型分类规则演进 | `references/change-routing.md` | ❌ |
 | 3.A/3.B/3.C/3.D 具体命令调整 | `references/test-strategies.md` | ❌ |

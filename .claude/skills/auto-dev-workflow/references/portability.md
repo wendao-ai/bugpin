@@ -21,19 +21,21 @@
 
 ## 2. Skill 角色 → 具体调用映射
 
-SKILL.md 引用语义角色；本表把角色绑定到当前项目实际使用的 skill 实例。BugPin 不使用 openspec/opsx 等 spec-driven 工作流，因此规划/实现/归档全部走 ce-* 系列与项目本地 plan 目录。
+SKILL.md 引用语义角色；本表把角色绑定到当前项目实际使用的 skill 实例。BugPin 采用 **OpenSpec** spec-driven 工作流（`openspec/changes/<name>/` 下的 `proposal.md` + `design.md` + `specs/*.md` + `tasks.md`），由 `openspec-*` 系列 skill 驱动。
 
 | 语义角色 | 用途 | 当前绑定 |
 |---|---|---|
-| **spec-propose** | 步骤 1：从需求生成计划文档到 `.claude/plans/<change>/plan.md` | `Skill("compound-engineering:ce-plan", args="<需求> ; 计划写到 .claude/plans/<kebab-name>/plan.md")` |
-| **spec-apply** | 步骤 2：按 plan tasks 列表实现代码 | `Skill("compound-engineering:ce-work", args="按 .claude/plans/<kebab-name>/plan.md 实现，每完成一个 task 在 plan 中打 [x]")` |
-| **spec-archive** | 步骤 4：检查 tasks 完成度 + 追加 review 段 + 移动 plan 到 archive | 直接由本流程编排（不调外部 skill）：写 review 段 → `mv .claude/plans/<name>/ .claude/plans/archive/$(date +%Y-%m-%d)-<name>/` |
+| **spec-propose** | 步骤 1：从需求一次性生成 proposal + design + specs + tasks | `Skill("openspec-propose", args="<需求描述>，change 名称用 kebab-case")` |
+| **spec-apply** | 步骤 2：按 `tasks.md` 实现代码，逐条勾选 | `Skill("openspec-apply-change", args="<change 名称>")` |
+| **spec-archive** | 步骤 4：检查 tasks 完成度 → 同步 delta specs → 移动 change 到 archive | `Skill("openspec-archive-change", args="<change 名称>")`（提示选"同步后归档（推荐）"） |
 | **record-learnings** | 步骤 3.5：把"失败→修复"循环根因归档 | `Skill("compound-engineering:ce-compound")` |
 | **browser-test** | 步骤 3.B：前端浏览器自动化测试 | `Skill("compound-engineering:ce-test-browser")`（底层为 `agent-browser` CLI） |
 | **commit-pr** | 步骤 5.2：暂存 + commit（DCO sign-off）+ push + 建 PR | `Skill("commit-commands:commit-push-pr")`（必须在提示中显式要求 `git commit --signoff`） |
 | **feature-video**（可选） | 步骤 5.3：把录屏嵌入 PR description | `Skill("compound-engineering:feature-video")` |
 
-> **可替换性**：本表是 skill 角色的"接线图"。其他项目可换 `spec-propose` → `opsx:propose` / `spec-kit` / `BMAD`；只改本表，不改 SKILL.md 文档体。
+> **可替换性**：本表是 skill 角色的"接线图"。其他项目可换 `spec-propose` → `ce-plan` / `spec-kit` / `BMAD`；只改本表，不改 SKILL.md 文档体。
+>
+> **slash 等价命令**：`openspec-propose ≡ /opsx:propose`，`openspec-apply-change ≡ /opsx:apply`，`openspec-archive-change ≡ /opsx:archive`。本流程通过 Skill 工具调用，避免触发交互式命令面板。
 
 ---
 
@@ -67,8 +69,9 @@ SKILL.md 用变量引用；本表给出当前项目实际值。
 
 | 变量 | 含义 | 当前值 |
 |---|---|---|
-| `$PLANS_DIR` | 计划目录（本项目 spec 替代） | `.claude/plans/` |
-| `$PLANS_ARCHIVE_DIR` | 归档后的 plan 目录 | `.claude/plans/archive/YYYY-MM-DD-<name>/` |
+| `$SPECS_DIR` | OpenSpec 变更目录 | `openspec/changes/<name>/` |
+| `$SPECS_ARCHIVE_DIR` | 归档后的 change 目录 | `openspec/changes/archive/YYYY-MM-DD-HHmm-<name>/` |
+| `$SPECS_MAIN_DIR` | 主规格目录（archive 时同步过来） | `openspec/specs/` |
 | `$SOLUTIONS_DIR` | 经验教训归档目录 | `docs/solutions/<问题域>/` |
 | `$TEST_RESULTS` | 测试证据目录（截图/日志/录屏） | `<repo>/test-results/`（gitignored） |
 | `$SCREENSHOT_PREFIX` | 测试证据文件名前缀约定 | `{branch}_{YYMMDDHH}` |
