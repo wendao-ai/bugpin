@@ -200,22 +200,32 @@ export const reportsRepo = {
     }
 
     // Full-text search (title/description via FTS5) OR substring match on
-    // metadata.url（页面 URL）。
+    // metadata.url（页面 URL）/ reporter_name / reporter_email。
     //
     // 设计要点：
-    // - FTS5 默认按词分词，URL 里 `/` 是非词字符被丢弃，无法用 MATCH 直接搜
-    //   `/lims/order/create` 这样的路径；故 URL 单独走 json_extract + LIKE
-    //   子串匹配。
+    // - FTS5 默认按词分词，URL 里 `/`、邮箱里 `@` `.` 都是非词字符会被丢弃，
+    //   无法用 MATCH 直接命中 `/lims/order` 或 `user@example.com`；故 URL
+    //   与 reporter 字段单独走 LIKE 子串匹配。
     // - 用 `rowid IN (SELECT … FROM reports_fts WHERE … MATCH ?)` 子查询替代
     //   INNER JOIN，避免和 OR 分支耦合，保留 FTS5 在自然语言搜索上的能力。
-    // - 单次搜索词同时尝试两个路径，匹配任一即命中，对 PM 「按页面归类反馈」
-    //   场景最实用（输 `/lims/order` 圈出所有订单页反馈）。
+    // - reporter_name / reporter_email 走 `LOWER(col) LIKE LOWER(?)` 实现
+    //   大小写不敏感匹配（ASCII 邮箱大小写敏感问题最常见；中文姓名 LOWER 为
+    //   no-op，不影响命中）。
+    // - 单次搜索词同时尝试四个路径，匹配任一即命中：对运营 / 客服「按反馈人
+    //   定位历史问题」与 PM「按页面归类反馈」两类场景都通用。
     if (filter.search) {
+      const likeTerm = `%${filter.search}%`;
+      // FTS5 把 `-` `@` `:` 等当作语法字符，原样传入会触发 "syntax error" 或被
+      // 解析成 NOT 操作；包成 phrase（双引号）后 FTS5 按 tokenizer 拆词再做
+      // AND 顺序匹配，对单词、邮箱、URL 路径都安全。内嵌的 `"` 翻倍转义。
+      const ftsTerm = `"${filter.search.replace(/"/g, '""')}"`;
       conditions.push(
         `(reports.rowid IN (SELECT rowid FROM reports_fts WHERE reports_fts MATCH ?)
-          OR json_extract(reports.metadata, '$.url') LIKE ?)`
+          OR json_extract(reports.metadata, '$.url') LIKE ?
+          OR LOWER(reports.reporter_name) LIKE LOWER(?)
+          OR LOWER(reports.reporter_email) LIKE LOWER(?))`
       );
-      params.push(filter.search, `%${filter.search}%`);
+      params.push(ftsTerm, likeTerm, likeTerm, likeTerm);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

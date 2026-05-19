@@ -87,7 +87,7 @@
     "title": "Reports",
     "manage": "Manage bug reports",
     "createReport": "Create Report",
-    "searchReports": "Search title / description / page URL...",
+    "searchReports": "Search title / description / URL / reporter name · email...",
     "allStatus": "All Status",
     "allPriority": "All Priority",
     "allProjects": "All Projects",

@@ -322,6 +322,123 @@ describe('reportsRepo', () => {
     expect(result.data[0].title).toBe('Crash on login');
   });
 
+  it('search filter matches reporter_name and reporter_email (case-insensitive)', async () => {
+    const project = await createProject('ReporterSearch');
+
+    // 三条不同 reporter 信息的 report，title/description 故意避开命中词，
+    // 确保只有 reporter 列匹配才会出现在结果中。
+    await reportsRepo.create({
+      projectId: project.id,
+      title: 'Alpha issue',
+      description: 'something',
+      priority: 'medium',
+      metadata: baseMetadata,
+      reporterName: '张三',
+      reporterEmail: 'zhangsan@aranti.example',
+    });
+    await reportsRepo.create({
+      projectId: project.id,
+      title: 'Beta issue',
+      description: 'something else',
+      priority: 'medium',
+      metadata: baseMetadata,
+      reporterName: 'Alice',
+      reporterEmail: 'User@Example.COM',
+    });
+    await reportsRepo.create({
+      projectId: project.id,
+      title: 'Gamma issue',
+      description: 'unrelated',
+      priority: 'low',
+      metadata: { ...baseMetadata, url: 'https://example.com/orders/123' },
+      reporterName: 'Bob',
+      reporterEmail: 'bob@other.test',
+    });
+
+    // Scenario 1: match by Chinese reporter name; non-Latin LOWER no-op
+    const byChineseName = await reportsRepo.find({
+      projectId: project.id,
+      search: '张三',
+    });
+    expect(byChineseName.total).toBe(1);
+    expect(byChineseName.data[0].reporterEmail).toBe('zhangsan@aranti.example');
+
+    // Pinyin variant should not match the Chinese name column directly.
+    // Hyphens are FTS5 NOT operators in raw queries — covered by phrase-quoting in repo.
+    const noPinyinHit = await reportsRepo.find({
+      projectId: project.id,
+      search: 'zhangsan-not-in-any-field',
+    });
+    expect(noPinyinHit.total).toBe(0);
+
+    // Scenario 2: email substring match, both cases
+    const byEmailLower = await reportsRepo.find({
+      projectId: project.id,
+      search: 'user@example',
+    });
+    expect(byEmailLower.total).toBe(1);
+    expect(byEmailLower.data[0].reporterName).toBe('Alice');
+
+    const byEmailUpper = await reportsRepo.find({
+      projectId: project.id,
+      search: 'USER@EXAMPLE',
+    });
+    expect(byEmailUpper.total).toBe(1);
+    expect(byEmailUpper.data[0].reporterName).toBe('Alice');
+
+    // Scenario 3: title FTS5 path still works (backward compat)
+    const byTitle = await reportsRepo.find({
+      projectId: project.id,
+      search: 'Alpha',
+    });
+    expect(byTitle.total).toBe(1);
+    expect(byTitle.data[0].title).toBe('Alpha issue');
+
+    // Scenario 4: metadata.url LIKE path still works (backward compat)
+    const byUrl = await reportsRepo.find({
+      projectId: project.id,
+      search: '/orders',
+    });
+    expect(byUrl.total).toBe(1);
+    expect(byUrl.data[0].reporterName).toBe('Bob');
+
+    // Scenario 5: no-match — searching for a string absent everywhere.
+    // Avoid hyphens since FTS5 treats `-` as NOT.
+    const noMatch = await reportsRepo.find({
+      projectId: project.id,
+      search: 'definitely_absent_token',
+    });
+    expect(noMatch.total).toBe(0);
+
+    // Scenario 6: combine with status filter — only Alice's report is open by default,
+    // so add a status filter that excludes hers to confirm AND-composition with OR-search
+    const aliceId = (
+      await reportsRepo.find({ projectId: project.id, search: 'user@example' })
+    ).data[0].id;
+    await reportsRepo.update(aliceId, { status: 'closed' });
+
+    const openAndReporter = await reportsRepo.find({
+      projectId: project.id,
+      status: ['open'],
+      search: 'user@example',
+    });
+    expect(openAndReporter.total).toBe(0);
+
+    const closedAndReporter = await reportsRepo.find({
+      projectId: project.id,
+      status: ['closed'],
+      search: 'user@example',
+    });
+    expect(closedAndReporter.total).toBe(1);
+
+    // Scenario 7: empty / undefined search degrades to no filter — returns all three
+    const noSearch = await reportsRepo.find({ projectId: project.id });
+    expect(noSearch.total).toBe(3);
+
+    const emptyString = await reportsRepo.find({ projectId: project.id, search: '' });
+    expect(emptyString.total).toBe(3);
+  });
+
   it('handles github sync fields', async () => {
     const project = await createProject('GitHub');
     const report = await reportsRepo.create({
