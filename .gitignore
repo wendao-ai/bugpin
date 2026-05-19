@@ -36,12 +36,6 @@ Thumbs.db
 .idea/
 *.code-workspace
 
-# AI agent files
-.claude/
-CLAUDE.md
-AGENT.md
-GEMINI.md
-
 # Obsidian files
 .obsidian/
 
