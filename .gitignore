@@ -39,6 +39,13 @@ Thumbs.db
 # Obsidian files
 .obsidian/
 
+# 私有 skill：不开源（保留本地，但不进版本控制）
+# 防御性地覆盖所有可能的 agent CLI 镜像位置
+.claude/skills/auto-dev-workflow/
+.codex/skills/auto-dev-workflow/
+.factory/skills/auto-dev-workflow/
+.factory/commands/auto-dev-workflow*
+
 # Build automation
 Makefile
 
