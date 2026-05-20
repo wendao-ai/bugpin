@@ -12,6 +12,8 @@
 </div>
 <br />
 
+**Language**: **English** | [简体中文](README.zh-CN.md)
+
 ### Admin Console
 
 Manage projects and triage reports. Light and dark mode out of the box.
