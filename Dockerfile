@@ -30,6 +30,10 @@ COPY bun.lock* ./
 COPY src/server/package.json ./src/server/
 COPY src/admin/package.json ./src/admin/
 COPY src/widget/package.json ./src/widget/
+# CLI workspace 也声明在根 package.json 的 workspaces 数组里。
+# 缺这一行 bun install 在 workspace 拓扑解析时会 warn/fail（被 `; exit 0` 掩盖），
+# 导致 admin/widget 依赖装不齐、后续 build 失败。CLI 本身不进生产 stage 2。
+COPY src/cli/package.json ./src/cli/
 
 # Install dependencies (canvas is optional and may fail on Alpine, which is OK)
 RUN bun install; exit 0

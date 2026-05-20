@@ -8,13 +8,15 @@
   "workspaces": [
     "src/server",
     "src/admin",
-    "src/widget"
+    "src/widget",
+    "src/cli"
   ],
   "scripts": {
     "dev": "bun run dev:server & bun run dev:admin",
     "dev:server": "bun run --cwd src/server dev",
     "dev:admin": "bun run --cwd src/admin dev",
     "dev:widget": "bun run --cwd src/widget build:watch",
+    "cli": "bun run --cwd src/cli start",
     "build": "bun run build:server && bun run build:admin && bun run build:widget",
     "build:server": "bun run --cwd src/server build",
     "build:admin": "bun run --cwd src/admin build",
@@ -24,6 +26,7 @@
     "typecheck:server": "bun run --cwd src/server typecheck",
     "typecheck:admin": "bun run --cwd src/admin typecheck",
     "typecheck:widget": "bun run --cwd src/widget typecheck",
+    "typecheck:cli": "bun run --cwd src/cli typecheck",
     "test": "bun run test:server && bun run test:admin && bun run test:widget",
     "test:server": "bun test tests/server",
     "test:admin": "bun run --cwd src/admin test",
