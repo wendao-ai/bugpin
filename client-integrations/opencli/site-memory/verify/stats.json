@@ -1,0 +1,16 @@
+{
+  "args": {},
+  "expect": {
+    "rowCount": { "min": 5, "max": 20 },
+    "columns": ["dimension", "value", "count"],
+    "types": {
+      "dimension": "string",
+      "value": "string",
+      "count": "string"
+    },
+    "patterns": {
+      "count": "^\\d+$"
+    },
+    "notEmpty": ["dimension", "count"]
+  }
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "dimension": "total",
+    "value": "",
+    "count": "22"
+  },
+  {
+    "dimension": "status",
+    "value": "open",
+    "count": "18"
+  },
+  {
+    "dimension": "status",
+    "value": "in_progress",
+    "count": "4"
+  },
+  {
+    "dimension": "status",
+    "value": "resolved",
+    "count": "0"
+  },
+  {
+    "dimension": "status",
+    "value": "closed",
+    "count": "0"
+  },
+  {
+    "dimension": "priority",
+    "value": "lowest",
+    "count": "0"
+  },
+  {
+    "dimension": "priority",
+    "value": "low",
+    "count": "1"
+  },
+  {
+    "dimension": "priority",
+    "value": "medium",
+    "count": "18"
+  },
+  {
+    "dimension": "priority",
+    "value": "high",
+    "count": "0"
+  },
+  {
+    "dimension": "priority",
+    "value": "highest",
+    "count": "3"
+  }
+]

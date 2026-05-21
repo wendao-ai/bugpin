@@ -1,0 +1,78 @@
+{
+  "list-reports": {
+    "url": "https://bugpin.migelab.com/api/reports/",
+    "method": "GET",
+    "params": {
+      "required": [],
+      "optional": [
+        "projectId",
+        "status",
+        "priority",
+        "source",
+        "assignedTo",
+        "search",
+        "page",
+        "limit",
+        "sortBy",
+        "sortOrder"
+      ]
+    },
+    "response": "{ success: true, data: Report[], total: number }",
+    "verified_at": "2026-05-18",
+    "notes": "status/priority 接受逗号分隔多值；search 同时匹配 title/description/metadata.url（PR #8）"
+  },
+  "get-report": {
+    "url": "https://bugpin.migelab.com/api/reports/:id",
+    "method": "GET",
+    "params": {
+      "required": ["id (path)"],
+      "optional": []
+    },
+    "response": "{ success: true, report: Report }（响应字段可能平铺，adapter 做了 r.report || r 兼容）",
+    "verified_at": "2026-05-18",
+    "notes": "metadata 是嵌套 object：url/title/userAgent/consoleErrors/networkErrors/browser/device/viewport"
+  },
+  "update-report": {
+    "url": "https://bugpin.migelab.com/api/reports/:id",
+    "method": "PATCH",
+    "params": {
+      "required": ["id (path)"],
+      "optional": ["status", "priority", "assignedTo", "title", "description"]
+    },
+    "response": "{ success: true, report: Report }（更新后的完整对象）",
+    "verified_at": "2026-05-18",
+    "notes": "assignedTo: 传 null 解除分配；空字符串 adapter 会转 null"
+  },
+  "download-file": {
+    "url": "https://bugpin.migelab.com/api/reports/:reportId/files/:fileId",
+    "method": "GET",
+    "params": {
+      "required": ["reportId (path)", "fileId (path)"],
+      "optional": []
+    },
+    "response": "binary stream（截图/视频），content-type 标识格式",
+    "verified_at": "2026-05-18",
+    "notes": "fileId 从 list-reports 拿不到——需要先 GET /api/reports/:id/files 拿文件清单"
+  },
+  "stats-overview": {
+    "url": "https://bugpin.migelab.com/api/reports/stats/overview",
+    "method": "GET",
+    "params": {
+      "required": [],
+      "optional": ["projectId"]
+    },
+    "response": "{ success: true, total, byStatus/byPriority/bySource: { [key]: count } }（具体字段名未确认）",
+    "verified_at": "2026-05-18",
+    "notes": "首次跑通时确认实际字段名；adapter 做了 byX/xCounts 双 key 容错 + raw 兜底"
+  },
+  "auth-login": {
+    "url": "https://bugpin.migelab.com/api/auth/login",
+    "method": "POST",
+    "params": {
+      "required": ["email", "password"]
+    },
+    "response": "Set-Cookie: session=...（建立 session）",
+    "verified_at": "2026-05-18",
+    "notes": "未在 adapter 中使用——保留供未来 auto-refresh"
+  }
+}

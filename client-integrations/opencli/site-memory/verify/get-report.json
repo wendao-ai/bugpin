@@ -1,0 +1,9 @@
+{
+  "args": ["rpt_f6e95ce31462443885559134e60bccb2"],
+  "expect": {
+    "rowCount": { "min": 19, "max": 30 },
+    "columns": ["field", "value"],
+    "types": { "field": "string", "value": "string" },
+    "notEmpty": ["field"]
+  }
+}

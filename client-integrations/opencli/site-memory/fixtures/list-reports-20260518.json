@@ -1,0 +1,57 @@
+[
+  {
+    "rank": 1,
+    "id": "rpt_f6e95ce31462443885559134e60bccb2",
+    "title": "首页和工作台是同一个页面",
+    "status": "open",
+    "priority": "low",
+    "pageUrl": "https://lims.migelab.com/lims/dashboard",
+    "reporter": "贾伟",
+    "projectId": "proj_cd850472006048829d42500fc32b590b",
+    "createdAt": "2026-05-18T13:13:44.939Z"
+  },
+  {
+    "rank": 2,
+    "id": "rpt_be97e796976d411da64d528b678baa0b",
+    "title": "导入错误，不可取消",
+    "status": "open",
+    "priority": "medium",
+    "pageUrl": "https://lims.migelab.com/lims/sample",
+    "reporter": "杨丽霞",
+    "projectId": "proj_cd850472006048829d42500fc32b590b",
+    "createdAt": "2026-05-18T11:29:08.235Z"
+  },
+  {
+    "rank": 3,
+    "id": "rpt_a7db43213b8e44e0bd48cb0681a3b52b",
+    "title": "右边这里增加左右拖动",
+    "status": "open",
+    "priority": "medium",
+    "pageUrl": "https://lims.migelab.com/lims/email-intake/detail/2055751607108841473?review=1&__full__=1",
+    "reporter": "杨丽霞",
+    "projectId": "proj_cd850472006048829d42500fc32b590b",
+    "createdAt": "2026-05-18T03:29:43.563Z"
+  },
+  {
+    "rank": 4,
+    "id": "rpt_68decf6d7bc94248a1056a4ee4cb7c8a",
+    "title": "不是需求的邮件，增加删除",
+    "status": "open",
+    "priority": "medium",
+    "pageUrl": "https://lims.migelab.com/lims/email-intake",
+    "reporter": "杨丽霞",
+    "projectId": "proj_cd850472006048829d42500fc32b590b",
+    "createdAt": "2026-05-18T03:06:24.491Z"
+  },
+  {
+    "rank": 5,
+    "id": "rpt_0b55200cda954fe99fff5e1e8365be94",
+    "title": "这里只有一个lot，一个die",
+    "status": "open",
+    "priority": "medium",
+    "pageUrl": "https://lims.migelab.com/lims/email-intake/detail/2055752902171504641",
+    "reporter": "杨丽霞",
+    "projectId": "proj_cd850472006048829d42500fc32b590b",
+    "createdAt": "2026-05-18T03:03:19.740Z"
+  }
+]
