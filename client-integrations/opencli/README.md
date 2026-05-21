@@ -17,23 +17,30 @@ opencli bugpin list-files rpt_xxx
 - **Agent 视角**：Claude Code 等 LLM 工具直接调命令拿结构化输出（table / json / yaml），免去 OAuth / API token 配置
 - **DevOps 视角**：CI / 脚本一行 `update-report --status resolved` 把 PR 与反馈联动
 
-## 安装（一次性）
+## 安装
 
 前置：[OpenCLI](https://github.com/jackwener/opencli) 已装好且 `opencli doctor` 通过（包括 Chrome 扩展，详见 OpenCLI 文档）。
 
 ```bash
-# 1. 复制 6 个 adapter 到 OpenCLI 私人 cli 目录
-mkdir -p ~/.opencli/clis/bugpin
-cp client-integrations/opencli/adapters/*.js ~/.opencli/clis/bugpin/
+# 一行搞定（脚本会自动 mkdir + hard-link adapter & site-memory）
+bash client-integrations/opencli/install.sh
+```
 
-# 2. 复制站点记忆（供 opencli browser verify / 字段对比用）
-mkdir -p ~/.opencli/sites/bugpin/verify ~/.opencli/sites/bugpin/fixtures
-cp client-integrations/opencli/site-memory/endpoints.json ~/.opencli/sites/bugpin/
-cp client-integrations/opencli/site-memory/notes.md      ~/.opencli/sites/bugpin/
-cp client-integrations/opencli/site-memory/verify/*.json  ~/.opencli/sites/bugpin/verify/
-cp client-integrations/opencli/site-memory/fixtures/*.json ~/.opencli/sites/bugpin/fixtures/
+脚本用 **hard link** 把 repo 里的 .js / .json 链接到 `~/.opencli/clis/bugpin/` 与 `~/.opencli/sites/bugpin/`，不复制副本，inode 同步——本地改 adapter 也会反向修改 repo 里的源文件（合作开发友好）。
 
-# 3. 验证命令注册
+**git pull 后需要重跑一次** install.sh：因为 `git checkout` 是"写新文件 + rename" 而不是 in-place edit，新文件的 inode 不同，旧的 hard link 仍指向旧 inode 的内容。脚本会重建链接到最新版。
+
+> 为什么用 hard link 不用 symlink：Node ESM 加载 symlink 文件时按真实路径往上找 `node_modules/@jackwener/opencli`，落在 BugPin repo 路径下找不到（@jackwener/opencli 装在全局 `/opt/homebrew/lib/node_modules`）。hard link 共享 inode 但 Node 当作普通文件，沿 `~/.opencli/` 路径上溯就能找到全局包。
+
+手动安装（不想用脚本）：
+
+```bash
+mkdir -p ~/.opencli/clis/bugpin ~/.opencli/sites/bugpin/verify ~/.opencli/sites/bugpin/fixtures
+for f in client-integrations/opencli/adapters/*.js; do ln "$f" ~/.opencli/clis/bugpin/$(basename "$f"); done
+ln client-integrations/opencli/site-memory/endpoints.json ~/.opencli/sites/bugpin/
+ln client-integrations/opencli/site-memory/notes.md      ~/.opencli/sites/bugpin/
+for f in client-integrations/opencli/site-memory/verify/*.json; do ln "$f" ~/.opencli/sites/bugpin/verify/; done
+for f in client-integrations/opencli/site-memory/fixtures/*.json; do ln "$f" ~/.opencli/sites/bugpin/fixtures/; done
 opencli bugpin --help
 ```
 
