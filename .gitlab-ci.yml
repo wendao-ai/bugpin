@@ -115,7 +115,28 @@ version-bump:
     - git config user.email "gitlab-ci@gitlab.wuzhiguo.tech"
     - git add package.json src/server/package.json src/admin/package.json
     - 'git commit -m "chore: bump version to $VERSION"'
-    - git push "https://oauth2:${GITLAB_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:$TARGET"
+    # push 重试 + rebase：GitLab 与 GitHub 之间存在 push/pull mirror，
+    # tag 触发流水线后 main 可能在 CI 跑期间被 mirror 同步推进，导致直接 push
+    # 报 "non-fast-forward"。这里每轮重新拉取最新 main 并 rebase，最多重试 5 次。
+    - |
+      PUSH_URL="https://oauth2:${GITLAB_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+      for attempt in 1 2 3 4 5; do
+        echo "Push attempt $attempt"
+        git fetch origin "$TARGET"
+        # 仅在远端领先时 rebase；否则 rebase 为 no-op
+        if ! git merge-base --is-ancestor "origin/$TARGET" HEAD; then
+          echo "Remote $TARGET advanced, rebasing..."
+          git rebase "origin/$TARGET" || { echo "rebase failed"; exit 1; }
+        fi
+        if git push "$PUSH_URL" "HEAD:$TARGET"; then
+          echo "Pushed on attempt $attempt"
+          exit 0
+        fi
+        echo "Push rejected, retrying in 5s..."
+        sleep 5
+      done
+      echo "Failed to push $TARGET after 5 attempts"
+      exit 1
 
 # ========================================================================
 # Stage 3: release  — 仅生产 tag 创建 GitLab Release
