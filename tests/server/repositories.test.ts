@@ -500,6 +500,54 @@ describe('reportsRepo', () => {
     const oldIds = await reportsRepo.findIdsOlderThan(5);
     expect(oldIds).toContain(first.id);
   });
+
+  it('getStats.byReporter groups anonymous reports separately from named reporters', async () => {
+    // 回归测试：旧实现仅按 email 分组并 MAX(name)，会把所有匿名/半匿名反馈
+    // 合并并随机挑一个有名字的报告作为整桶名字，导致某用户名下出现大量
+    // 并非本人提交的匿名反馈。这里构造三类反馈，断言彼此独立。
+    const project = await createProject('ReporterStats');
+
+    // 1) 完全匿名 ×3（无 email 无 name）
+    for (let i = 0; i < 3; i++) {
+      await reportsRepo.create({
+        projectId: project.id,
+        title: `anon-${i}`,
+        priority: 'medium',
+        metadata: baseMetadata,
+      });
+    }
+    // 2) 半匿名（只有 name）×2
+    for (let i = 0; i < 2; i++) {
+      await reportsRepo.create({
+        projectId: project.id,
+        title: `named-${i}`,
+        priority: 'medium',
+        metadata: baseMetadata,
+        reporterName: '贾伟',
+      });
+    }
+    // 3) 实名（有 email + name）×1
+    await reportsRepo.create({
+      projectId: project.id,
+      title: 'with-email',
+      priority: 'medium',
+      metadata: baseMetadata,
+      reporterName: '吴志国',
+      reporterEmail: 'wu@example.com',
+    });
+
+    const stats = await reportsRepo.getStats(project.id);
+    expect(stats.total).toBe(6);
+
+    const anon = stats.byReporter.find((r) => !r.email && !r.name);
+    const named = stats.byReporter.find((r) => !r.email && r.name === '贾伟');
+    const withEmail = stats.byReporter.find((r) => r.email === 'wu@example.com');
+
+    expect(anon?.total).toBe(3);
+    expect(named?.total).toBe(2);
+    expect(withEmail?.total).toBe(1);
+    expect(withEmail?.name).toBe('吴志国');
+  });
 });
 
 describe('filesRepo', () => {

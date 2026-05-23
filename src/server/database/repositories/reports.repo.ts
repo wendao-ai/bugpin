@@ -428,18 +428,31 @@ export const reportsRepo = {
         resolved: number;
       }[];
 
-    // 按反馈人聚合（reporter_email 为主键，空值合并为 anonymous 桶）
+    // 按反馈人聚合：
+    // - 有 email：按 LOWER(email) 分组（同邮箱视为同一人）
+    // - 无 email 但有 name：按 name 分组（半匿名也是独立反馈人）
+    // - email 和 name 都为空：合并为单一“匿名”桶
+    // 注意：旧实现仅按 email 分组并 MAX(name)，会把所有匿名反馈合并并随机
+    //       挑一个有名字的报告作为整桶名字，导致“某用户名下出现大量并非
+    //       本人提交的匿名反馈”的统计错误。
     const reporterRows = db
       .query(
         `
       SELECT
-        reporter_email AS email,
+        MAX(reporter_email) AS email,
         MAX(reporter_name) AS name,
         COUNT(*) AS total,
         SUM(CASE WHEN status IN ('open','in_progress') THEN 1 ELSE 0 END) AS pending,
         SUM(CASE WHEN status IN ('resolved','closed') THEN 1 ELSE 0 END) AS resolved
       FROM reports ${whereClause}
-      GROUP BY COALESCE(reporter_email, '')
+      GROUP BY
+        CASE
+          WHEN reporter_email IS NOT NULL AND reporter_email <> ''
+            THEN 'e:' || LOWER(reporter_email)
+          WHEN reporter_name IS NOT NULL AND reporter_name <> ''
+            THEN 'n:' || reporter_name
+          ELSE 'anon'
+        END
       ORDER BY total DESC, email ASC
     `,
       )
