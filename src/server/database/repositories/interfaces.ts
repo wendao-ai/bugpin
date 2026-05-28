@@ -5,6 +5,7 @@ import type {
   ReportPriority,
   ReportMetadata,
   ReportSource,
+  ReportType,
   Project,
   ProjectSettings,
   User,
@@ -38,6 +39,10 @@ export interface CreateReportData {
   metadata: ReportMetadata;
   reporterEmail?: string;
   reporterName?: string;
+  // F1: 反馈模块（widget 提交时后端按项目的 moduleRules 由 pageUrl 推导后填入）
+  module?: string | null;
+  // F2: 反馈类型（widget 提交必选；admin 手动创建可不传默认 'other'）
+  type?: ReportType;
 }
 
 export interface IReportsRepository {

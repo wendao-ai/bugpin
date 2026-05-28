@@ -205,6 +205,7 @@ describe('widget components', () => {
           title: '',
           description: '',
           priority: 'medium',
+          type: 'bug' as const,
           reporterEmail: '',
           reporterName: '',
         }}
@@ -237,6 +238,7 @@ describe('widget components', () => {
           title: '',
           description: '',
           priority: 'medium',
+          type: 'bug' as const,
           reporterEmail: '',
           reporterName: '',
         }}
@@ -269,6 +271,7 @@ describe('widget components', () => {
           title: 'Valid title',
           description: '',
           priority: 'medium',
+          type: 'bug' as const,
           reporterEmail: '',
           reporterName: '',
         }}

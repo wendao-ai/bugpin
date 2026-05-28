@@ -3,6 +3,10 @@
 export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 export type ReportPriority = 'lowest' | 'low' | 'medium' | 'high' | 'highest';
 export type ReportSource = 'widget' | 'manual';
+// F2 (2026-05-26): 反馈类型。widget 提交必选，历史数据 backfill 默认 'other'。
+// bug = Bug 报告 / feature = 功能建议 / ux = 体验优化 / other = 其他
+export type ReportType = 'bug' | 'feature' | 'ux' | 'other';
+export const REPORT_TYPES: ReportType[] = ['bug', 'feature', 'ux', 'other'];
 export type ManualReportChannel = 'email' | 'chat' | 'phone' | 'qa' | 'other';
 export type UserRole = 'admin' | 'editor' | 'viewer';
 export type FileType = 'screenshot' | 'video' | 'attachment';
@@ -104,6 +108,11 @@ export interface Report {
   githubIssueNumber?: number | null;
   githubIssueUrl?: string | null;
   githubSyncedAt?: string | null;
+  // F1 (2026-05-26): 反馈模块。widget 提交时后端按项目的 moduleRules 由 pageUrl 推导。
+  // 历史数据 / 未配规则 / 未匹配 都是 null，前端显示「未分类」。
+  module?: string | null;
+  // F2 (2026-05-26): 反馈类型。widget 提交必选；历史数据 backfill 默认 'other'
+  type: ReportType;
 }
 
 export interface ForwardedReference {
@@ -221,6 +230,9 @@ export interface ProjectSettings {
   };
   notifyReporter?: boolean;
   reporterNotifications?: Partial<ReporterNotificationSettings>;
+  // F1 (2026-05-26): 反馈模块映射规则。widget 提交时后端遍历规则，第一个 `pageUrl.includes(pattern)`
+  // 命中的 `module` 落库。规则按数组顺序生效，建议长 pattern 排前面。
+  moduleRules?: ModuleRule[];
   // Legacy widget settings (for backward compatibility during migration)
   widget?: {
     enabled?: boolean;
@@ -228,6 +240,11 @@ export interface ProjectSettings {
     captureMethod?: 'visible' | 'fullpage' | 'element';
     rateLimit?: number;
   };
+}
+
+export interface ModuleRule {
+  pattern: string; // page_url 子串匹配（大小写敏感）
+  module: string; // 命中后落库的模块名（如「邮件 review」「任务详情」）
 }
 
 export interface CustomField {
@@ -347,6 +364,10 @@ export interface ReportFilter {
   search?: string;
   createdAfter?: string;
   createdBefore?: string;
+  // F1: 反馈模块筛选。空串「__unmatched__」筛选 module IS NULL（未分类）
+  module?: string;
+  // F2: 反馈类型筛选
+  type?: ReportType;
   page?: number;
   limit?: number;
   sortBy?: string;

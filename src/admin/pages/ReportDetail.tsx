@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -62,8 +62,16 @@ export function ReportDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  // 返回列表时优先用进入详情时记下的 URL（含 ?status=...&page=... 等筛选），
+  // 直链访问没有 state 时回退到 /reports 根
+  const backToList = () => {
+    const fromList = (location.state as { fromList?: string } | null)?.fromList;
+    navigate(fromList || '/reports');
+  };
   const isAdmin = user?.role === 'admin';
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
@@ -174,7 +182,7 @@ export function ReportDetail() {
       queryClient.invalidateQueries({ queryKey: ['recent-reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success(t('reportDetail.reportDeleted'));
-      navigate('/reports');
+      backToList();
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
       toast.error(err.response?.data?.message || t('reportDetail.failedDelete'));
@@ -193,7 +201,7 @@ export function ReportDetail() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">{t('reportDetail.reportNotFound')}</p>
-        <Button variant="outline" onClick={() => navigate('/reports')} className="mt-4">
+        <Button variant="outline" onClick={backToList} className="mt-4">
           {t('reportDetail.backToReports')}
         </Button>
       </div>
@@ -304,7 +312,7 @@ export function ReportDetail() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/reports')}
+            onClick={backToList}
             className="mb-2 -ml-2 text-muted-foreground"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />

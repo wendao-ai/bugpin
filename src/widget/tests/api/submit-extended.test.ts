@@ -77,6 +77,7 @@ describe('submit API (offline + errors)', () => {
       serverUrl: 'https://example.com',
       title: 'Bug report',
       priority: 'medium',
+      type: 'bug' as const,
       metadata: baseMetadata,
     });
 
@@ -101,6 +102,7 @@ describe('submit API (offline + errors)', () => {
       serverUrl: 'https://example.com',
       title: 'Bug report',
       priority: 'medium',
+      type: 'bug' as const,
       metadata: baseMetadata,
     });
 
@@ -125,6 +127,7 @@ describe('submit API (offline + errors)', () => {
         serverUrl: 'https://example.com',
         title: 'Bug report',
         priority: 'medium',
+        type: 'bug' as const,
         metadata: baseMetadata,
       }),
     ).rejects.toThrow('Nope');
@@ -161,6 +164,7 @@ describe('submit API (media + config)', () => {
       serverUrl: 'https://example.com',
       title: 'Bug report',
       priority: 'medium',
+      type: 'bug' as const,
       metadata: baseMetadata,
       media: [
         {

@@ -63,8 +63,13 @@
     "priorityMedium": "中",
     "priorityHigh": "高",
     "priorityHighest": "紧急",
+    "type": "反馈类型",
+    "type_bug": "Bug 报告",
+    "type_feature": "功能建议",
+    "type_ux": "体验优化",
+    "type_other": "其他",
     "name": "您的姓名",
-    "namePlaceholder": "请输入姓名（可选）",
+    "namePlaceholder": "请输入您的姓名",
     "email": "您的邮箱",
     "emailPlaceholder": "you@example.com",
     "emailInvalid": "邮箱格式不正确"
@@ -94,7 +99,9 @@
   "validation": {
     "titleRequired": "请填写标题",
     "titleTooShort": "标题至少需要 4 个字符",
-    "invalidEmail": "邮箱地址无效"
+    "invalidEmail": "邮箱地址无效",
+    "reporterNameRequired": "请填写您的姓名",
+    "typeRequired": "请选择反馈类型"
   },
   "drawingTools": {
     "pen": "画笔",

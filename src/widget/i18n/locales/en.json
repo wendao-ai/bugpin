@@ -63,8 +63,13 @@
     "priorityMedium": "Medium",
     "priorityHigh": "High",
     "priorityHighest": "Highest",
+    "type": "Feedback type",
+    "type_bug": "Bug report",
+    "type_feature": "Feature request",
+    "type_ux": "UX improvement",
+    "type_other": "Other",
     "name": "Your name",
-    "namePlaceholder": "Your name (optional)",
+    "namePlaceholder": "Your name",
     "email": "Your email",
     "emailPlaceholder": "you@example.com",
     "emailInvalid": "Invalid email address"
@@ -94,7 +99,9 @@
   "validation": {
     "titleRequired": "Title is required",
     "titleTooShort": "Title must be at least 4 characters",
-    "invalidEmail": "Invalid email address"
+    "invalidEmail": "Invalid email address",
+    "reporterNameRequired": "Your name is required",
+    "typeRequired": "Please select a feedback type"
   },
   "drawingTools": {
     "pen": "Pen",
