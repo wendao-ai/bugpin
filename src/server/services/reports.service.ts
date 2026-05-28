@@ -16,6 +16,7 @@ import type {
   ReportFilter,
   ReportStatus,
   ReportPriority,
+  ReportType,
   ReportMetadata,
   ReportSource,
   ManualReportChannel,
@@ -38,6 +39,7 @@ export interface CreateReportInput {
   title: string;
   description?: string;
   priority?: ReportPriority;
+  type: ReportType; // F2: 必填
   files?: MediaFile[];
   annotations?: object;
   metadata: ReportMetadata;
@@ -50,6 +52,7 @@ export interface CreateManualReportInput {
   title: string;
   description?: string;
   priority?: ReportPriority;
+  type?: ReportType; // F2: admin 手动创建可选，默认 'other'
   assignedTo?: string | null;
   reporterEmail?: string;
   reporterName?: string;
@@ -222,6 +225,7 @@ async function createForProject(
     title: string;
     description?: string;
     priority?: ReportPriority;
+    type?: ReportType;
     annotations?: object;
     metadata: ReportMetadata;
     reporterEmail?: string;
@@ -260,6 +264,18 @@ async function createForProject(
     return fileValidation;
   }
 
+  // F1: 按项目的 moduleRules 推导反馈模块。第一个 pageUrl.includes(pattern) 命中的赢；
+  // 都不命中则 null（admin 列表显示「未分类」）。
+  const pageUrl = input.metadata?.url ?? '';
+  const moduleRules = project.settings?.moduleRules ?? [];
+  let derivedModule: string | null = null;
+  for (const rule of moduleRules) {
+    if (rule.pattern && rule.module && pageUrl.includes(rule.pattern)) {
+      derivedModule = rule.module;
+      break;
+    }
+  }
+
   const reportData: CreateReportData = {
     projectId: project.id,
     source: options.source,
@@ -271,6 +287,8 @@ async function createForProject(
     metadata: input.metadata,
     reporterEmail: normalizeOptionalText(input.reporterEmail),
     reporterName: normalizeOptionalText(input.reporterName),
+    module: derivedModule,
+    type: input.type ?? 'other',
   };
 
   const report = await reportsRepo.create(reportData);
@@ -367,6 +385,7 @@ export const reportsService = {
         title: input.title,
         description: input.description,
         priority: input.priority,
+        type: input.type,
         annotations: input.annotations,
         metadata: input.metadata,
         reporterEmail: input.reporterEmail,
@@ -407,6 +426,7 @@ export const reportsService = {
         title: input.title,
         description: input.description,
         priority: input.priority,
+        type: input.type,
         metadata,
         reporterEmail: input.reporterEmail,
         reporterName: input.reporterName,

@@ -126,6 +126,10 @@ const validSubmitBody = {
   title: 'Test Bug Report',
   description: 'This is a test bug report',
   priority: 'medium',
+  // F2: 反馈类型必填
+  type: 'bug',
+  // B2: 反馈人必填
+  reporterName: 'Tester',
   metadata: {
     url: 'https://example.com',
     browser: { name: 'Chrome', version: '120', userAgent: 'Mozilla/5.0' },

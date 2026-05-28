@@ -17,7 +17,13 @@ const submitReportSchema = z.object({
   title: z.string().min(4, 'Title must be at least 4 characters').max(200),
   description: z.string().optional(),
   priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).default('medium'),
-  reporterName: z.string().optional(),
+  // F2 (2026-05-26)：反馈类型必选。历史 widget 客户端不发 type 时不接受 — 强制必填。
+  type: z.enum(['bug', 'feature', 'ux', 'other'], {
+    errorMap: () => ({ message: 'type is required and must be bug/feature/ux/other' }),
+  }),
+  // 反馈人姓名必填（B2，2026-05-26 起）。历史 widget 客户端可能仍发空字符串，
+  // 拒绝空和空白避免脏数据；前端 widget 已加必填校验。
+  reporterName: z.string().trim().min(1, 'Reporter name is required'),
   reporterEmail: z.string().email().optional().or(z.literal('')),
   metadata: z.object({
     url: z.string(),
@@ -222,6 +228,7 @@ widget.post('/submit', dynamicRateLimiter({ keyGenerator: apiKeyGenerator }), as
     title: data.title,
     description: data.description,
     priority: data.priority,
+    type: data.type,
     files: media,
     annotations: data.annotations as object,
     metadata: data.metadata as ReportMetadata,

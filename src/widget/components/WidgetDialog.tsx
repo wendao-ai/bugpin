@@ -5,10 +5,14 @@ import { Button, Input, Textarea, Select, Label, Tabs } from './ui';
 import { ScreenCaptureConsentDialog } from './ScreenCaptureConsentDialog.js';
 import { t } from '../i18n/index.js';
 
+// F2: 反馈类型枚举与前端的 widget 完全独立；后端 Zod 把 type 校验成枚举之一。
+export type FeedbackType = 'bug' | 'feature' | 'ux' | 'other';
+
 export interface FormData {
   title: string;
   description: string;
   priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
+  type: FeedbackType | ''; // 空串 = 用户还没选，提交时 validate 拦截
   reporterEmail: string;
   reporterName: string;
 }
@@ -103,6 +107,14 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
       newErrors.title = t('validation.titleRequired');
     } else if (formData.title.trim().length < 4) {
       newErrors.title = t('validation.titleTooShort');
+    }
+
+    if (!formData.type) {
+      newErrors.type = t('validation.typeRequired');
+    }
+
+    if (!formData.reporterName.trim()) {
+      newErrors.reporterName = t('validation.reporterNameRequired');
     }
 
     if (formData.reporterEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.reporterEmail)) {
@@ -231,9 +243,43 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                     </Select>
                   </div>
 
+                  {/* F2: 反馈类型（必选 radio 组） */}
+                  <div class="flex flex-col gap-1.5">
+                    <Label required>{t('form.type')}</Label>
+                    <div
+                      class="flex flex-wrap gap-3"
+                      role="radiogroup"
+                      aria-label={t('form.type')}
+                      aria-describedby={errors.type ? 'bugpin-type-error' : undefined}
+                    >
+                      {(['bug', 'feature', 'ux', 'other'] as const).map((opt) => (
+                        <label
+                          key={opt}
+                          class="flex items-center gap-1.5 cursor-pointer text-sm"
+                        >
+                          <input
+                            type="radio"
+                            name="bugpin-type"
+                            value={opt}
+                            checked={formData.type === opt}
+                            onChange={() => handleInputChange('type', opt)}
+                          />
+                          <span>{t(`form.type_${opt}`)}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.type && (
+                      <span id="bugpin-type-error" class="text-destructive text-xs mt-0.5">
+                        {errors.type}
+                      </span>
+                    )}
+                  </div>
+
                   {/* Name */}
                   <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-name">{t('form.name')}</Label>
+                    <Label for="bugpin-name" required>
+                      {t('form.name')}
+                    </Label>
                     <Input
                       id="bugpin-name"
                       type="text"
@@ -242,7 +288,14 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                       onInput={(e) =>
                         handleInputChange('reporterName', (e.target as HTMLInputElement).value)
                       }
+                      error={!!errors.reporterName}
+                      aria-describedby={errors.reporterName ? 'bugpin-name-error' : undefined}
                     />
+                    {errors.reporterName && (
+                      <span id="bugpin-name-error" class="text-destructive text-xs mt-0.5">
+                        {errors.reporterName}
+                      </span>
+                    )}
                   </div>
 
                   {/* Email */}

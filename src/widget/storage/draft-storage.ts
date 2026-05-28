@@ -193,6 +193,7 @@ async function loadDraft(
       title: '',
       description: '',
       priority: 'medium',
+      type: '', // F2: 默认空，强迫用户选择
       reporterEmail: '',
       reporterName: '',
     },

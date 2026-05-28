@@ -22,6 +22,8 @@ reports.get('/', validate({ query: schemas.reportFilter }), async (c) => {
     priority: query.priority?.split(',') as ReportPriority[],
     assignedTo: query.assignedTo,
     search: query.search,
+    module: query.module,
+    type: query.type as 'bug' | 'feature' | 'ux' | 'other' | undefined,
     page: parseInt(query.page || '1'),
     limit: parseInt(query.limit || '20'),
     sortBy: query.sortBy || 'createdAt',

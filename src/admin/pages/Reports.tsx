@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import i18next from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -127,7 +127,16 @@ export function Reports() {
     buildCreateReportForm(searchParams.get('projectId') || undefined),
   );
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  // 跳转到详情页时把当前列表 URL 通过 history state 带过去，
+  // ReportDetail 里的「返回」+ 删除后跳回会回到带筛选的同一个 URL
+  const goToReportDetail = (reportId: string) => {
+    navigate(`/reports/${reportId}`, {
+      state: { fromList: location.pathname + location.search },
+    });
+  };
 
   const page = parseInt(searchParams.get('page') || '1');
   const status = searchParams.get('status') || '';
@@ -135,6 +144,8 @@ export function Reports() {
   const projectId = searchParams.get('projectId') || '';
   const assignedTo = searchParams.get('assignedTo') || '';
   const source = searchParams.get('source') || '';
+  const moduleFilter = searchParams.get('module') || '';
+  const typeFilter = searchParams.get('type') || '';
 
   // Fetch projects for filter
   const { data: projectsData } = useQuery({
@@ -157,7 +168,7 @@ export function Reports() {
   const { data, isLoading } = useQuery({
     queryKey: [
       'reports',
-      { page, status, priority, projectId, assignedTo, source, search: searchParams.get('search') },
+      { page, status, priority, projectId, assignedTo, source, moduleFilter, typeFilter, search: searchParams.get('search') },
     ],
     queryFn: async () => {
       const params: Record<string, string> = { page: String(page), limit: '20' };
@@ -166,6 +177,8 @@ export function Reports() {
       if (projectId) params.projectId = projectId;
       if (assignedTo) params.assignedTo = assignedTo;
       if (source) params.source = source;
+      if (moduleFilter) params.module = moduleFilter;
+      if (typeFilter) params.type = typeFilter;
       if (searchParams.get('search')) params.search = searchParams.get('search')!;
 
       const response = await api.get('/reports', { params });
@@ -480,6 +493,50 @@ export function Reports() {
                 <SelectItem value="all">{t('reports.allSources')}</SelectItem>
                 <SelectItem value="widget">{t('widget.widget')}</SelectItem>
                 <SelectItem value="manual">{t('reports.sourceManual')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* F2: 反馈类型筛选 */}
+            <Select
+              value={typeFilter || 'all'}
+              onValueChange={(value) => handleFilterChange('type', value)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder={t('reports.allTypes')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('reports.allTypes')}</SelectItem>
+                <SelectItem value="bug">{t('reports.type_bug')}</SelectItem>
+                <SelectItem value="feature">{t('reports.type_feature')}</SelectItem>
+                <SelectItem value="ux">{t('reports.type_ux')}</SelectItem>
+                <SelectItem value="other">{t('reports.type_other')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* F1: 反馈模块筛选。下拉项来自当前列表里出现过的 module 值 + 「未分类」 */}
+            <Select
+              value={moduleFilter || 'all'}
+              onValueChange={(value) => handleFilterChange('module', value)}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder={t('reports.allModules')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('reports.allModules')}</SelectItem>
+                <SelectItem value="__unmatched__">{t('reports.moduleUnmatched')}</SelectItem>
+                {Array.from(
+                  new Set<string>(
+                    ((data?.data ?? []) as Report[])
+                      .map((r) => r.module)
+                      .filter((m): m is string => typeof m === 'string' && m.length > 0),
+                  ),
+                )
+                  .sort()
+                  .map((m: string) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -827,7 +884,7 @@ export function Reports() {
             <Card
               key={report.id}
               className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(report.id) ? 'bg-muted/30' : ''}`}
-              onClick={() => navigate(`/reports/${report.id}`)}
+              onClick={() => goToReportDetail(report.id)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -854,6 +911,12 @@ export function Reports() {
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <StatusBadge status={report.status} />
                       <PriorityBadge priority={report.priority} />
+                      <TypeBadge type={report.type} />
+                      {report.module && (
+                        <Badge variant="outline" className="text-xs">
+                          {report.module}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {report.projectName || t('common.unknown')}
                       </span>
@@ -925,7 +988,7 @@ export function Reports() {
                 <TableRow
                   key={report.id}
                   className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(report.id) ? 'bg-muted/30' : ''}`}
-                  onClick={() => navigate(`/reports/${report.id}`)}
+                  onClick={() => goToReportDetail(report.id)}
                 >
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
@@ -935,7 +998,15 @@ export function Reports() {
                     />
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium">{report.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium">{report.title}</p>
+                      <TypeBadge type={report.type} />
+                      {report.module && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {report.module}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground truncate max-w-xs">
                       {report.metadata?.url || t('reports.noUrl')}
                     </p>
@@ -1022,6 +1093,21 @@ function PriorityBadge({ priority }: { priority: string }) {
   return (
     <Badge variant="outline" className={`priority-${priority} uppercase text-xs`}>
       {priority}
+    </Badge>
+  );
+}
+
+// F2: 反馈类型 chip。bug/feature/ux/other 各分配 tailwind 颜色辅助辨识。
+function TypeBadge({ type }: { type: string }) {
+  const palette: Record<string, string> = {
+    bug: 'border-red-300 text-red-600 dark:text-red-400',
+    feature: 'border-blue-300 text-blue-600 dark:text-blue-400',
+    ux: 'border-amber-300 text-amber-600 dark:text-amber-400',
+    other: 'border-gray-300 text-muted-foreground',
+  };
+  return (
+    <Badge variant="outline" className={`text-xs ${palette[type] || palette.other}`}>
+      {i18next.t(`reports.type_${type}`)}
     </Badge>
   );
 }

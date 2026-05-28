@@ -135,6 +135,8 @@ export const schemas = {
     priority: z.string().optional(), // comma-separated list
     assignedTo: z.string().optional(),
     search: z.string().optional(),
+    module: z.string().optional(),
+    type: z.enum(['bug', 'feature', 'ux', 'other']).optional(),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(20),
     sortBy: z.enum(['createdAt', 'updatedAt', 'title', 'status', 'priority']).default('createdAt'),

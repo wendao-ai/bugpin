@@ -51,6 +51,7 @@ describe('submit API', () => {
       serverUrl: 'https://example.com',
       title: 'Bug report',
       priority: 'medium',
+      type: 'bug' as const,
       metadata: {
         url: 'https://example.com',
         browser: { name: 'Chrome', version: '1', userAgent: 'UA' },

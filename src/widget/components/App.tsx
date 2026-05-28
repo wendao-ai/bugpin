@@ -14,13 +14,36 @@ import { useEffectiveTheme } from '../hooks/use-effective-theme.js';
 
 type WidgetStep = 'closed' | 'form' | 'annotating';
 
-const INITIAL_FORM_DATA: FormData = {
+// localStorage key for remembering the reporter name across sessions in the same browser.
+// 用户填过一次姓名后，下次打开 widget 自动带入；纯本地不上云端。
+const REPORTER_NAME_STORAGE_KEY = 'bugpin-reporter-name';
+
+const readSavedReporterName = (): string => {
+  try {
+    return localStorage.getItem(REPORTER_NAME_STORAGE_KEY) || '';
+  } catch {
+    // localStorage 不可用（隐私模式 / SSR）静默兜底为空
+    return '';
+  }
+};
+
+const saveReporterName = (name: string): void => {
+  try {
+    const trimmed = name.trim();
+    if (trimmed) localStorage.setItem(REPORTER_NAME_STORAGE_KEY, trimmed);
+  } catch {
+    // ignore
+  }
+};
+
+const buildInitialFormData = (): FormData => ({
   title: '',
   description: '',
   priority: 'medium',
+  type: '', // F2: 必选，不预选避免误提交
   reporterEmail: '',
-  reporterName: '',
-};
+  reporterName: readSavedReporterName(),
+});
 
 type AppDependencies = {
   WidgetDialog: typeof WidgetDialog;
@@ -51,7 +74,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   // Lifted state for Modal persistence across screenshot capture
   const [activeTab, setActiveTab] = useState('details');
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
+  const [formData, setFormData] = useState<FormData>(() => buildInitialFormData());
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showScreenCaptureConsent, setShowScreenCaptureConsent] = useState(false);
@@ -151,7 +174,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
   const handleCloseDiscardDraft = useCallback(() => {
     setMedia([]);
     setActiveTab('details');
-    setFormData(INITIAL_FORM_DATA);
+    setFormData(buildInitialFormData());
     draftStorage.clear(config.apiKey);
     setShowCloseConfirm(false);
     setStep('closed');
@@ -166,7 +189,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
         // Clear state and draft (after successful submission)
         setMedia([]);
         setActiveTab('details');
-        setFormData(INITIAL_FORM_DATA);
+        setFormData(buildInitialFormData());
         draftStorage.clear(config.apiKey);
       }
       setShowCloseConfirm(false);
@@ -329,6 +352,8 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
           title: formData.title,
           description: formData.description,
           priority: formData.priority,
+          // F2: validate() 已保证 type 非空，TS narrowing 需 || 'other' 兜底（不应触发）
+          type: formData.type || 'other',
           reporterEmail: formData.reporterEmail || undefined,
           reporterName: formData.reporterName || undefined,
           media: mediaItems.map((item) => ({
@@ -338,6 +363,9 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
           })),
           metadata,
         });
+
+        // 提交成功后把姓名存到 localStorage，下次自动带入（纯本地）
+        saveReporterName(formData.reporterName);
 
         // Show success toast
         setToast({ message: 'Bug report submitted successfully!', type: 'success' });

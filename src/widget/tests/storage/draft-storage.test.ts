@@ -45,6 +45,7 @@ describe('draft storage', () => {
       title: 'Test Bug',
       description: 'This is a test bug description',
       priority: 'high' as const,
+      type: 'bug' as const,
       reporterEmail: 'test@example.com',
       reporterName: 'Test User',
     };
@@ -81,6 +82,7 @@ describe('draft storage', () => {
         title: 'Stored Bug',
         description: 'Stored description',
         priority: 'low',
+        type: 'bug' as const,
         reporterEmail: 'stored@example.com',
         reporterName: 'Stored User',
       },
@@ -143,6 +145,7 @@ describe('draft storage', () => {
       title: 'Bug for Project 1',
       description: '',
       priority: 'low' as const,
+      type: 'bug' as const,
       reporterEmail: '',
       reporterName: '',
     };
@@ -151,6 +154,7 @@ describe('draft storage', () => {
       title: 'Bug for Project 2',
       description: '',
       priority: 'high' as const,
+      type: 'bug' as const,
       reporterEmail: '',
       reporterName: '',
     };

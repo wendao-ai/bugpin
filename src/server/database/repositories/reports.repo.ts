@@ -9,6 +9,7 @@ import type {
   ReportPriority,
   ReportMetadata,
   GitHubSyncStatus,
+  ReportType,
 } from '@shared/types';
 
 // Database Row Type
@@ -39,6 +40,8 @@ interface ReportRow {
   github_issue_number: number | null;
   github_issue_url: string | null;
   github_synced_at: string | null;
+  module: string | null;
+  type: ReportType | null;
   assignee_id?: string | null;
   assignee_name?: string | null;
   assignee_email?: string | null;
@@ -85,6 +88,9 @@ function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
     githubIssueNumber: row.github_issue_number ?? undefined,
     githubIssueUrl: row.github_issue_url ?? undefined,
     githubSyncedAt: row.github_synced_at ?? undefined,
+    module: row.module ?? null,
+    // F2: type 兜底 'other'，老库未跑 migration 时 type 列可能为 null
+    type: row.type ?? 'other',
   };
 }
 
@@ -106,8 +112,8 @@ export const reportsRepo = {
       `INSERT INTO reports (
         id, project_id, source, title, description, status, priority,
         annotations, metadata, reporter_email, reporter_name, assigned_to,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        module, type, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.projectId,
@@ -121,6 +127,8 @@ export const reportsRepo = {
         data.reporterEmail ?? null,
         data.reporterName ?? null,
         data.assignedTo ?? null,
+        data.module ?? null,
+        data.type ?? 'other',
         now,
         now,
       ],
@@ -187,6 +195,21 @@ export const reportsRepo = {
     if (filter.assignedTo) {
       conditions.push('assigned_to = ?');
       params.push(filter.assignedTo);
+    }
+
+    if (filter.module) {
+      // 特殊值 __unmatched__ 用于筛选「未分类」（module IS NULL）
+      if (filter.module === '__unmatched__') {
+        conditions.push('module IS NULL');
+      } else {
+        conditions.push('module = ?');
+        params.push(filter.module);
+      }
+    }
+
+    if (filter.type) {
+      conditions.push('type = ?');
+      params.push(filter.type);
     }
 
     if (filter.createdAfter) {

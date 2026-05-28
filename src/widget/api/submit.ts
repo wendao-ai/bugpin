@@ -17,6 +17,8 @@ export interface SubmitReportInput {
   title: string;
   description?: string;
   priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
+  // F2: 反馈类型，widget 必传（后端 Zod 强约束）
+  type: 'bug' | 'feature' | 'ux' | 'other';
   reporterEmail?: string;
   reporterName?: string;
   media?: MediaItem[];
@@ -70,6 +72,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
       title: data.title,
       description: data.description,
       priority: data.priority,
+      type: data.type,
       reporterEmail: data.reporterEmail,
       reporterName: data.reporterName,
       media,
@@ -95,6 +98,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
       title: data.title,
       description: data.description,
       priority: data.priority,
+      type: data.type,
       reporterEmail: data.reporterEmail,
       reporterName: data.reporterName,
       metadata: data.metadata,
@@ -150,6 +154,7 @@ export async function submitReport(input: SubmitReportInput): Promise<SubmitResp
         title: data.title,
         description: data.description,
         priority: data.priority,
+        type: data.type,
         reporterEmail: data.reporterEmail,
         reporterName: data.reporterName,
         media,

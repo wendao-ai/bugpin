@@ -166,7 +166,9 @@ export async function initSchema(): Promise<void> {
       github_sync_error TEXT NULL,
       github_issue_number INTEGER NULL,
       github_issue_url TEXT NULL,
-      github_synced_at TEXT NULL
+      github_synced_at TEXT NULL,
+      module TEXT,
+      type TEXT DEFAULT 'other' NOT NULL CHECK(type IN ('bug', 'feature', 'ux', 'other'))
     )
   `);
 
@@ -177,10 +179,28 @@ export async function initSchema(): Promise<void> {
     // Column already exists
   }
 
+  // F1 (2026-05-26): module 字段，老库通过 migration 003 加；这里兜底防 fresh init 之外的边缘场景
+  try {
+    db.exec(`ALTER TABLE reports ADD COLUMN module TEXT`);
+  } catch {
+    // Column already exists
+  }
+
+  // F2 (2026-05-26): type 字段，老库通过 migration 004 加；这里兜底新初始化路径
+  // 注意：fresh init 走的是上面的 CREATE TABLE，已有 type 列；老库 ALTER 时不能直接带 NOT NULL，
+  // 所以 ALTER 出来的列是 nullable，migration 004 会 backfill 历史行的 type 为 'other'
+  try {
+    db.exec(`ALTER TABLE reports ADD COLUMN type TEXT`);
+  } catch {
+    // Column already exists
+  }
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_project ON reports(project_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_priority ON reports(priority)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_source ON reports(source)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_module ON reports(module)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(type)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_assigned_to ON reports(assigned_to)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_reports_project_status ON reports(project_id, status)`);

@@ -19,6 +19,8 @@ interface PendingReport {
   title: string;
   description?: string;
   priority: string;
+  // F2: 反馈类型；存进 buffer 用 string，重放时和 widget submit 一致
+  type?: string;
   reporterEmail?: string;
   reporterName?: string;
   media?: MediaItem[];
@@ -198,6 +200,7 @@ async function submitReport(report: PendingReport): Promise<boolean> {
         title: report.title,
         description: report.description,
         priority: report.priority,
+        type: report.type,
         reporterEmail: report.reporterEmail,
         reporterName: report.reporterName,
         metadata: report.metadata,

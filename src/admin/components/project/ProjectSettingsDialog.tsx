@@ -12,6 +12,7 @@ import type {
   WidgetDialogSettings,
   ScreenshotSettings,
   ReporterNotificationSettings,
+  ModuleRule,
 } from '@shared/types';
 import {
   Dialog,
@@ -36,6 +37,8 @@ import { NotificationSettingsForm } from '../NotificationSettingsForm';
 import { ReporterNotificationSettingsForm } from '../ReporterNotificationSettingsForm';
 import { ProjectWhitelistForm } from './ProjectWhitelistForm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Input } from '../ui/input';
+import { Trash2, Plus } from 'lucide-react';
 
 interface ProjectSettingsDialogProps {
   project: { id: string; name: string; settings?: ProjectSettings };
@@ -47,7 +50,8 @@ interface ProjectSettingsDialogProps {
     | 'widgetLauncherButton'
     | 'screenshot'
     | 'notifications'
-    | 'whitelists';
+    | 'whitelists'
+    | 'moduleRules';
 }
 
 import type { NotificationDefaultSettings } from '@shared/types';
@@ -91,6 +95,9 @@ export function ProjectSettingsDialog({
   // Whitelist settings state
   const [useCustomWhitelist, setUseCustomWhitelist] = useState(false);
   const [whitelistSettings, setWhitelistSettings] = useState<string[]>([]);
+
+  // F1: Module rules state — 反馈模块映射规则，pageUrl 子串匹配 → module 名
+  const [moduleRules, setModuleRules] = useState<ModuleRule[]>([]);
 
   // Fetch project details
   const { data: projectDetail, isLoading: isLoadingProject } = useQuery({
@@ -185,6 +192,9 @@ export function ProjectSettingsDialog({
 
       // Default assignee
       setDefaultAssigneeUserId(projectDetail.settings?.defaultAssigneeUserId ?? null);
+
+      // F1: Module rules
+      setModuleRules(projectDetail.settings?.moduleRules ?? []);
     }
   }, [projectDetail]);
 
@@ -291,6 +301,12 @@ export function ProjectSettingsDialog({
 
       newSettings.defaultAssigneeUserId = defaultAssigneeUserId;
 
+      // F1: Module rules — 过滤掉空 pattern / 空 module 的行（用户没填完整就别存）
+      const cleanedModuleRules = moduleRules
+        .map((r) => ({ pattern: r.pattern.trim(), module: r.module.trim() }))
+        .filter((r) => r.pattern && r.module);
+      newSettings.moduleRules = cleanedModuleRules.length > 0 ? cleanedModuleRules : undefined;
+
       // Save project settings
       await projectMutation.mutateAsync({
         settings: newSettings,
@@ -372,6 +388,9 @@ export function ProjectSettingsDialog({
               </TabsTrigger>
               <TabsTrigger value="whitelists" className="px-4 py-2">
                 {t('projectSettings.tabWhitelists')}
+              </TabsTrigger>
+              <TabsTrigger value="moduleRules" className="px-4 py-2">
+                {t('projectSettings.tabModuleRules')}
               </TabsTrigger>
             </TabsList>
 
@@ -552,6 +571,10 @@ export function ProjectSettingsDialog({
                   onCustomToggle={setUseCustomWhitelist}
                 />
               </TabsContent>
+
+              <TabsContent value="moduleRules" className="mt-0">
+                <ModuleRulesEditor value={moduleRules} onChange={setModuleRules} />
+              </TabsContent>
             </DialogBody>
           </Tabs>
         )}
@@ -573,5 +596,108 @@ export function ProjectSettingsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// F1: 反馈模块映射规则编辑器
+// 一条规则 = { pattern: page URL 子串, module: 命中后落库的模块名 }
+// 规则按数组顺序生效（第一个 includes 命中的 win），建议长 pattern 排前面避免被短 pattern 抢命中
+function ModuleRulesEditor({
+  value,
+  onChange,
+}: {
+  value: ModuleRule[];
+  onChange: (rules: ModuleRule[]) => void;
+}) {
+  const { t } = useTranslation('projectSettings');
+
+  const addRule = () => onChange([...value, { pattern: '', module: '' }]);
+
+  const updateRule = (idx: number, patch: Partial<ModuleRule>) => {
+    onChange(value.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+  };
+
+  const removeRule = (idx: number) => onChange(value.filter((_, i) => i !== idx));
+
+  const moveRule = (idx: number, dir: -1 | 1) => {
+    const target = idx + dir;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-5 rounded-xl border bg-card p-5">
+      <div className="space-y-1">
+        <Label>{t('projectSettings.moduleRulesLabel')}</Label>
+        <p className="text-sm text-muted-foreground whitespace-pre-line">
+          {t('projectSettings.moduleRulesHint')}
+        </p>
+      </div>
+
+      {value.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+          {t('projectSettings.moduleRulesEmpty')}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {/* 表头 */}
+          <div className="grid grid-cols-[1fr_1fr_auto] gap-2 px-1 text-xs text-muted-foreground">
+            <span>{t('projectSettings.moduleRulePatternCol')}</span>
+            <span>{t('projectSettings.moduleRuleModuleCol')}</span>
+            <span className="w-[88px]" />
+          </div>
+
+          {value.map((rule, idx) => (
+            <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+              <Input
+                placeholder="/lims/email-intake/detail/"
+                value={rule.pattern}
+                onChange={(e) => updateRule(idx, { pattern: e.target.value })}
+              />
+              <Input
+                placeholder={t('projectSettings.moduleRuleModulePlaceholder')}
+                value={rule.module}
+                onChange={(e) => updateRule(idx, { module: e.target.value })}
+              />
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => moveRule(idx, -1)}
+                  disabled={idx === 0}
+                  aria-label="Move up"
+                >
+                  ↑
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => moveRule(idx, 1)}
+                  disabled={idx === value.length - 1}
+                  aria-label="Move down"
+                >
+                  ↓
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeRule(idx)}
+                  aria-label="Delete rule"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button variant="outline" size="sm" onClick={addRule}>
+        <Plus className="h-4 w-4 mr-1" />
+        {t('projectSettings.moduleRulesAdd')}
+      </Button>
+    </div>
   );
 }
