@@ -332,6 +332,14 @@ export function Reports() {
     });
   };
 
+  // lula 2026-05-28：状态列内联可编辑（单条快捷更新，复用 bulkUpdateMutation 单元素分支）
+  const handleStatusChange = (reportId: string, newStatus: string) => {
+    bulkUpdateMutation.mutate({
+      ids: [reportId],
+      updates: { status: newStatus },
+    });
+  };
+
   const handleBulkPriorityUpdate = (newPriority: string) => {
     bulkUpdateMutation.mutate({
       ids: Array.from(selectedIds),
@@ -422,6 +430,7 @@ export function Reports() {
                 <SelectItem value="all">{t('reports.allStatus')}</SelectItem>
                 <SelectItem value="open">{t('dashboard.open')}</SelectItem>
                 <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
+                <SelectItem value="developed">{t('dashboard.developed')}</SelectItem>
                 <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
                 <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
               </SelectContent>
@@ -571,6 +580,9 @@ export function Reports() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleBulkStatusUpdate('in_progress')}>
                       {t('dashboard.inProgress')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleBulkStatusUpdate('developed')}>
+                      {t('dashboard.developed')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleBulkStatusUpdate('resolved')}>
                       {t('dashboard.resolved')}
@@ -961,6 +973,8 @@ export function Reports() {
               </TableHead>
               <TableHead>{t('reports.report')}</TableHead>
               <TableHead>{t('reports.project')}</TableHead>
+              <TableHead>{t('dashboard.reporter')}</TableHead>
+              <TableHead>{t('reports.module')}</TableHead>
               <TableHead>{t('common.status')}</TableHead>
               <TableHead>{t('common.priority')}</TableHead>
               <TableHead>{t('reports.assignee')}</TableHead>
@@ -1001,28 +1015,49 @@ export function Reports() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-medium">{report.title}</p>
                       <TypeBadge type={report.type} />
-                      {report.module && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {report.module}
-                        </Badge>
-                      )}
                     </div>
                     <p className="text-sm text-muted-foreground truncate max-w-xs">
                       {report.metadata?.url || t('reports.noUrl')}
                     </p>
-                    {report.reporterEmail && (
-                      <p className="text-xs text-muted-foreground">
-                        {report.reporterName || report.reporterEmail}
-                      </p>
-                    )}
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
                       {report.projectName || t('common.unknown')}
                     </span>
                   </TableCell>
+                  {/* lula 2026-05-28：反馈人独立列 */}
                   <TableCell>
-                    <StatusBadge status={report.status} />
+                    <span className="text-sm">
+                      {report.reporterName || report.reporterEmail || '-'}
+                    </span>
+                  </TableCell>
+                  {/* lula 2026-05-28：反馈模块独立列（对应一级页面名） */}
+                  <TableCell>
+                    {report.module ? (
+                      <Badge variant="outline" className="text-xs">
+                        {report.module}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  {/* lula 2026-05-28：状态列改可点击 Select，直接更新 */}
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={report.status}
+                      onValueChange={(value) => handleStatusChange(report.id, value)}
+                    >
+                      <SelectTrigger className="h-8 w-[110px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">{t('dashboard.open')}</SelectItem>
+                        <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
+                        <SelectItem value="developed">{t('dashboard.developed')}</SelectItem>
+                        <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
+                        <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <PriorityBadge priority={report.priority} />
@@ -1078,6 +1113,7 @@ function StatusBadge({ status }: { status: string }) {
   const labels: Record<string, string> = {
     open: t('dashboard.open'),
     in_progress: t('dashboard.inProgress'),
+    developed: t('dashboard.developed'),
     resolved: t('dashboard.resolved'),
     closed: t('dashboard.closed'),
   };

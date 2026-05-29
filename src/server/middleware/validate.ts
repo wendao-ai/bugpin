@@ -194,7 +194,7 @@ export const schemas = {
   updateReport: z.object({
     title: z.string().min(4).max(500).optional(),
     description: z.string().optional(),
-    status: z.enum(['open', 'in_progress', 'resolved', 'closed']).optional(),
+    status: z.enum(['open', 'in_progress', 'developed', 'resolved', 'closed']).optional(),
     priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).optional(),
     assignedTo: z.string().nullable().optional(),
   }),
@@ -203,7 +203,7 @@ export const schemas = {
   bulkUpdateReports: z.object({
     ids: z.array(z.string()).min(1).max(100),
     updates: z.object({
-      status: z.enum(['open', 'in_progress', 'resolved', 'closed']).optional(),
+      status: z.enum(['open', 'in_progress', 'developed', 'resolved', 'closed']).optional(),
       priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).optional(),
       assignedTo: z.string().nullable().optional(),
     }),

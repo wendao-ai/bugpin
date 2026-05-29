@@ -299,6 +299,7 @@ function StatusBadge({ status }: { status: string }) {
   const labels: Record<string, string> = {
     open: t('dashboard.open'),
     in_progress: t('dashboard.inProgress'),
+    developed: t('dashboard.developed'),
     resolved: t('dashboard.resolved'),
     closed: t('dashboard.closed'),
   };
