@@ -148,7 +148,7 @@ export async function initSchema(): Promise<void> {
       source TEXT DEFAULT 'widget' NOT NULL CHECK(source IN ('widget', 'manual')),
       title TEXT NOT NULL,
       description TEXT,
-      status TEXT DEFAULT 'open' NOT NULL CHECK(status IN ('open', 'in_progress', 'resolved', 'closed')),
+      status TEXT DEFAULT 'open' NOT NULL CHECK(status IN ('open', 'in_progress', 'developed', 'resolved', 'closed')),
       priority TEXT DEFAULT 'medium' NOT NULL CHECK(priority IN ('lowest', 'low', 'medium', 'high', 'highest')),
       annotations JSON,
       metadata JSON NOT NULL,
