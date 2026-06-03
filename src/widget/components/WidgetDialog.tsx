@@ -1,16 +1,19 @@
 import { FunctionComponent } from 'preact';
-import { useState, useCallback } from 'preact/hooks';
-import { ScreenshotManager, CapturedMedia } from './ScreenshotManager.js';
-import { Button, Input, Textarea, Select, Label, Tabs } from './ui';
+import { useState, useCallback, useEffect } from 'preact/hooks';
+import { CapturedMedia } from './ScreenshotManager.js';
+import { ScreenshotInline } from './ScreenshotInline.js';
+import { Button, Input, Textarea, Label } from './ui';
 import { ScreenCaptureConsentDialog } from './ScreenCaptureConsentDialog.js';
 import { t } from '../i18n/index.js';
 
 // F2: 反馈类型枚举与前端的 widget 完全独立；后端 Zod 把 type 校验成枚举之一。
 export type FeedbackType = 'bug' | 'feature' | 'ux' | 'other';
 
+// lula 2026-06-01: 简化字段 —— title 字段在 UI 上表现为「问题」单字段（textarea），
+// 原 description 字段不再单独录入；提交时由 App.tsx 决定怎么切分。
 export interface FormData {
   title: string;
-  description: string;
+  description: string; // 保留是为了和后端字段对齐（兼容历史草稿）；前端不再单独编辑
   priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
   type: FeedbackType | ''; // 空串 = 用户还没选，提交时 validate 拦截
   reporterEmail: string;
@@ -29,8 +32,6 @@ interface WidgetDialogProps {
   isCapturing: boolean;
   enableAnnotation: boolean;
   // Controlled state props (lifted to App for persistence across capture)
-  activeTab: string;
-  onActiveTabChange: (tab: string) => void;
   formData: FormData;
   onFormDataChange: (data: FormData) => void;
   showScreenCaptureConsent: boolean;
@@ -40,31 +41,19 @@ interface WidgetDialogProps {
   maxVideoSize?: number;
 }
 
-const TABS = [
-  {
-    id: 'details',
-    label: t('widget.details'),
-    icon: (
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-          fill="currentColor"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 'media',
-    label: t('widget.screenshots'),
-    icon: (
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-          fill="currentColor"
-        />
-      </svg>
-    ),
-  },
+const PRIORITY_OPTIONS: Array<{ value: FormData['priority']; labelKey: string }> = [
+  { value: 'lowest', labelKey: 'form.priorityLowest' },
+  { value: 'low', labelKey: 'form.priorityLow' },
+  { value: 'medium', labelKey: 'form.priorityMedium' },
+  { value: 'high', labelKey: 'form.priorityHigh' },
+  { value: 'highest', labelKey: 'form.priorityHighest' },
+];
+
+const TYPE_OPTIONS: Array<{ value: FeedbackType; labelKey: string }> = [
+  { value: 'bug', labelKey: 'form.type_bug' },
+  { value: 'feature', labelKey: 'form.type_feature' },
+  { value: 'ux', labelKey: 'form.type_ux' },
+  { value: 'other', labelKey: 'form.type_other' },
 ];
 
 export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
@@ -78,8 +67,6 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
   isSubmitting,
   isCapturing,
   enableAnnotation,
-  activeTab,
-  onActiveTabChange,
   formData,
   onFormDataChange,
   showScreenCaptureConsent,
@@ -130,28 +117,57 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
       e.preventDefault();
 
       if (!validate()) {
-        onActiveTabChange('details');
         return;
       }
 
       onSubmit(formData, media);
     },
-    [formData, media, validate, onSubmit, onActiveTabChange],
+    [formData, media, validate, onSubmit],
   );
 
-  const mediaCount = media.length;
+  // lula 2026-06-01: 粘贴上传图片。监听对话框范围内的 paste 事件，把剪贴板里的
+  // 图片文件丢给 onAddMedia（走和拖拽相同的处理流程）。
+  useEffect(() => {
+    if (showScreenCaptureConsent) return; // 同意页打开时不响应
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+      if (imageFiles.length === 0) return;
+
+      e.preventDefault();
+      // 复用 ScreenshotInline 的 processFile —— 通过自定义事件传给它
+      imageFiles.forEach((file) => {
+        document.dispatchEvent(
+          new CustomEvent('bugpin:paste-file', { detail: { file } }),
+        );
+      });
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [showScreenCaptureConsent]);
 
   return (
     <div class="fixed inset-0 z-[2147483646] bg-black/50 flex items-center justify-center p-5 animate-[fadeIn_0.2s_ease-out]">
       <div
-        class="relative w-full max-w-3xl max-h-[90vh] bg-background border border-solid border-border rounded shadow-lg overflow-hidden flex flex-col animate-[slideUp_0.2s_ease-out]"
+        class="relative w-full max-w-2xl max-h-[90vh] bg-background border border-solid border-border rounded shadow-lg overflow-hidden flex flex-col animate-[slideUp_0.2s_ease-out]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="bugpin-title"
       >
         {/* Header */}
-        <div class="flex items-center justify-between p-6 border-b border-solid border-border">
-          <h1 id="bugpin-title">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-solid border-border">
+          <h1 id="bugpin-title" class="text-base font-semibold">
             {t('widget.reportBug')}
           </h1>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label={t('widget.close')}>
@@ -168,104 +184,57 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
           <ScreenCaptureConsentDialog onConfirm={onConsentConfirm} onCancel={onConsentCancel} />
         ) : (
           <>
-            {/* Tabs */}
-            <div class="p-4 pb-0 bg-transparent">
-              <Tabs
-                tabs={TABS.map((tab) => ({
-                  ...tab,
-                  label:
-                    tab.id === 'media' && mediaCount > 0
-                      ? `${tab.label} (${mediaCount})`
-                      : tab.label,
-                }))}
-                activeTab={activeTab}
-                onTabChange={onActiveTabChange}
-              />
-            </div>
+            {/* Body — 单页平铺，无 Tab */}
+            <div class="flex-1 overflow-y-auto px-5 py-4">
+              <form class="flex flex-col gap-4" onSubmit={handleSubmit}>
+                {/* 问题（合并 title + description）*/}
+                <div class="flex flex-col gap-1.5">
+                  <Label for="bugpin-content-input" required>
+                    {t('form.content')}
+                  </Label>
+                  <Textarea
+                    id="bugpin-content-input"
+                    placeholder={t('form.contentPlaceholder')}
+                    value={formData.title}
+                    onInput={(e) =>
+                      handleInputChange('title', (e.target as HTMLTextAreaElement).value)
+                    }
+                    class="min-h-24"
+                    aria-describedby={errors.title ? 'bugpin-content-error' : undefined}
+                  />
+                  {errors.title && (
+                    <span id="bugpin-content-error" class="text-destructive text-xs mt-0.5">
+                      {errors.title}
+                    </span>
+                  )}
+                </div>
 
-            {/* Body */}
-            <div class="flex-1 overflow-y-auto p-6">
-              {/* Details Tab */}
-              {activeTab === 'details' && (
-                <form class="flex flex-col gap-4" onSubmit={handleSubmit}>
-                  {/* Title */}
-                  <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-title-input" required>
-                      {t('form.title')}
-                    </Label>
-                    <Input
-                      id="bugpin-title-input"
-                      type="text"
-                      placeholder={t('form.titlePlaceholder')}
-                      value={formData.title}
-                      onInput={(e) =>
-                        handleInputChange('title', (e.target as HTMLInputElement).value)
-                      }
-                      maxLength={200}
-                      error={!!errors.title}
-                      aria-describedby={errors.title ? 'bugpin-title-error' : undefined}
-                    />
-                    {errors.title && (
-                      <span id="bugpin-title-error" class="text-destructive text-xs mt-0.5">
-                        {errors.title === 'Title is required' ? t('form.titleRequired') : t('form.titleMinLength')}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Description */}
-                  <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-description">{t('form.description')}</Label>
-                    <Textarea
-                      id="bugpin-description"
-                      placeholder={t('form.descriptionPlaceholder')}
-                      value={formData.description}
-                      onInput={(e) =>
-                        handleInputChange('description', (e.target as HTMLTextAreaElement).value)
-                      }
-                    />
-                  </div>
-
-                  {/* Priority */}
-                  <div class="flex flex-col gap-1.5">
-                    <Label for="bugpin-priority">{t('form.priority')}</Label>
-                    <Select
-                      id="bugpin-priority"
-                      value={formData.priority}
-                      onChange={(e) =>
-                        handleInputChange('priority', (e.target as HTMLSelectElement).value)
-                      }
-                    >
-                      <option value="highest">{t('form.priorityHighest')}</option>
-                      <option value="high">{t('form.priorityHigh')}</option>
-                      <option value="medium">{t('form.priorityMedium')}</option>
-                      <option value="low">{t('form.priorityLow')}</option>
-                      <option value="lowest">{t('form.priorityLowest')}</option>
-                    </Select>
-                  </div>
-
-                  {/* F2: 反馈类型（必选 radio 组） */}
+                {/* 类型 + 优先级 同一行 */}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* 反馈类型 radio 组 */}
                   <div class="flex flex-col gap-1.5">
                     <Label required>{t('form.type')}</Label>
                     <div
-                      class="flex flex-wrap gap-3"
+                      class="flex flex-wrap gap-1"
                       role="radiogroup"
                       aria-label={t('form.type')}
                       aria-describedby={errors.type ? 'bugpin-type-error' : undefined}
                     >
-                      {(['bug', 'feature', 'ux', 'other'] as const).map((opt) => (
-                        <label
-                          key={opt}
-                          class="flex items-center gap-1.5 cursor-pointer text-sm"
+                      {TYPE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={formData.type === opt.value}
+                          onClick={() => handleInputChange('type', opt.value)}
+                          class={`px-2.5 py-1 text-xs rounded border border-solid transition-colors ${
+                            formData.type === opt.value
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background text-foreground border-border hover:bg-muted'
+                          }`}
                         >
-                          <input
-                            type="radio"
-                            name="bugpin-type"
-                            value={opt}
-                            checked={formData.type === opt}
-                            onChange={() => handleInputChange('type', opt)}
-                          />
-                          <span>{t(`form.type_${opt}`)}</span>
-                        </label>
+                          {t(opt.labelKey)}
+                        </button>
                       ))}
                     </div>
                     {errors.type && (
@@ -275,7 +244,36 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                     )}
                   </div>
 
-                  {/* Name */}
+                  {/* 优先级 radio 组（替换原 Select 下拉）*/}
+                  <div class="flex flex-col gap-1.5">
+                    <Label>{t('form.priority')}</Label>
+                    <div
+                      class="flex flex-wrap gap-1"
+                      role="radiogroup"
+                      aria-label={t('form.priority')}
+                    >
+                      {PRIORITY_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={formData.priority === opt.value}
+                          onClick={() => handleInputChange('priority', opt.value)}
+                          class={`px-2.5 py-1 text-xs rounded border border-solid transition-colors ${
+                            formData.priority === opt.value
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background text-foreground border-border hover:bg-muted'
+                          }`}
+                        >
+                          {t(opt.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 姓名 + 邮箱 同一行 */}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="flex flex-col gap-1.5">
                     <Label for="bugpin-name" required>
                       {t('form.name')}
@@ -298,7 +296,6 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                     )}
                   </div>
 
-                  {/* Email */}
                   <div class="flex flex-col gap-1.5">
                     <Label for="bugpin-email">{t('form.email')}</Label>
                     <Input
@@ -318,27 +315,32 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
                       </span>
                     )}
                   </div>
-                </form>
-              )}
+                </div>
 
-              {/* Media Tab */}
-              {activeTab === 'media' && (
-                <ScreenshotManager
-                  media={media}
-                  onCapture={onCaptureScreenshot}
-                  onUpload={onAddMedia}
-                  onRemove={onRemoveMedia}
-                  onAnnotate={onAnnotateMedia}
-                  isCapturing={isCapturing}
-                  enableAnnotation={enableAnnotation}
-                  maxImageSize={maxImageSize}
-                  maxVideoSize={maxVideoSize}
-                />
-              )}
+                {/* 截图区域（内联，无 Tab）*/}
+                <div class="flex flex-col gap-1.5">
+                  <Label>
+                    {media.length > 0
+                      ? `${t('form.screenshots')} (${media.length})`
+                      : t('form.screenshots')}
+                  </Label>
+                  <ScreenshotInline
+                    media={media}
+                    onCapture={onCaptureScreenshot}
+                    onUpload={onAddMedia}
+                    onRemove={onRemoveMedia}
+                    onAnnotate={onAnnotateMedia}
+                    isCapturing={isCapturing}
+                    enableAnnotation={enableAnnotation}
+                    maxImageSize={maxImageSize}
+                    maxVideoSize={maxVideoSize}
+                  />
+                </div>
+              </form>
             </div>
 
             {/* Footer */}
-            <div class="flex gap-3 p-6 border-t border-solid border-border bg-muted">
+            <div class="flex gap-3 px-5 py-3 border-t border-solid border-border bg-muted">
               <Button variant="outline" class="flex-1" onClick={onClose} disabled={isSubmitting}>
                 {t('widget.cancel')}
               </Button>
@@ -354,7 +356,7 @@ export const WidgetDialog: FunctionComponent<WidgetDialogProps> = ({
         )}
 
         {/* Branding */}
-        <div class="py-3 px-6 text-center text-xs text-muted-foreground border-t border-solid border-border bg-background">
+        <div class="py-2 px-5 text-center text-xs text-muted-foreground border-t border-solid border-border bg-background">
           {t('widget.poweredBy')}{' '}
           <a
             href="https://bugpin.io"

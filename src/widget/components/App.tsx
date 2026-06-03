@@ -72,8 +72,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
   const [media, setMedia] = useState<CapturedMedia[]>([]);
   const [annotatingMediaId, setAnnotatingMediaId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
-  // Lifted state for Modal persistence across screenshot capture
-  const [activeTab, setActiveTab] = useState('details');
+  // lula 2026-06-01: tab 已合并为单页，activeTab 不再需要
   const [formData, setFormData] = useState<FormData>(() => buildInitialFormData());
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -85,7 +84,7 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
       draftStorage.load(config.apiKey).then((draft) => {
         if (draft) {
           setFormData(draft.formData);
-          setActiveTab(draft.activeTab);
+          // lula 2026-06-01: 旧草稿可能带 activeTab 字段，单页化后忽略
           setMedia(draft.media);
         }
         setDraftLoaded(true);
@@ -163,17 +162,17 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
 
   // Close and keep draft
   const handleCloseKeepDraft = useCallback(() => {
-    draftStorage.save(config.apiKey, formData, activeTab, media);
+    // lula 2026-06-01: 单页化后 activeTab 固定传 'details' 兼容旧 schema
+    draftStorage.save(config.apiKey, formData, 'details', media);
     setShowCloseConfirm(false);
     setStep('closed');
     setAnnotatingMediaId(null);
     setDraftLoaded(false);
-  }, [config.apiKey, formData, activeTab, media]);
+  }, [config.apiKey, formData, media]);
 
   // Close and discard draft
   const handleCloseDiscardDraft = useCallback(() => {
     setMedia([]);
-    setActiveTab('details');
     setFormData(buildInitialFormData());
     draftStorage.clear(config.apiKey);
     setShowCloseConfirm(false);
@@ -188,7 +187,6 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
       if (clearDraftData === true) {
         // Clear state and draft (after successful submission)
         setMedia([]);
-        setActiveTab('details');
         setFormData(buildInitialFormData());
         draftStorage.clear(config.apiKey);
       }
@@ -257,7 +255,6 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
 
         setMedia((prev) => [...prev, newMedia]);
         setIsCapturing(false);
-        setActiveTab('media'); // Stay on media tab after capture
         setStep('form');
       };
 
@@ -273,7 +270,6 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
 
         setMedia((prev) => [...prev, newMedia]);
         setIsCapturing(false);
-        setActiveTab('media'); // Stay on media tab after capture
         setStep('form');
       };
 
@@ -444,8 +440,6 @@ export const App: FunctionComponent<AppProps> = ({ config, deps }) => {
           enableAnnotation={config.enableAnnotation}
           maxImageSize={config.maxImageUploadSize}
           maxVideoSize={config.maxVideoUploadSize}
-          activeTab={activeTab}
-          onActiveTabChange={setActiveTab}
           formData={formData}
           onFormDataChange={setFormData}
           showScreenCaptureConsent={showScreenCaptureConsent}

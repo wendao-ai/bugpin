@@ -199,8 +199,6 @@ describe('widget components', () => {
         isSubmitting={false}
         isCapturing={false}
         enableAnnotation={true}
-        activeTab="details"
-        onActiveTabChange={() => undefined}
         formData={{
           title: '',
           description: '',
@@ -232,8 +230,6 @@ describe('widget components', () => {
         isSubmitting={false}
         isCapturing={false}
         enableAnnotation={true}
-        activeTab="media"
-        onActiveTabChange={() => undefined}
         formData={{
           title: '',
           description: '',
@@ -265,8 +261,6 @@ describe('widget components', () => {
         isSubmitting={true}
         isCapturing={false}
         enableAnnotation={true}
-        activeTab="details"
-        onActiveTabChange={() => undefined}
         formData={{
           title: 'Valid title',
           description: '',
