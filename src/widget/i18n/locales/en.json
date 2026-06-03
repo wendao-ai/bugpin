@@ -55,8 +55,11 @@
     "titlePlaceholder": "Brief summary of the issue",
     "titleRequired": "Title is required",
     "titleMinLength": "Title must be at least 4 characters",
+    "content": "Issue",
+    "contentPlaceholder": "Describe what went wrong (required)",
     "description": "Description",
     "descriptionPlaceholder": "Steps to reproduce, expected behavior, actual result, etc.",
+    "screenshots": "Screenshots",
     "priority": "Priority",
     "priorityLowest": "Lowest",
     "priorityLow": "Low",
@@ -77,6 +80,7 @@
   "media": {
     "captureScreenshot": "Capture Screenshot",
     "capturing": "Capturing...",
+    "chooseFile": "Choose File",
     "dragAndDrop": "Drag & drop files here",
     "orClickToBrowse": "or click to browse",
     "addMore": "Add more",
@@ -85,6 +89,8 @@
     "remove": "Remove",
     "supported": "Supported: PNG, JPG, GIF, WebP, video",
     "tip": "Tip: click Annotate to mark up the screenshot",
+    "inlineHint": "Capture, choose file, drag, or paste images with Ctrl/Cmd+V",
+    "dragOrPasteEmptyHint": "Drop here or paste with Ctrl/Cmd+V",
     "video": "Video"
   },
   "consent": {
