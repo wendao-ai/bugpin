@@ -13,6 +13,62 @@ export type FileType = 'screenshot' | 'video' | 'attachment';
 export type GitHubSyncStatus = 'pending' | 'synced' | 'error';
 export type GitHubSyncMode = 'manual' | 'automatic';
 
+// lula 2026-06-03: AI 分析模块（GLM）
+export type AiAnalysisStatus =
+  | 'idle'
+  | 'analyzing'
+  | 'awaiting_feedback'
+  | 'confirmed'
+  | 'failed';
+
+export interface AiDecisionOption {
+  id: string;
+  label: string;
+  description?: string;
+  recommended?: boolean;
+}
+
+export interface AiDecisionNeeded {
+  id: string;
+  question: string;
+  options: AiDecisionOption[];
+  help?: string;
+}
+
+export interface AiAnalysisContent {
+  understanding: string; // 1-2 句产品语言复述
+  rootCause: { summary: string }; // GLM 在没有 code-access 时只能给概念性根因
+  recommendedMeta?: {
+    priority?: ReportPriority;
+    type?: ReportType;
+    module?: string;
+  };
+  decisionsNeeded: AiDecisionNeeded[];
+  impact?: { affected?: string[]; testHints?: string[] };
+  notes?: string;
+}
+
+export interface AiAnalysisFeedback {
+  decisionId: string;
+  choice: string; // option.id
+  note?: string;
+  answeredAt: string;
+  answeredBy: string;
+}
+
+export interface AiAnalysisRecord {
+  status: AiAnalysisStatus;
+  version: number; // 每次重新分析 +1
+  requestedAt?: string;
+  analyzedAt?: string;
+  confirmedAt?: string;
+  triggeredBy?: string; // userId
+  model?: string;
+  content?: AiAnalysisContent;
+  feedback?: AiAnalysisFeedback[];
+  error?: string;
+}
+
 // Report Types
 
 export interface ManualReportContext {
@@ -85,6 +141,7 @@ export interface Report {
   projectId: string;
   projectName?: string; // Only populated in list queries with JOIN
   seq?: number; // lula 2026-06-01: per-project 自增序号，用于沟通时引用「MIGE-7」
+  aiAnalysis?: AiAnalysisRecord | null; // lula 2026-06-03: AI 分析模块（GLM）
   source: ReportSource;
   title: string;
   description?: string;
@@ -512,6 +569,12 @@ export interface AppSettings {
   emailTemplates?: EmailTemplates;
   // White-label settings (EE feature)
   whiteLabel?: WhiteLabelSettings;
+  // lula 2026-06-03: AI 分析模块（GLM）
+  aiEnabled?: boolean;
+  aiProvider?: 'glm' | 'openai'; // 默认 'glm'，后续可加 openai
+  aiBaseUrl?: string; // 默认 GLM 的 https://open.bigmodel.cn/api/paas/v4
+  aiApiKey?: string; // 敏感
+  aiModel?: string; // 默认 'glm-4-plus'
 }
 
 // Integration Types

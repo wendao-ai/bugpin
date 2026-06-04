@@ -14,6 +14,7 @@ import { UsersSettings } from './UsersSettings';
 import { LicenseSettings } from './LicenseSettings';
 import { NotificationDefaultsSettings } from './NotificationDefaultsSettings';
 import { ReporterNotificationSettings } from './ReporterNotificationSettings';
+import { AISettings } from './AISettings';
 
 // All valid hash values (includes sub-tabs like 'screenshot')
 const ALL_VALID_HASHES = [
@@ -30,6 +31,7 @@ const ALL_VALID_HASHES = [
   'storage',
   'users',
   'license',
+  'ai',
 ] as const;
 type HashValue = (typeof ALL_VALID_HASHES)[number];
 
@@ -52,6 +54,7 @@ const hashToMainTab: Record<HashValue, MainTabValue> = {
   security: 'security',
   users: 'users',
   license: 'license',
+  ai: 'system', // AI 设置放在 system 主 tab 下
 };
 
 interface SubTab {
@@ -66,6 +69,7 @@ function useTabConfigs(t: ReturnType<typeof useTranslation>['t']): Record<MainTa
       { hash: 'system', label: t('settings.system') },
       { hash: 'screenshot', label: t('settings.screenshot') },
       { hash: 'storage', label: t('settings.storage') },
+      { hash: 'ai', label: t('settings.ai') },
     ],
     design: [
       { hash: 'widgetLauncherButton', label: t('settings.widgetButton') },
@@ -161,6 +165,7 @@ export function Settings() {
           <SystemSettings />
           <ScreenshotSettings />
           <StorageSettings />
+          <AISettings />
         </SubPageTabs>
       </TabsContent>
 

@@ -43,6 +43,7 @@ interface ReportRow {
   module: string | null;
   type: ReportType | null;
   seq: number | null;
+  ai_analysis: string | null;
   assignee_id?: string | null;
   assignee_name?: string | null;
   assignee_email?: string | null;
@@ -93,6 +94,7 @@ function mapRowToReport(row: ReportRow & { project_name?: string }): Report {
     // F2: type 兜底 'other'，老库未跑 migration 时 type 列可能为 null
     type: row.type ?? 'other',
     seq: row.seq ?? undefined,
+    aiAnalysis: row.ai_analysis ? JSON.parse(row.ai_analysis) : null,
   };
 }
 
@@ -665,6 +667,17 @@ export const reportsRepo = {
       .get(projectId, issueNumber) as ReportRow | null;
 
     return row ? mapRowToReport(row) : null;
+  },
+
+  /**
+   * lula 2026-06-03: 写入 AI 分析结果（整体替换；调用方负责合并历史）
+   */
+  async updateAiAnalysis(id: string, analysis: unknown): Promise<void> {
+    const db = getDb();
+    db.run(
+      'UPDATE reports SET ai_analysis = ?, updated_at = ? WHERE id = ?',
+      [analysis === null ? null : JSON.stringify(analysis), new Date().toISOString(), id],
+    );
   },
 
   /**
