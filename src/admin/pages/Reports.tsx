@@ -70,9 +70,12 @@ const NO_CHANNEL = '__none__';
 
 interface CreateReportFormState {
   projectId: string;
+  // lula 2026-06-03: title 字段在 UI 上表现为「问题」单 textarea，
+  // description 在 admin create 路径不再单独录入（保留兼容性）
   title: string;
   description: string;
-  priority: string;
+  priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
+  type: 'bug' | 'feature' | 'ux' | 'other';
   assignedTo: string;
   reporterName: string;
   reporterEmail: string;
@@ -81,12 +84,28 @@ interface CreateReportFormState {
   files: File[];
 }
 
+const PRIORITY_OPTIONS: Array<{ value: CreateReportFormState['priority']; labelKey: string }> = [
+  { value: 'lowest', labelKey: 'reports.priorityLowest' },
+  { value: 'low', labelKey: 'reports.priorityLow' },
+  { value: 'medium', labelKey: 'reports.priorityMedium' },
+  { value: 'high', labelKey: 'reports.priorityHigh' },
+  { value: 'highest', labelKey: 'reports.priorityHighest' },
+];
+
+const TYPE_OPTIONS: Array<{ value: CreateReportFormState['type']; labelKey: string }> = [
+  { value: 'bug', labelKey: 'reports.typeBug' },
+  { value: 'feature', labelKey: 'reports.typeFeature' },
+  { value: 'ux', labelKey: 'reports.typeUx' },
+  { value: 'other', labelKey: 'reports.typeOther' },
+];
+
 function buildCreateReportForm(defaultProjectId?: string): CreateReportFormState {
   return {
     projectId: defaultProjectId ?? '',
     title: '',
     description: '',
     priority: 'medium',
+    type: 'bug',
     assignedTo: PROJECT_DEFAULT_ASSIGNEE,
     reporterName: '',
     reporterEmail: '',
@@ -196,6 +215,7 @@ export function Reports() {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
         priority: form.priority,
+        type: form.type,
         assignedTo:
           form.assignedTo === PROJECT_DEFAULT_ASSIGNEE
             ? undefined
@@ -678,6 +698,9 @@ export function Reports() {
           </DialogHeader>
 
           <form onSubmit={handleCreateReport} className="space-y-4">
+            {/* lula 2026-06-03: 重做布局，跟 widget 表单一致 —— 单问题 textarea + button radio */}
+
+            {/* 项目 + 渠道 同一行 */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="create-report-project">{t('reports.projectLabel')}</Label>
@@ -692,70 +715,6 @@ export function Reports() {
                     {projectsData?.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="create-report-priority">{t('reports.priorityLabel')}</Label>
-                <Select
-                  value={createForm.priority}
-                  onValueChange={(value) => updateCreateForm('priority', value)}
-                >
-                  <SelectTrigger id="create-report-priority">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lowest">{t('reports.priorityLowest')}</SelectItem>
-                    <SelectItem value="low">{t('reports.priorityLow')}</SelectItem>
-                    <SelectItem value="medium">{t('reports.priorityMedium')}</SelectItem>
-                    <SelectItem value="high">{t('reports.priorityHigh')}</SelectItem>
-                    <SelectItem value="highest">{t('reports.priorityHighest')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="create-report-title">{t('reports.titleLabel')}</Label>
-              <Input
-                id="create-report-title"
-                value={createForm.title}
-                onChange={(e) => updateCreateForm('title', e.target.value)}
-                placeholder={t('reports.titlePlaceholder')}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="create-report-description">{t('reports.descriptionLabel')}</Label>
-              <Textarea
-                id="create-report-description"
-                value={createForm.description}
-                onChange={(e) => updateCreateForm('description', e.target.value)}
-                placeholder={t('reports.descriptionPlaceholder')}
-                rows={4}
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="create-report-assignee">{t('reports.assigneeLabel')}</Label>
-                <Select
-                  value={createForm.assignedTo}
-                  onValueChange={(value) => updateCreateForm('assignedTo', value)}
-                >
-                  <SelectTrigger id="create-report-assignee">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={PROJECT_DEFAULT_ASSIGNEE}>{t('reports.useProjectDefault')}</SelectItem>
-                    <SelectItem value={UNASSIGNED_ASSIGNEE}>{t('common.unassigned')}</SelectItem>
-                    {assignableUsers.map((assignee) => (
-                      <SelectItem key={assignee.id} value={assignee.id}>
-                        {assignee.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -783,6 +742,104 @@ export function Reports() {
               </div>
             </div>
 
+            {/* 问题（合并 title + description）*/}
+            <div className="space-y-2">
+              <Label htmlFor="create-report-content">{t('reports.contentLabel')}</Label>
+              <Textarea
+                id="create-report-content"
+                value={createForm.title}
+                onChange={(e) => updateCreateForm('title', e.target.value)}
+                placeholder={t('reports.contentPlaceholder')}
+                rows={4}
+                required
+              />
+            </div>
+
+            {/* 类型 + 优先级 (button radio) 同一行 */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>{t('reports.typeLabel')}</Label>
+                <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={t('reports.typeLabel')}>
+                  {TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={createForm.type === opt.value}
+                      onClick={() => updateCreateForm('type', opt.value)}
+                      className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                        createForm.type === opt.value
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-input hover:bg-muted'
+                      }`}
+                    >
+                      {t(opt.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('reports.priorityLabel')}</Label>
+                <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={t('reports.priorityLabel')}>
+                  {PRIORITY_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={createForm.priority === opt.value}
+                      onClick={() => updateCreateForm('priority', opt.value)}
+                      className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                        createForm.priority === opt.value
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-input hover:bg-muted'
+                      }`}
+                    >
+                      {t(opt.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 指派 + URL 同一行 */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="create-report-assignee">{t('reports.assigneeLabel')}</Label>
+                <Select
+                  value={createForm.assignedTo}
+                  onValueChange={(value) => updateCreateForm('assignedTo', value)}
+                >
+                  <SelectTrigger id="create-report-assignee">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PROJECT_DEFAULT_ASSIGNEE}>{t('reports.useProjectDefault')}</SelectItem>
+                    <SelectItem value={UNASSIGNED_ASSIGNEE}>{t('common.unassigned')}</SelectItem>
+                    {assignableUsers.map((assignee) => (
+                      <SelectItem key={assignee.id} value={assignee.id}>
+                        {assignee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-report-url">{t('reports.urlLabel')}</Label>
+                <Input
+                  id="create-report-url"
+                  type="text"
+                  inputMode="url"
+                  value={createForm.url}
+                  onChange={(e) => updateCreateForm('url', e.target.value)}
+                  onBlur={(e) => updateCreateForm('url', normalizeManualReportUrl(e.target.value))}
+                  placeholder={t('reports.urlPlaceholder')}
+                />
+              </div>
+            </div>
+
+            {/* 反馈人姓名 + 邮箱 同一行 */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="create-report-reporter-name">{t('reports.reporterName')}</Label>
@@ -806,19 +863,7 @@ export function Reports() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="create-report-url">{t('reports.urlLabel')}</Label>
-              <Input
-                id="create-report-url"
-                type="text"
-                inputMode="url"
-                value={createForm.url}
-                onChange={(e) => updateCreateForm('url', e.target.value)}
-                onBlur={(e) => updateCreateForm('url', normalizeManualReportUrl(e.target.value))}
-                placeholder={t('reports.urlPlaceholder')}
-              />
-            </div>
-
+            {/* 文件附件 */}
             <div className="space-y-2">
               <Label htmlFor="create-report-files">{t('reports.filesLabel')}</Label>
               <Input

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { reportsService } from '../../services/reports.service.js';
+import { aiAnalysisService } from '../../services/ai-analysis.service.js';
 import { syncQueueService } from '../../services/integrations/sync-queue.service.js';
 import { authMiddleware, authorize } from '../../middleware/auth.js';
 import { validate, schemas } from '../../middleware/validate.js';
@@ -250,6 +251,70 @@ reports.post(
       success: true,
       updated: result.value,
     });
+  },
+);
+
+// lula 2026-06-03: AI 分析模块（GLM）
+
+reports.post(
+  '/:id/ai-analysis/request',
+  authorize(['admin', 'editor']),
+  validate({ params: schemas.id }),
+  async (c) => {
+    const id = c.req.param('id');
+    const user = c.get('user');
+    const result = await aiAnalysisService.triggerAnalysis({
+      reportId: id,
+      triggeredBy: user.id,
+    });
+    if (!result.success) {
+      const status =
+        result.code === 'NOT_FOUND' ? 404 : result.code === 'AI_DISABLED' ? 400 : 400;
+      return c.json({ success: false, error: result.code, message: result.error }, status);
+    }
+    return c.json({ success: true, analysis: result.value });
+  },
+);
+
+reports.post(
+  '/:id/ai-analysis/feedback',
+  authorize(['admin', 'editor']),
+  validate({ params: schemas.id }),
+  async (c) => {
+    const id = c.req.param('id');
+    const user = c.get('user');
+    const body = (await c.req.json()) as { decisionId?: string; choice?: string; note?: string };
+    if (!body.decisionId || !body.choice) {
+      return c.json({ success: false, error: 'INVALID_INPUT' }, 400);
+    }
+    const result = await aiAnalysisService.applyFeedback({
+      reportId: id,
+      decisionId: body.decisionId,
+      choice: body.choice,
+      note: body.note,
+      answeredBy: user.id,
+    });
+    if (!result.success) {
+      const status = result.code === 'NOT_FOUND' ? 404 : 400;
+      return c.json({ success: false, error: result.code, message: result.error }, status);
+    }
+    return c.json({ success: true, analysis: result.value });
+  },
+);
+
+reports.post(
+  '/:id/ai-analysis/confirm',
+  authorize(['admin', 'editor']),
+  validate({ params: schemas.id }),
+  async (c) => {
+    const id = c.req.param('id');
+    const user = c.get('user');
+    const result = await aiAnalysisService.confirm(id, user.id);
+    if (!result.success) {
+      const status = result.code === 'NOT_FOUND' ? 404 : 400;
+      return c.json({ success: false, error: result.code, message: result.error }, status);
+    }
+    return c.json({ success: true, analysis: result.value });
   },
 );
 

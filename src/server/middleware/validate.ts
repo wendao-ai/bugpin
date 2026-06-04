@@ -214,6 +214,7 @@ export const schemas = {
     title: z.string().min(4, 'Title must be at least 4 characters').max(200),
     description: z.string().optional(),
     priority: z.enum(['lowest', 'low', 'medium', 'high', 'highest']).optional(),
+    type: z.enum(['bug', 'feature', 'ux', 'other']).optional(),
     assignedTo: z.string().nullable().optional(),
     reporterName: z.string().optional(),
     reporterEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
@@ -285,6 +286,12 @@ export const schemas = {
     rateLimitPerMinute: z.number().int().min(1).max(1000).optional(),
     sessionMaxAgeDays: z.number().int().min(1).max(365).optional(),
     updateCheckEnabled: z.boolean().optional(),
+    // lula 2026-06-03: AI 分析模块
+    aiEnabled: z.boolean().optional(),
+    aiProvider: z.enum(['glm', 'openai']).optional(),
+    aiBaseUrl: z.string().optional(),
+    aiApiKey: z.string().optional(),
+    aiModel: z.string().optional(),
   }),
 
   // Create integration request

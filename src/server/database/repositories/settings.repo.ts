@@ -128,6 +128,12 @@ const KEY_MAP: Record<string, string> = {
   reporterNotifications: 'reporter_notifications',
   adminButton: 'admin_button',
   emailTemplates: 'email_templates',
+  // lula 2026-06-03: AI 分析模块
+  aiEnabled: 'ai_enabled',
+  aiProvider: 'ai_provider',
+  aiBaseUrl: 'ai_base_url',
+  aiApiKey: 'ai_api_key',
+  aiModel: 'ai_model',
 };
 
 // Repository
@@ -228,6 +234,12 @@ export const settingsRepo = {
         ...DEFAULT_ADMIN_BUTTON,
         ...(settings.adminButton as Partial<AdminButtonColors>),
       },
+      // lula 2026-06-03: AI 分析设置（默认 GLM）
+      aiEnabled: (settings.aiEnabled as boolean) ?? false,
+      aiProvider: (settings.aiProvider as 'glm' | 'openai') ?? 'glm',
+      aiBaseUrl: (settings.aiBaseUrl as string) ?? 'https://open.bigmodel.cn/api/paas/v4',
+      aiApiKey: (settings.aiApiKey as string) ?? '',
+      aiModel: (settings.aiModel as string) ?? 'glm-4-plus',
     };
   },
 

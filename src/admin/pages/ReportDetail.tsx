@@ -54,6 +54,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../componen
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Spinner } from '../components/ui/spinner';
 import { formatDate, formatDateTime } from '../lib/utils';
+import { AIAnalysisCard } from '../components/AIAnalysisCard';
 import type { AppSettings, Project, Report, ReportSource, User } from '@shared/types';
 
 const UNASSIGNED_VALUE = '__unassigned__';
@@ -75,19 +76,11 @@ export function ReportDetail() {
   const isAdmin = user?.role === 'admin';
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    status: '',
-    priority: '',
-    assignedTo: UNASSIGNED_VALUE,
-  });
+  // lula 2026-06-03: 删除 isEditing / editData / showResolveMessage —— inline 编辑后不再需要
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [composeMessage, setComposeMessage] = useState('');
   const [composeCcSender, setComposeCcSender] = useState(false);
-  const [resolveMessage, setResolveMessage] = useState('');
-  const [resolveCcSender, setResolveCcSender] = useState(false);
-  const [showResolveMessage, setShowResolveMessage] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['report', id],
@@ -135,7 +128,6 @@ export function ReportDetail() {
     messages: reporterMessages,
     isLoading: messagesLoading,
     sendMessage,
-    sendMessageAsync,
     isSending,
   } = useReporterMessages(id ?? '');
 
@@ -165,13 +157,21 @@ export function ReportDetail() {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['recent-reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      setIsEditing(false);
       toast.success(t('reportDetail.reportUpdated'));
     },
     onError: (err: Error & { response?: { data?: { message?: string } } }) => {
       toast.error(err.response?.data?.message || t('reportDetail.failedUpdate'));
     },
   });
+
+  // lula 2026-06-03: 详情页 inline 编辑——状态/优先级/指派 select 切换后直接 PATCH
+  const inlineUpdate = (field: 'status' | 'priority' | 'assignedTo', value: string) => {
+    if (field === 'assignedTo') {
+      updateMutation.mutate({ assignedTo: value === UNASSIGNED_VALUE ? null : value });
+    } else {
+      updateMutation.mutate({ [field]: value });
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -248,44 +248,8 @@ export function ReportDetail() {
     );
   })();
 
-  const handleSave = async () => {
-    const updates: { status?: string; priority?: string; assignedTo?: string | null } = {};
-    if (editData.status && editData.status !== report.status) updates.status = editData.status;
-    if (editData.priority && editData.priority !== report.priority)
-      updates.priority = editData.priority;
-    const nextAssignedTo = editData.assignedTo === UNASSIGNED_VALUE ? null : editData.assignedTo;
-    if ((report.assignedTo ?? null) !== nextAssignedTo) {
-      updates.assignedTo = nextAssignedTo;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      const shouldSendResolveMessage =
-        updates.status === 'resolved' &&
-        report.reporterEmail &&
-        messagingEnabled &&
-        resolveMessage.trim();
-
-      updateMutation.mutate(updates, {
-        onSuccess: async () => {
-          if (shouldSendResolveMessage) {
-            try {
-              await sendMessageAsync({
-                message: resolveMessage.trim(),
-                ccSender: resolveCcSender,
-              });
-            } catch {
-              // Toast error is handled by the hook
-            }
-          }
-          setResolveMessage('');
-          setResolveCcSender(false);
-          setShowResolveMessage(false);
-        },
-      });
-    } else {
-      setIsEditing(false);
-    }
-  };
+  // lula 2026-06-03: handleSave 删除——inline 编辑直接 PATCH，无需手动 save
+  // resolved 状态的 reporter 通知改走「reporter messages」区独立发送，不再混在状态切换里
 
   const handleForward = async (integrationId: string, integrationName: string) => {
     if (!id) return;
@@ -322,70 +286,45 @@ export function ReportDetail() {
         </div>
         {canEdit && (
           <div className="flex gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button onClick={handleSave} disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? t('common.saving') : t('common.save')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditData({
-                      status: report.status,
-                      priority: report.priority,
-                      assignedTo: report.assignedTo ?? UNASSIGNED_VALUE,
-                    });
-                    setIsEditing(true);
-                  }}
-                >
-                  {t('common.edit')}
-                </Button>
-                {isAdmin && activeIntegrations.length > 0 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" disabled={forwardMutation.isPending}>
-                        {forwardMutation.isPending ? (
-                          <>
-                            <Spinner size="sm" className="mr-2" />
-                            Forwarding...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4 mr-2" />
-                            Forward
-                          </>
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {activeIntegrations.map((integration) => (
-                        <DropdownMenuItem
-                          key={integration.id}
-                          onClick={() => handleForward(integration.id, integration.name)}
-                        >
-                          {integration.type === 'github' && 'GitHub: '}
-                          {integration.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-                {isAdmin && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {t('common.delete')}
+            {/* lula 2026-06-03: 状态/优先级/指派改为侧栏 inline 编辑，去掉「编辑」按钮 */}
+            {isAdmin && activeIntegrations.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" disabled={forwardMutation.isPending}>
+                    {forwardMutation.isPending ? (
+                      <>
+                        <Spinner size="sm" className="mr-2" />
+                        Forwarding...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Forward
+                      </>
+                    )}
                   </Button>
-                )}
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {activeIntegrations.map((integration) => (
+                    <DropdownMenuItem
+                      key={integration.id}
+                      onClick={() => handleForward(integration.id, integration.name)}
+                    >
+                      {integration.type === 'github' && 'GitHub: '}
+                      {integration.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {isAdmin && (
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={deleteMutation.isPending}
+              >
+                {t('common.delete')}
+              </Button>
             )}
           </div>
         )}
@@ -784,62 +723,26 @@ export function ReportDetail() {
               <CardTitle>{t('reportDetail.details')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* lula 2026-06-03: 全部改 inline Select（canEdit 用户）；非编辑用户仍看 badge */}
               <div className="space-y-1">
                 <Label className="text-muted-foreground block">{t('common.status')}</Label>
-                {isEditing ? (
-                  <>
-                    <Select
-                      value={editData.status}
-                      onValueChange={(value) => setEditData({ ...editData, status: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">{t('dashboard.open')}</SelectItem>
-                        <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
-                        <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
-                        <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {editData.status === 'resolved' && report.reporterEmail && messagingEnabled && (
-                      <div className="mt-2 space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowResolveMessage(!showResolveMessage);
-                            if (showResolveMessage) setResolveMessage('');
-                          }}
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
-                        >
-                          <MessageSquare className="h-3 w-3" />
-                          {showResolveMessage
-                            ? t('reportDetail.removeMessage')
-                            : t('reportDetail.addMessage')}
-                        </button>
-                        {showResolveMessage && (
-                          <>
-                            <Textarea
-                              placeholder={t('reportDetail.optionalMessage')}
-                              value={resolveMessage}
-                              onChange={(e) => setResolveMessage(e.target.value)}
-                              rows={3}
-                              className="text-sm"
-                            />
-                            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                              <Checkbox
-                                checked={resolveCcSender}
-                                onCheckedChange={(checked) =>
-                                  setResolveCcSender(checked === true)
-                                }
-                              />
-                              {t('reportDetail.sendMeACopy')}
-                            </label>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </>
+                {canEdit ? (
+                  <Select
+                    value={report.status}
+                    onValueChange={(value) => inlineUpdate('status', value)}
+                    disabled={updateMutation.isPending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">{t('dashboard.open')}</SelectItem>
+                      <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
+                      <SelectItem value="developed">{t('dashboard.developed')}</SelectItem>
+                      <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
+                      <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <div>
                     <StatusBadge status={report.status} />
@@ -848,10 +751,11 @@ export function ReportDetail() {
               </div>
               <div className="space-y-1">
                 <Label className="text-muted-foreground block">{t('common.priority')}</Label>
-                {isEditing ? (
+                {canEdit ? (
                   <Select
-                    value={editData.priority}
-                    onValueChange={(value) => setEditData({ ...editData, priority: value })}
+                    value={report.priority}
+                    onValueChange={(value) => inlineUpdate('priority', value)}
+                    disabled={updateMutation.isPending}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -872,19 +776,20 @@ export function ReportDetail() {
               </div>
               <div className="space-y-1">
                 <Label className="text-muted-foreground block">{t('reports.assigneeLabel')}</Label>
-                {isEditing ? (
+                {canEdit ? (
                   <Select
-                    value={editData.assignedTo}
-                    onValueChange={(value) => setEditData({ ...editData, assignedTo: value })}
+                    value={report.assignedTo ?? UNASSIGNED_VALUE}
+                    onValueChange={(value) => inlineUpdate('assignedTo', value)}
+                    disabled={updateMutation.isPending}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder={t('common.unassigned')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={UNASSIGNED_VALUE}>{t('common.unassigned')}</SelectItem>
                       {assignableUsers.map((assignee) => (
                         <SelectItem key={assignee.id} value={assignee.id}>
-                          <AssigneeDisplay user={assignee} size="sm" />
+                          {assignee.id === user?.id ? `${assignee.name}（${t('reports.you')}）` : assignee.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1203,6 +1108,11 @@ export function ReportDetail() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* lula 2026-06-03: AI 分析卡片，仅 canEdit 用户可见（触发分析需要权限） */}
+          {canEdit && id && settingsData?.aiEnabled && (
+            <AIAnalysisCard reportId={id} report={report} />
           )}
         </div>
       </div>

@@ -169,7 +169,8 @@ export async function initSchema(): Promise<void> {
       github_synced_at TEXT NULL,
       module TEXT,
       type TEXT DEFAULT 'other' NOT NULL CHECK(type IN ('bug', 'feature', 'ux', 'other')),
-      seq INTEGER
+      seq INTEGER,
+      ai_analysis TEXT
     )
   `);
 
@@ -199,6 +200,13 @@ export async function initSchema(): Promise<void> {
   // lula 2026-06-01: per-project 自增 seq；fresh init 走上面 CREATE TABLE；老库走 migration 006
   try {
     db.exec(`ALTER TABLE reports ADD COLUMN seq INTEGER`);
+  } catch {
+    // Column already exists
+  }
+
+  // lula 2026-06-03: AI 分析结果 JSON 字段；fresh init 走 CREATE TABLE；老库这里兜底 ALTER
+  try {
+    db.exec(`ALTER TABLE reports ADD COLUMN ai_analysis TEXT`);
   } catch {
     // Column already exists
   }

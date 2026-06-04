@@ -58,6 +58,12 @@ export interface UpdateSettingsInput {
   branding?: Partial<BrandingSettings>;
   // Admin Console settings
   adminButton?: Partial<AdminButtonColors>;
+  // lula 2026-06-03: AI 分析模块
+  aiEnabled?: boolean;
+  aiProvider?: 'glm' | 'openai';
+  aiBaseUrl?: string;
+  aiApiKey?: string;
+  aiModel?: string;
 }
 
 // Service
@@ -246,6 +252,13 @@ export const settingsService = {
     if (input.adminButton !== undefined) {
       updates.adminButton = input.adminButton as AdminButtonColors;
     }
+
+    // lula 2026-06-03: AI 分析设置
+    if (input.aiEnabled !== undefined) updates.aiEnabled = input.aiEnabled;
+    if (input.aiProvider !== undefined) updates.aiProvider = input.aiProvider;
+    if (input.aiBaseUrl !== undefined) updates.aiBaseUrl = input.aiBaseUrl;
+    if (input.aiApiKey !== undefined) updates.aiApiKey = input.aiApiKey;
+    if (input.aiModel !== undefined) updates.aiModel = input.aiModel;
 
     const settings = await settingsRepo.updateAll(updates);
 
