@@ -89,6 +89,13 @@ export function ReportDetail() {
       return response.data;
     },
     enabled: !!id,
+    // lula 2026-06-05 v1.0.31: 当 AI 正在分析时每 3 秒轮询一次，看 status 变化
+    // 后端 trigger 改为 fire-and-forget 后，前端靠轮询知道分析何时完成
+    refetchInterval: (query) => {
+      const aiStatus = (query.state.data as { report?: { aiAnalysis?: { status?: string } } })
+        ?.report?.aiAnalysis?.status;
+      return aiStatus === 'analyzing' ? 3000 : false;
+    },
   });
 
   // Load integrations for this report's project
