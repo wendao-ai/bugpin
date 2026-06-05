@@ -272,10 +272,88 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
+/**
+ * 在后台运行 SDK 分析 + 写最终结果。
+ * 不抛错（所有错误捕获写到 ai_analysis.error），让 fire-and-forget 不污染主进程。
+ * lula 2026-06-05 v1.0.31
+ */
+async function runSdkAnalysisInBackground(args: {
+  reportId: string;
+  report: Report;
+  baseUrl: string;
+  authToken: string;
+  model: string;
+  cwd: string;
+  hasLimsSource: boolean;
+  analyzingRecord: AiAnalysisRecord;
+}): Promise<void> {
+  const { reportId, report, baseUrl, authToken, model, cwd, hasLimsSource, analyzingRecord } = args;
+
+  try {
+    const prompt = buildPrompt(report, hasLimsSource);
+    const sdkRes = await callClaudeAgentSdk(baseUrl, authToken, model, prompt, cwd);
+
+    if (!sdkRes.success) {
+      const failedRecord: AiAnalysisRecord = {
+        ...analyzingRecord,
+        status: 'failed',
+        error: sdkRes.error,
+      };
+      await reportsRepo.updateAiAnalysis(reportId, failedRecord);
+      logger.error('AI analysis failed', { reportId, error: sdkRes.error });
+      return;
+    }
+
+    const content = parseAiJsonResponse(sdkRes.value);
+    if (!content) {
+      const failedRecord: AiAnalysisRecord = {
+        ...analyzingRecord,
+        status: 'failed',
+        error: 'AI 返回不是合法 JSON',
+      };
+      await reportsRepo.updateAiAnalysis(reportId, failedRecord);
+      return;
+    }
+
+    const doneRecord: AiAnalysisRecord = {
+      ...analyzingRecord,
+      status:
+        content.decisionsNeeded && content.decisionsNeeded.length > 0
+          ? 'awaiting_feedback'
+          : 'confirmed',
+      analyzedAt: new Date().toISOString(),
+      content,
+    };
+    await reportsRepo.updateAiAnalysis(reportId, doneRecord);
+
+    logger.info('AI analysis completed', {
+      reportId,
+      version: analyzingRecord.version,
+      decisionsCount: content.decisionsNeeded?.length ?? 0,
+    });
+  } catch (error) {
+    // 兜底：任何未捕获错误也写 failed 状态，避免 report 卡在 analyzing
+    const failedRecord: AiAnalysisRecord = {
+      ...analyzingRecord,
+      status: 'failed',
+      error: `后台执行异常: ${String(error)}`,
+    };
+    await reportsRepo.updateAiAnalysis(reportId, failedRecord).catch(() => {
+      // 写库也失败，至少让 log 留痕
+      logger.error('Failed to write failed-status after exception', error as Error, { reportId });
+    });
+  }
+}
+
 export const aiAnalysisService = {
   /**
-   * 触发一次分析（同步等待 GLM 返回 → 写入 ai_analysis）。
-   * 返回的 Report 已包含最新 ai_analysis。
+   * 触发一次分析。
+   * lula 2026-06-05 v1.0.31：把 SDK 调用 fire-and-forget 在后台跑，
+   * 同步部分（pre-check + 写 analyzing 记录）<100ms 完成立即返回，
+   * 避免 nginx 30s 超时给前端 502。
+   *
+   * 前端流程：调 trigger → 收到 analyzing 状态 → 轮询 GET /reports/:id
+   * 看 ai_analysis.status 何时变 awaiting_feedback / confirmed / failed。
    */
   async triggerAnalysis(options: TriggerAnalysisOptions): Promise<Result<AiAnalysisRecord>> {
     const { reportId, triggeredBy } = options;
@@ -311,57 +389,20 @@ export const aiAnalysisService = {
     };
     await reportsRepo.updateAiAnalysis(reportId, analyzingRecord);
 
-    // 调 Claude Agent SDK（GLM 后端）跑深度分析
-    const prompt = buildPrompt(report, hasLimsSource);
-    const sdkRes = await callClaudeAgentSdk(
-      // 默认走 GLM 的 Anthropic 兼容 endpoint
-      settings.aiBaseUrl ?? 'https://api.z.ai/api/anthropic',
-      settings.aiApiKey,
-      model,
-      prompt,
-      cwd,
-    );
-
-    if (!sdkRes.success) {
-      const failedRecord: AiAnalysisRecord = {
-        ...analyzingRecord,
-        status: 'failed',
-        error: sdkRes.error,
-      };
-      await reportsRepo.updateAiAnalysis(reportId, failedRecord);
-      logger.error('AI analysis failed', { reportId, error: sdkRes.error });
-      return Result.fail(sdkRes.error, sdkRes.code);
-    }
-
-    const content = parseAiJsonResponse(sdkRes.value);
-    if (!content) {
-      const failedRecord: AiAnalysisRecord = {
-        ...analyzingRecord,
-        status: 'failed',
-        error: 'AI 返回不是合法 JSON',
-      };
-      await reportsRepo.updateAiAnalysis(reportId, failedRecord);
-      return Result.fail('AI 返回不是合法 JSON', 'AI_PARSE_ERROR');
-    }
-
-    const doneRecord: AiAnalysisRecord = {
-      ...analyzingRecord,
-      status:
-        content.decisionsNeeded && content.decisionsNeeded.length > 0
-          ? 'awaiting_feedback'
-          : 'confirmed',
-      analyzedAt: new Date().toISOString(),
-      content,
-    };
-    await reportsRepo.updateAiAnalysis(reportId, doneRecord);
-
-    logger.info('AI analysis completed', {
+    // 后台异步跑 SDK + 写最终结果，不阻塞 HTTP 响应
+    void runSdkAnalysisInBackground({
       reportId,
-      version: nextVersion,
-      decisionsCount: content.decisionsNeeded?.length ?? 0,
+      report,
+      baseUrl: settings.aiBaseUrl ?? 'https://api.z.ai/api/anthropic',
+      authToken: settings.aiApiKey,
+      model,
+      cwd,
+      hasLimsSource,
+      analyzingRecord,
     });
 
-    return Result.ok(doneRecord);
+    logger.info('AI analysis started (background)', { reportId, version: nextVersion });
+    return Result.ok(analyzingRecord);
   },
 
   /**
