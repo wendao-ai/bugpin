@@ -14,6 +14,7 @@
     "migrate-to-s3": "bun run scripts/migrate-to-s3.ts"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.163",
     "@aws-sdk/client-s3": "^3.1040.0",
     "hono": "^4.12.16",
     "nodemailer": "^8.0.7",

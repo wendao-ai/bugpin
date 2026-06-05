@@ -388,6 +388,21 @@ async function createForProject(
     });
   });
 
+  // lula 2026-06-05 v1.0.30: 报告创建即异步触发 AI 深度分析（不阻塞返回）。
+  // settings.aiEnabled=false 时 service 内部会返回 AI_DISABLED，不影响主流程。
+  void import('./ai-analysis.service.js').then(({ aiAnalysisService }) => {
+    aiAnalysisService
+      .triggerAnalysis({
+        reportId: report.id,
+        triggeredBy: 'system:auto-on-create',
+      })
+      .catch((error) => {
+        logger.error('Failed to auto-trigger AI analysis', error, {
+          reportId: report.id,
+        });
+      });
+  });
+
   if (options.sendReporterSubmission) {
     notificationsService.notifyReporterSubmission(report).catch((error) => {
       logger.error('Failed to send reporter submission confirmation', error, {

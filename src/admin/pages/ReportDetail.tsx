@@ -717,6 +717,15 @@ export function ReportDetail() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* lula 2026-06-04: AI 分析卡片置顶（优先级最高） */}
+          {canEdit && id && (
+            <AIAnalysisCard
+              reportId={id}
+              report={report}
+              aiEnabled={settingsData?.aiEnabled ?? false}
+            />
+          )}
+
           {/* Status & Priority */}
           <Card>
             <CardHeader>
@@ -1110,10 +1119,6 @@ export function ReportDetail() {
             </Card>
           )}
 
-          {/* lula 2026-06-03: AI 分析卡片，仅 canEdit 用户可见（触发分析需要权限） */}
-          {canEdit && id && settingsData?.aiEnabled && (
-            <AIAnalysisCard reportId={id} report={report} />
-          )}
         </div>
       </div>
 

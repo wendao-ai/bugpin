@@ -235,11 +235,12 @@ export const settingsRepo = {
         ...(settings.adminButton as Partial<AdminButtonColors>),
       },
       // lula 2026-06-03: AI 分析设置（默认 GLM）
+      // 2026-06-05 v1.0.30: 改走 Anthropic 兼容 endpoint + glm-4.6，配合 Claude Agent SDK
       aiEnabled: (settings.aiEnabled as boolean) ?? false,
       aiProvider: (settings.aiProvider as 'glm' | 'openai') ?? 'glm',
-      aiBaseUrl: (settings.aiBaseUrl as string) ?? 'https://open.bigmodel.cn/api/paas/v4',
+      aiBaseUrl: (settings.aiBaseUrl as string) ?? 'https://api.z.ai/api/anthropic',
       aiApiKey: (settings.aiApiKey as string) ?? '',
-      aiModel: (settings.aiModel as string) ?? 'glm-4-plus',
+      aiModel: (settings.aiModel as string) ?? 'glm-4.6',
     };
   },
 
