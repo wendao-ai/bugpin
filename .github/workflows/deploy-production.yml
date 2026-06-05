@@ -38,6 +38,7 @@ jobs:
               --restart unless-stopped \
               -p 7300:7300 \
               -v /opt/bugpin/data:/data \
+              -v /opt/lims-source:/lims-source:ro \
               "$IMAGE"
             docker logout zot.migelab.com
         env:
