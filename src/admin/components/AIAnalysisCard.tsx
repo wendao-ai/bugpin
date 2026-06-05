@@ -13,8 +13,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Sparkles, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertTriangle, Settings } from 'lucide-react';
 import { api } from '../api/client';
 import {
   Card,
@@ -31,9 +32,10 @@ import { useState } from 'react';
 interface AIAnalysisCardProps {
   reportId: string;
   report: Report;
+  aiEnabled: boolean;
 }
 
-export function AIAnalysisCard({ reportId, report }: AIAnalysisCardProps) {
+export function AIAnalysisCard({ reportId, report, aiEnabled }: AIAnalysisCardProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const analysis = (report.aiAnalysis ?? null) as AiAnalysisRecord | null;
@@ -61,7 +63,9 @@ export function AIAnalysisCard({ reportId, report }: AIAnalysisCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!analysis || analysis.status === 'idle' ? (
+        {!aiEnabled ? (
+          <DisabledState />
+        ) : !analysis || analysis.status === 'idle' ? (
           <IdleState
             onTrigger={() => triggerMutation.mutate()}
             loading={triggerMutation.isPending}
@@ -84,6 +88,27 @@ export function AIAnalysisCard({ reportId, report }: AIAnalysisCardProps) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function DisabledState() {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-2 p-2.5 rounded bg-muted text-muted-foreground text-xs">
+        <Settings className="h-4 w-4 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-medium text-foreground">{t('aiAnalysis.disabledTitle')}</p>
+          <p className="mt-1">{t('aiAnalysis.disabledHint')}</p>
+        </div>
+      </div>
+      <Button asChild variant="outline" size="sm" className="w-full">
+        <Link to="/settings/system#ai">
+          <Settings className="h-3.5 w-3.5 mr-1.5" />
+          {t('aiAnalysis.goToSettings')}
+        </Link>
+      </Button>
+    </div>
   );
 }
 
