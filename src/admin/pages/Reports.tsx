@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +54,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Search, RefreshCw, CheckCircle, AlertCircle, Trash2, X } from 'lucide-react';
+import { Search, CheckCircle, AlertCircle, Trash2, X } from 'lucide-react';
 import { Spinner } from '../components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { formatDate as formatAbsoluteDate } from '../lib/utils';
@@ -97,6 +98,25 @@ const TYPE_OPTIONS: Array<{ value: CreateReportFormState['type']; labelKey: stri
   { value: 'feature', labelKey: 'reports.typeFeature' },
   { value: 'ux', labelKey: 'reports.typeUx' },
   { value: 'other', labelKey: 'reports.typeOther' },
+];
+
+// lula 2026-06-17: 状态/类型快捷筛选 chip 配置。dot = chip 前的颜色圆点，激活/未激活都显示，
+// 让用户不点开下拉就能一眼区分。value='all' 表示「全部」。
+const STATUS_FILTER_CHIPS: Array<{ value: string; labelKey: string; dot: string }> = [
+  { value: 'all', labelKey: 'reports.allStatus', dot: '' },
+  { value: 'open', labelKey: 'dashboard.open', dot: 'bg-sky-500' },
+  { value: 'in_progress', labelKey: 'dashboard.inProgress', dot: 'bg-yellow-500' },
+  { value: 'developed', labelKey: 'dashboard.developed', dot: 'bg-indigo-500' },
+  { value: 'resolved', labelKey: 'dashboard.resolved', dot: 'bg-emerald-500' },
+  { value: 'closed', labelKey: 'dashboard.closed', dot: 'bg-slate-400' },
+];
+
+const TYPE_FILTER_CHIPS: Array<{ value: string; labelKey: string; dot: string }> = [
+  { value: 'all', labelKey: 'reports.allTypes', dot: '' },
+  { value: 'bug', labelKey: 'reports.type_bug', dot: 'bg-red-500' },
+  { value: 'feature', labelKey: 'reports.type_feature', dot: 'bg-blue-500' },
+  { value: 'ux', labelKey: 'reports.type_ux', dot: 'bg-amber-500' },
+  { value: 'other', labelKey: 'reports.type_other', dot: 'bg-gray-400' },
 ];
 
 function buildCreateReportForm(defaultProjectId?: string): CreateReportFormState {
@@ -158,7 +178,10 @@ export function Reports() {
   };
 
   const page = parseInt(searchParams.get('page') || '1');
-  const status = searchParams.get('status') || '';
+  // lula 2026-06-17: 列表默认只看「待处理(open)」。URL 无 status 参数 = 默认 open；
+  // status=all 表示用户主动点了「全部」。这样首次进入就聚焦待办，不被已关闭项淹没。
+  const statusParam = searchParams.get('status');
+  const status = statusParam == null ? 'open' : statusParam === 'all' ? '' : statusParam;
   const priority = searchParams.get('priority') || '';
   const projectId = searchParams.get('projectId') || '';
   const assignedTo = searchParams.get('assignedTo') || '';
@@ -411,6 +434,15 @@ export function Reports() {
     setSearchParams(params);
   };
 
+  // lula 2026-06-17: status 默认 open，所以「全部」必须显式写成 status=all（不能 delete，
+  // 否则会回退到默认 open）。其余 status 值直接写入。
+  const handleStatusFilter = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('status', value);
+    params.set('page', '1');
+    setSearchParams(params);
+  };
+
   const handleCreateReport = (e: React.FormEvent) => {
     e.preventDefault();
     createReportMutation.mutate(createForm);
@@ -430,10 +462,73 @@ export function Reports() {
         )}
       </div>
 
+      {/* lula 2026-06-17: 项目切换用 Tab，不同项目独立看，不再混在一个列表里 */}
+      <Tabs
+        value={projectId || 'all'}
+        onValueChange={(value) => handleFilterChange('projectId', value)}
+      >
+        <TabsList className="h-auto flex-wrap justify-start">
+          <TabsTrigger value="all">{t('reports.allProjects')}</TabsTrigger>
+          {projectsData?.map((project) => (
+            <TabsTrigger key={project.id} value={project.id}>
+              {project.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
+        <CardContent className="p-4 space-y-3">
+          {/* lula 2026-06-17: 状态/类型改成 chip 快捷筛选（替代原来的下拉，不重复）。
+              点 chip 即筛选；状态默认「待处理」，点「全部」才看全部。 */}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground shrink-0 w-12">{t('common.status')}</span>
+              {STATUS_FILTER_CHIPS.map((chip) => {
+                const active = (chip.value === 'all' ? status === '' : status === chip.value);
+                return (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => handleStatusFilter(chip.value)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                      active
+                        ? 'bg-primary text-primary-foreground border-primary font-medium'
+                        : 'bg-background text-foreground border-input hover:bg-muted'
+                    }`}
+                  >
+                    {chip.dot && <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} />}
+                    {t(chip.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground shrink-0 w-12">{t('reports.typeLabel')}</span>
+              {TYPE_FILTER_CHIPS.map((chip) => {
+                const active = (chip.value === 'all' ? typeFilter === '' : typeFilter === chip.value);
+                return (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => handleFilterChange('type', chip.value)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                      active
+                        ? 'bg-primary text-primary-foreground border-primary font-medium'
+                        : 'bg-background text-foreground border-input hover:bg-muted'
+                    }`}
+                  >
+                    {chip.dot && <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} />}
+                    {t(chip.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 搜索 + 低频筛选项（优先级 / 处理人 / 来源 / 模块）保持下拉 */}
+          <div className="flex flex-wrap gap-3">
             {/* Search */}
             <form onSubmit={handleSearch} className="flex-1 min-w-[200px]">
               <div className="relative">
@@ -447,24 +542,6 @@ export function Reports() {
                 />
               </div>
             </form>
-
-            {/* Status filter */}
-            <Select
-              value={status || 'all'}
-              onValueChange={(value) => handleFilterChange('status', value)}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t('reports.allStatus')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('reports.allStatus')}</SelectItem>
-                <SelectItem value="open">{t('dashboard.open')}</SelectItem>
-                <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
-                <SelectItem value="developed">{t('dashboard.developed')}</SelectItem>
-                <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
-                <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
-              </SelectContent>
-            </Select>
 
             {/* Priority filter */}
             <Select
@@ -481,24 +558,6 @@ export function Reports() {
                 <SelectItem value="medium">{t('reports.priorityMedium')}</SelectItem>
                 <SelectItem value="low">{t('reports.priorityLow')}</SelectItem>
                 <SelectItem value="lowest">{t('reports.priorityLowest')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Project filter */}
-            <Select
-              value={projectId || 'all'}
-              onValueChange={(value) => handleFilterChange('projectId', value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('reports.allProjects')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('reports.allProjects')}</SelectItem>
-                {projectsData?.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
 
@@ -532,23 +591,6 @@ export function Reports() {
                 <SelectItem value="all">{t('reports.allSources')}</SelectItem>
                 <SelectItem value="widget">{t('widget.widget')}</SelectItem>
                 <SelectItem value="manual">{t('reports.sourceManual')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* F2: 反馈类型筛选 */}
-            <Select
-              value={typeFilter || 'all'}
-              onValueChange={(value) => handleFilterChange('type', value)}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t('reports.allTypes')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('reports.allTypes')}</SelectItem>
-                <SelectItem value="bug">{t('reports.type_bug')}</SelectItem>
-                <SelectItem value="feature">{t('reports.type_feature')}</SelectItem>
-                <SelectItem value="ux">{t('reports.type_ux')}</SelectItem>
-                <SelectItem value="other">{t('reports.type_other')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1027,30 +1069,28 @@ export function Reports() {
                 />
               </TableHead>
               {/* lula 2026-06-01：稳定 ID 列（取 report.id 后 8 位 hex），用户在沟通时引用 */}
-              <TableHead className="w-[100px] text-muted-foreground">ID</TableHead>
+              {/* lula 2026-06-17：项目列删除（已移到顶部 Tab），刷新/GitHub 列删除（详情页可看）；
+                  报告列吃掉剩余宽度，其余列固定宽 + nowrap，解决竖排/过空 */}
+              <TableHead className="w-[96px] text-muted-foreground whitespace-nowrap">ID</TableHead>
               <TableHead>{t('reports.report')}</TableHead>
-              <TableHead>{t('reports.project')}</TableHead>
-              <TableHead>{t('dashboard.reporter')}</TableHead>
-              <TableHead>{t('reports.module')}</TableHead>
-              <TableHead>{t('common.status')}</TableHead>
-              <TableHead>{t('common.priority')}</TableHead>
-              <TableHead>{t('reports.assignee')}</TableHead>
-              <TableHead className="w-[50px]">
-                <RefreshCw className="h-4 w-4" />
-              </TableHead>
-              <TableHead>{t('reports.created')}</TableHead>
+              <TableHead className="w-[120px] whitespace-nowrap">{t('dashboard.reporter')}</TableHead>
+              <TableHead className="w-[120px] whitespace-nowrap">{t('reports.module')}</TableHead>
+              <TableHead className="w-[120px] whitespace-nowrap">{t('common.status')}</TableHead>
+              <TableHead className="w-[88px] whitespace-nowrap">{t('common.priority')}</TableHead>
+              <TableHead className="w-[150px] whitespace-nowrap">{t('reports.assignee')}</TableHead>
+              <TableHead className="w-[110px] whitespace-nowrap">{t('reports.created')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-12">
+                <TableCell colSpan={9} className="text-center py-12">
                   <Spinner className="mx-auto text-primary" />
                 </TableCell>
               </TableRow>
             ) : data?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                   {t('reports.noReportsFound')}
                 </TableCell>
               </TableRow>
@@ -1086,18 +1126,13 @@ export function Reports() {
                       <p className="font-medium">{report.title}</p>
                       <TypeBadge type={report.type} />
                     </div>
-                    <p className="text-sm text-muted-foreground truncate max-w-xs">
+                    <p className="text-sm text-muted-foreground truncate max-w-md">
                       {report.metadata?.url || t('reports.noUrl')}
                     </p>
                   </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {report.projectName || t('common.unknown')}
-                    </span>
-                  </TableCell>
                   {/* lula 2026-05-28：反馈人独立列 */}
-                  <TableCell>
-                    <span className="text-sm">
+                  <TableCell className="whitespace-nowrap">
+                    <span className="text-sm truncate block max-w-[120px]">
                       {report.reporterName || report.reporterEmail || '-'}
                     </span>
                   </TableCell>
@@ -1129,7 +1164,7 @@ export function Reports() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <PriorityBadge priority={report.priority} />
                   </TableCell>
                   {/* lula 2026-05-28：指派列改可点击 Select，直接列出所有可指派用户（含自己） */}
@@ -1159,10 +1194,7 @@ export function Reports() {
                       <AssigneeDisplay user={report.assignee} compact />
                     )}
                   </TableCell>
-                  <TableCell>
-                    <GitHubSyncIcon report={report} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
                     {formatDate(report.createdAt)}
                   </TableCell>
                 </TableRow>
