@@ -337,9 +337,101 @@ export function ReportDetail() {
         )}
       </div>
 
+      {/* lula 2026-06-17: 操作区置顶——状态/优先级/处理人横排，最显眼。
+          原来埋在右侧栏，导致左短右长、操作不突出。「查看」类信息全部下沉到下方两栏。 */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">{t('common.status')}</Label>
+              {canEdit ? (
+                <Select
+                  value={report.status}
+                  onValueChange={(value) => inlineUpdate('status', value)}
+                  disabled={updateMutation.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">{t('dashboard.open')}</SelectItem>
+                    <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
+                    <SelectItem value="developed">{t('dashboard.developed')}</SelectItem>
+                    <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
+                    <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div>
+                  <StatusBadge status={report.status} />
+                </div>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">{t('common.priority')}</Label>
+              {canEdit ? (
+                <Select
+                  value={report.priority}
+                  onValueChange={(value) => inlineUpdate('priority', value)}
+                  disabled={updateMutation.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lowest">{t('reports.priorityLowest')}</SelectItem>
+                    <SelectItem value="low">{t('reports.priorityLow')}</SelectItem>
+                    <SelectItem value="medium">{t('reports.priorityMedium')}</SelectItem>
+                    <SelectItem value="high">{t('reports.priorityHigh')}</SelectItem>
+                    <SelectItem value="highest">{t('reports.priorityHighest')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div>
+                  <PriorityBadge priority={report.priority} />
+                </div>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs">{t('reports.assigneeLabel')}</Label>
+              {canEdit ? (
+                <Select
+                  value={report.assignedTo ?? UNASSIGNED_VALUE}
+                  onValueChange={(value) => inlineUpdate('assignedTo', value)}
+                  disabled={updateMutation.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('common.unassigned')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED_VALUE}>{t('common.unassigned')}</SelectItem>
+                    {assignableUsers.map((assignee) => (
+                      <SelectItem key={assignee.id} value={assignee.id}>
+                        {assignee.id === user?.id ? `${assignee.name}（${t('reports.you')}）` : assignee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <AssigneeDisplay user={report.assignee} showEmail />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* lula 2026-06-17: AI 分析从右侧栏移到主列顶部——内容量大、优先级最高，
+              放主列既更突出，也让左右两栏高度平衡 */}
+          {canEdit && id && (
+            <AIAnalysisCard
+              reportId={id}
+              report={report}
+              aiEnabled={settingsData?.aiEnabled ?? false}
+            />
+          )}
           {/* Screenshots/Media */}
           {files?.length > 0 && (
             <Card>
@@ -430,6 +522,113 @@ export function ReportDetail() {
               </p>
             </CardContent>
           </Card>
+
+          {/* lula 2026-06-17: 报告人消息从右侧栏移到主列——是阅读/沟通内容，放主列更合理，
+              也顺手修了原来 t(...) 没被求值、直接显示字面量的 bug */}
+          {report.reporterEmail && messagingEnabled && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  {t('reportDetail.reporterMessages')}
+                  {reporterMessages.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {reporterMessages.length}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Compose new message (admin/editor only) */}
+                {canEdit && (
+                  <>
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder={t('reportDetail.writeMessage')}
+                        value={composeMessage}
+                        onChange={(e) => setComposeMessage(e.target.value)}
+                        rows={3}
+                        disabled={isSending}
+                      />
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                          <Checkbox
+                            checked={composeCcSender}
+                            onCheckedChange={(checked) =>
+                              setComposeCcSender(checked === true)
+                            }
+                            disabled={isSending}
+                          />
+                          {t('reportDetail.sendMeACopy')}
+                        </label>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (composeMessage.trim()) {
+                              sendMessage(
+                                { message: composeMessage.trim(), ccSender: composeCcSender },
+                                {
+                                  onSuccess: () => {
+                                    setComposeMessage('');
+                                    setComposeCcSender(false);
+                                  },
+                                },
+                              );
+                            }
+                          }}
+                          disabled={!composeMessage.trim() || isSending}
+                        >
+                          {isSending ? (
+                            <>
+                              <Spinner size="sm" className="mr-2" />
+                              {t('reportDetail.sending')}
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              {t('reportDetail.sendMessage')}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+                  </>
+                )}
+
+                {/* Message history */}
+                {messagesLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Spinner size="sm" className="text-muted-foreground" />
+                  </div>
+                ) : reporterMessages.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {t('reportDetail.noMessages')}
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {reporterMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className="rounded-lg border bg-muted/30 p-3 space-y-1"
+                      >
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="font-medium">
+                            {msg.userName ?? 'System'}
+                          </span>
+                          <span title={formatDateTime(msg.sentAt)}>
+                            {formatRelativeTime(new Date(msg.sentAt))}
+                          </span>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Console Output */}
           {consoleErrors.length > 0 && (
@@ -722,99 +921,14 @@ export function ReportDetail() {
 
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar —— 仅放「查看」类只读信息 */}
         <div className="space-y-6">
-          {/* lula 2026-06-04: AI 分析卡片置顶（优先级最高） */}
-          {canEdit && id && (
-            <AIAnalysisCard
-              reportId={id}
-              report={report}
-              aiEnabled={settingsData?.aiEnabled ?? false}
-            />
-          )}
-
-          {/* Status & Priority */}
+          {/* lula 2026-06-17: 详情卡降级为「基本信息」——状态/优先级/处理人已上移到顶部操作区 */}
           <Card>
             <CardHeader>
               <CardTitle>{t('reportDetail.details')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* lula 2026-06-03: 全部改 inline Select（canEdit 用户）；非编辑用户仍看 badge */}
-              <div className="space-y-1">
-                <Label className="text-muted-foreground block">{t('common.status')}</Label>
-                {canEdit ? (
-                  <Select
-                    value={report.status}
-                    onValueChange={(value) => inlineUpdate('status', value)}
-                    disabled={updateMutation.isPending}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">{t('dashboard.open')}</SelectItem>
-                      <SelectItem value="in_progress">{t('dashboard.inProgress')}</SelectItem>
-                      <SelectItem value="developed">{t('dashboard.developed')}</SelectItem>
-                      <SelectItem value="resolved">{t('dashboard.resolved')}</SelectItem>
-                      <SelectItem value="closed">{t('dashboard.closed')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div>
-                    <StatusBadge status={report.status} />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground block">{t('common.priority')}</Label>
-                {canEdit ? (
-                  <Select
-                    value={report.priority}
-                    onValueChange={(value) => inlineUpdate('priority', value)}
-                    disabled={updateMutation.isPending}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lowest">{t('reports.priorityLowest')}</SelectItem>
-                      <SelectItem value="low">{t('reports.priorityLow')}</SelectItem>
-                      <SelectItem value="medium">{t('reports.priorityMedium')}</SelectItem>
-                      <SelectItem value="high">{t('reports.priorityHigh')}</SelectItem>
-                      <SelectItem value="highest">{t('reports.priorityHighest')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div>
-                    <PriorityBadge priority={report.priority} />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground block">{t('reports.assigneeLabel')}</Label>
-                {canEdit ? (
-                  <Select
-                    value={report.assignedTo ?? UNASSIGNED_VALUE}
-                    onValueChange={(value) => inlineUpdate('assignedTo', value)}
-                    disabled={updateMutation.isPending}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('common.unassigned')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={UNASSIGNED_VALUE}>{t('common.unassigned')}</SelectItem>
-                      {assignableUsers.map((assignee) => (
-                        <SelectItem key={assignee.id} value={assignee.id}>
-                          {assignee.id === user?.id ? `${assignee.name}（${t('reports.you')}）` : assignee.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <AssigneeDisplay user={report.assignee} showEmail />
-                )}
-              </div>
-              <Separator />
               <div className="space-y-1">
                 <Label className="text-muted-foreground">{t('reportDetail.source')}</Label>
                 <div>
@@ -910,112 +1024,6 @@ export function ReportDetail() {
                   This report was created manually in {appName} and does not include widget capture data.
                 </p>
                 {manualChannel && <InfoRow label="Channel" value={manualChannel} />}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Reporter Messages */}
-          {report.reporterEmail && messagingEnabled && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Reporter Messages
-                  {reporterMessages.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {reporterMessages.length}
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Compose new message (admin/editor only) */}
-                {canEdit && (
-                  <>
-                    <div className="space-y-2">
-                      <Textarea
-                        placeholder="t('reportDetail.writeMessage')"
-                        value={composeMessage}
-                        onChange={(e) => setComposeMessage(e.target.value)}
-                        rows={3}
-                        disabled={isSending}
-                      />
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                          <Checkbox
-                            checked={composeCcSender}
-                            onCheckedChange={(checked) =>
-                              setComposeCcSender(checked === true)
-                            }
-                            disabled={isSending}
-                          />
-                          t('reportDetail.sendMeACopy')
-                        </label>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (composeMessage.trim()) {
-                              sendMessage(
-                                { message: composeMessage.trim(), ccSender: composeCcSender },
-                                {
-                                  onSuccess: () => {
-                                    setComposeMessage('');
-                                    setComposeCcSender(false);
-                                  },
-                                },
-                              );
-                            }
-                          }}
-                          disabled={!composeMessage.trim() || isSending}
-                        >
-                          {isSending ? (
-                            <>
-                              <Spinner size="sm" className="mr-2" />
-                              t('reportDetail.sending')
-                            </>
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4 mr-2" />
-                              t('reportDetail.sendMessage')
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <Separator />
-                  </>
-                )}
-
-                {/* Message history */}
-                {messagesLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Spinner size="sm" className="text-muted-foreground" />
-                  </div>
-                ) : reporterMessages.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    {t('reportDetail.noMessages')}
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {reporterMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="rounded-lg border bg-muted/30 p-3 space-y-1"
-                      >
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="font-medium">
-                            {msg.userName ?? 'System'}
-                          </span>
-                          <span title={formatDateTime(msg.sentAt)}>
-                            {formatRelativeTime(new Date(msg.sentAt))}
-                          </span>
-                        </div>
-                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
